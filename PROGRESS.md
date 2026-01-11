@@ -443,6 +443,41 @@ Dashboard | Inventory | Expenses | Analytics | Settings
 
 ---
 
+### Date Range Filtering for Tax Purposes
+
+**Completed:** Jan 11, 2026
+
+**Overview:**
+Added date range filtering to Expenses tab and Mileage Log for quarterly tax filing support.
+
+**New Component:**
+- `src/components/ui/DateRangeFilter.tsx` - Reusable date range filter with:
+  - Preset pills: All Time, This Month, This Quarter, Last Quarter, This Year, Custom
+  - Custom date range modal with DateTimePicker
+  - Quarter calculation helpers (getQuarterDates, getCurrentQuarter)
+  - `isWithinDateRange` helper function for filtering items by date
+  - Elegant pill-style design matching app aesthetic
+
+**Files Modified:**
+- `app/(tabs)/expenses.tsx` - Added DateRangeFilter, filters expenses by date and category
+- `app/mileage/index.tsx` - Added DateRangeFilter, filters trips with dynamic summary recalculation
+
+**Features:**
+- Filter expenses and mileage trips by quarter (Q1-Q4)
+- This Month / This Year quick filters for common reports
+- Custom date range for arbitrary periods
+- Summary totals update to reflect filtered data
+- Useful for quarterly estimated tax filing (Q1: Apr 15, Q2: Jun 15, Q3: Sep 15, Q4: Jan 15)
+
+**Commits:**
+- `feat(expenses): add date range filtering for expenses and mileage`
+
+**Future UX Ideas:**
+- Consider grouping expenses by month with section headers
+- Compact list rows as alternative to full cards for long lists
+
+---
+
 ### Phase 8F: Onboarding Integration
 
 **New Onboarding Screen:**
