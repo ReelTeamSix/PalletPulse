@@ -1,8 +1,8 @@
 # PalletPulse Development Progress
 
-## Current Phase: Phase 6 - Item Management
-**Status:** PASSED - Ready for Approval
-**Branch:** feature/item-management
+## Current Phase: Phase 7 - Sales & Profit
+**Status:** Not Started
+**Branch:** main
 
 ---
 
@@ -12,7 +12,7 @@
 - [x] Phase 3: Database & Data Layer (approved)
 - [x] Phase 4: Core Navigation (approved)
 - [x] Phase 5: Pallet Management (approved)
-- [x] Phase 6: Item Management (awaiting review)
+- [x] Phase 6: Item Management (approved)
 - [ ] Phase 7: Sales & Profit
 - [ ] Phase 8: Expenses
 - [ ] Phase 9: Analytics
