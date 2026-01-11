@@ -63,6 +63,7 @@
   - Live profit/ROI preview
   - Price warning for significant differences from listing
   - Discount display
+  - Improved keyboard scroll handling
 - [x] Update items store with enhanced markAsSold action
   - Now saves sale_price, sale_date, sales_channel
   - Appends buyer notes to item notes
@@ -71,6 +72,22 @@
   - Shows Cost, Profit, ROI cards with color coding
   - Progress summary: Sold count, Unsold count, Revenue
   - Fetches pallet expenses for accurate calculation
+  - Refreshes data on screen focus (useFocusEffect)
+- [x] Add quick-sell swipe feature
+  - Swipe right on item card reveals "SELL" button
+  - Bottom sheet modal with sale price input
+  - Live profit/ROI preview in quick sell modal
+  - Works on both Pallet Detail and Items tab
+- [x] Add pallet status dropdown
+  - Tap status badge in Details section to change
+  - Options: Unprocessed, In Progress, Processed
+  - Modal picker with color-coded status dots
+- [x] Fix dashboard to show real metrics
+  - Connected to pallets, items, expenses stores
+  - Shows total profit (dynamically calculated)
+  - Shows pallets count, items count, sold count
+  - Refreshes on screen focus
+  - Pull-to-refresh support
 - [x] Item detail already has Mark Sold button (from Phase 6)
 
 ### Test Results
@@ -117,9 +134,12 @@ Tests:       374 passed, 374 total
 - `src/features/sales/index.ts` - Feature exports
 
 ### Files Modified
-- `app/pallets/[id].tsx` - Added real profit/ROI display with expenses
+- `app/pallets/[id].tsx` - Added quick-sell swipe, status dropdown, useFocusEffect refresh
+- `app/(tabs)/index.tsx` - Connected to stores, shows real metrics, pull-to-refresh
+- `app/(tabs)/items.tsx` - Added quick-sell swipe, useFocusEffect refresh
 - `src/stores/items-store.ts` - Enhanced markAsSold with buyer notes
 - `src/lib/photo-utils.ts` - Fixed generateStoragePath extension handling
+- `package.json` - Added react-native-gesture-handler
 
 ### Human Verification Checklist
 - [ ] From item detail, tap "Mark Sold" -> sell screen opens
@@ -133,6 +153,15 @@ Tests:       374 passed, 374 total
 - [ ] Pallet detail shows sold/unsold counts
 - [ ] ROI color indicates positive/negative correctly
 - [ ] Verify math: Profit = Revenue - (Pallet Cost + Tax + Expenses)
+- [ ] **Quick Sell:** Swipe right on item in pallet detail -> SELL button appears
+- [ ] **Quick Sell:** Tap SELL -> bottom sheet modal opens
+- [ ] **Quick Sell:** Sale price pre-fills, profit preview shows
+- [ ] **Quick Sell:** Confirm sale -> item marked sold, list refreshes
+- [ ] **Quick Sell:** Also works on Items tab
+- [ ] **Status:** Tap pallet status -> dropdown appears
+- [ ] **Status:** Change status -> saves correctly
+- [ ] **Dashboard:** Shows real profit, pallets, items, sold counts
+- [ ] **Dashboard:** Updates after marking item sold
 
 ---
 
@@ -199,6 +228,8 @@ Phase 8 will include:
 
 ### Maybe Add
 - [ ] Optional photo cropping
+- [ ] Tax % setting during onboarding (with tax-exempt option)
+- [ ] Unsellable items as inventory loss expense (write-off option)
 
 ---
 
