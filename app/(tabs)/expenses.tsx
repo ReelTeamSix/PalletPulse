@@ -17,6 +17,7 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { useExpensesStore, ExpenseWithPallets } from '@/src/stores/expenses-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
+import { useItemsStore } from '@/src/stores/items-store';
 import { ExpenseCard } from '@/src/features/expenses/components/ExpenseCard';
 import {
   formatExpenseAmount,
@@ -37,6 +38,7 @@ export default function ExpensesScreen() {
   const insets = useSafeAreaInsets();
   const { expenses, isLoading, error, fetchExpenses } = useExpensesStore();
   const { pallets, getPalletById, fetchPallets } = usePalletsStore();
+  const { items, fetchItems } = useItemsStore();
 
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -50,6 +52,7 @@ export default function ExpensesScreen() {
     useCallback(() => {
       fetchExpenses();
       fetchPallets();
+      fetchItems();
     }, [])
   );
 
@@ -68,10 +71,31 @@ export default function ExpensesScreen() {
     });
   }, [expenses, activeCategory, dateRange]);
 
-  // Calculate total
-  const totalExpenses = useMemo(() => {
+  // Calculate total operating expenses
+  const totalOperatingExpenses = useMemo(() => {
     return filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
   }, [filteredExpenses]);
+
+  // Calculate sales costs (platform fees + shipping) from sold items
+  const salesCosts = useMemo(() => {
+    const soldItems = items.filter(item => {
+      if (item.status !== 'sold') return false;
+      // Filter by date range using sale_date
+      if (item.sale_date && !isWithinDateRange(item.sale_date, dateRange)) {
+        return false;
+      }
+      return true;
+    });
+
+    const platformFees = soldItems.reduce((sum, item) => sum + (item.platform_fee || 0), 0);
+    const shippingCosts = soldItems.reduce((sum, item) => sum + (item.shipping_cost || 0), 0);
+    const itemCount = soldItems.length;
+
+    return { platformFees, shippingCosts, itemCount };
+  }, [items, dateRange]);
+
+  // Combined total for header display
+  const totalAllExpenses = totalOperatingExpenses + salesCosts.platformFees + salesCosts.shippingCosts;
 
   const handleAddExpense = () => {
     router.push('/expenses/new');
@@ -82,7 +106,7 @@ export default function ExpensesScreen() {
   };
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([fetchExpenses(), fetchPallets()]);
+    await Promise.all([fetchExpenses(), fetchPallets(), fetchItems()]);
   }, []);
 
   // Get linked pallets for an expense
@@ -105,6 +129,68 @@ export default function ExpensesScreen() {
         palletNames={linkedPallets.map(p => p.name)}
         onPress={() => handleExpensePress(item)}
       />
+    );
+  };
+
+  // Summary card showing sales costs + operating expenses breakdown
+  const hasSalesCosts = salesCosts.platformFees > 0 || salesCosts.shippingCosts > 0;
+
+  const renderSummaryCard = () => {
+    // Only show if there are sales costs to display
+    if (!hasSalesCosts) return null;
+
+    return (
+      <View style={styles.summaryCard}>
+        <View style={styles.summaryHeader}>
+          <FontAwesome name="pie-chart" size={16} color={colors.primary} />
+          <Text style={styles.summaryTitle}>Cost Breakdown</Text>
+        </View>
+
+        {/* From Sales section */}
+        <View style={styles.summarySection}>
+          <Text style={styles.summarySectionLabel}>From Sales ({salesCosts.itemCount} items)</Text>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryRowLeft}>
+              <FontAwesome name="credit-card" size={12} color={colors.textSecondary} />
+              <Text style={styles.summaryRowLabel}>Platform Fees</Text>
+            </View>
+            <Text style={styles.summaryRowValue}>{formatExpenseAmount(salesCosts.platformFees)}</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryRowLeft}>
+              <FontAwesome name="truck" size={12} color={colors.textSecondary} />
+              <Text style={styles.summaryRowLabel}>Shipping</Text>
+            </View>
+            <Text style={styles.summaryRowValue}>{formatExpenseAmount(salesCosts.shippingCosts)}</Text>
+          </View>
+        </View>
+
+        {/* Operating Expenses section */}
+        <View style={styles.summarySection}>
+          <Text style={styles.summarySectionLabel}>Operating Expenses</Text>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryRowLeft}>
+              <FontAwesome name="building-o" size={12} color={colors.textSecondary} />
+              <Text style={styles.summaryRowLabel}>Overhead</Text>
+            </View>
+            <Text style={styles.summaryRowValue}>{formatExpenseAmount(totalOperatingExpenses)}</Text>
+          </View>
+        </View>
+
+        {/* Total */}
+        <View style={styles.summaryTotal}>
+          <Text style={styles.summaryTotalLabel}>Total Expenses</Text>
+          <Text style={styles.summaryTotalValue}>{formatExpenseAmount(totalAllExpenses)}</Text>
+        </View>
+
+        {/* Note about already accounted */}
+        <View style={styles.summaryNote}>
+          <FontAwesome name="info-circle" size={10} color={colors.textSecondary} />
+          <Text style={styles.summaryNoteText}>
+            Sales costs are already deducted from item profits
+          </Text>
+        </View>
+      </View>
     );
   };
 
@@ -173,7 +259,7 @@ export default function ExpensesScreen() {
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
         <View style={styles.headerTop}>
           <Text style={styles.title}>Expenses</Text>
-          <Text style={styles.totalAmount}>{formatExpenseAmount(totalExpenses)}</Text>
+          <Text style={styles.totalAmount}>{formatExpenseAmount(totalAllExpenses)}</Text>
         </View>
         <Text style={styles.subtitle}>
           {expenses.length > 0
@@ -237,6 +323,7 @@ export default function ExpensesScreen() {
           data={filteredExpenses}
           renderItem={renderExpenseCard}
           keyExtractor={(item) => item.id}
+          ListHeaderComponent={renderSummaryCard}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -413,5 +500,87 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+  },
+  // Summary Card
+  summaryCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  summaryTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  summarySection: {
+    marginBottom: spacing.md,
+  },
+  summarySectionLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.xs,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.xs,
+  },
+  summaryRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  summaryRowLabel: {
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
+  },
+  summaryRowValue: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
+  summaryTotal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  summaryTotalLabel: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  summaryTotalValue: {
+    fontSize: fontSize.md,
+    fontWeight: '700',
+    color: colors.loss,
+  },
+  summaryNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  summaryNoteText: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
   },
 });
