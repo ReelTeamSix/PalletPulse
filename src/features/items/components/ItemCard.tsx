@@ -113,17 +113,14 @@ export function ItemCard({
         )}
       </View>
 
-      <View style={styles.footer}>
-        {item.storage_location && (
-          <View style={styles.locationRow}>
-            <FontAwesome name="map-marker" size={12} color={colors.textSecondary} />
-            <Text style={styles.locationText} numberOfLines={1}>
-              {item.storage_location}
-            </Text>
-          </View>
-        )}
-        <FontAwesome name="chevron-right" size={14} color={colors.textSecondary} />
-      </View>
+      {item.storage_location && (
+        <View style={styles.footer}>
+          <FontAwesome name="map-marker" size={12} color={colors.textSecondary} />
+          <Text style={styles.locationText} numberOfLines={1}>
+            {item.storage_location}
+          </Text>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -222,18 +219,11 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  locationRow: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    flex: 1,
   },
   locationText: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
-    flex: 1,
   },
 });
