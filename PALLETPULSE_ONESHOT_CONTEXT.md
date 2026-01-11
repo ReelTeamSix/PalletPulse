@@ -187,7 +187,7 @@
 8. Item saved with status "Listed"
 
 **Business Rules:**
-- Items default to status "Unprocessed" if no listing price entered
+- Items default to status "Unlisted" if no listing price entered
 - Cost allocation: Total pallet cost ÷ number of items (excluding unsellable items)
 - Items can be marked as "Unsellable" and excluded from cost calculation
 - User can toggle between "Include unsellable items in cost" vs "Exclude"
@@ -414,7 +414,7 @@ items
 ├── purchase_cost (nullable, for individual items not from pallets)
 ├── allocated_cost (computed: pallet cost ÷ items, or = purchase_cost for individuals)
 ├── storage_location
-├── status (unprocessed, listed, sold)
+├── status (unlisted, listed, sold)
 ├── listing_date
 ├── sale_date
 ├── sales_channel
@@ -1009,7 +1009,7 @@ subscriptions (managed by RevenueCat, mirrored in DB)
 - ✅ Mark item as sold (sale price, date, channel)
 - ✅ Edit item details
 - ✅ Delete item
-- ✅ Item status: Unprocessed, Listed, Sold
+- ✅ Item status: Unlisted, Listed, Sold
 - ✅ Support for case-packed items (quantity > 1)
 
 **Cost Allocation:**

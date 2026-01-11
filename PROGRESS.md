@@ -26,9 +26,9 @@
 ### All Tasks Completed
 - [x] Create feature branch (`feature/item-management`)
 - [x] Create item form validation schema (Zod)
-  - Name, description, quantity validation (max 100 chars)
+  - Name, description, quantity validation (name max 50 chars)
   - Condition enum (new, open_box, used_good, used_fair, damaged, for_parts, unsellable)
-  - Status enum (unprocessed, listed, sold)
+  - Status enum (unlisted, listed, sold)
   - Pricing fields (retail, listing, purchase cost)
   - Storage location, barcode, source name
   - Pallet ID validation (UUID)
@@ -90,9 +90,10 @@
 ### Bug Fixes After Review
 - Fixed decimal input in price fields (MSRP, listing price, purchase cost)
 - Fixed condition chip selection not showing visual feedback
-- Reduced item name max length from 200 to 100 characters
+- Reduced item name max length to 50 characters
 - Implemented photo persistence (photos now save and display)
 - Added cost allocation calculation for pallet items
+- Renamed item status "Unprocessed" to "Unlisted" (clearer for individual items)
 
 ### Test Results
 ```
