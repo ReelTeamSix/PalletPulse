@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Image,
   Dimensions,
+  Modal,
+  StatusBar,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,6 +40,8 @@ export default function ItemDetailScreen() {
   const { getPalletById } = usePalletsStore();
   const [photos, setPhotos] = useState<ItemPhoto[]>([]);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [photoViewerVisible, setPhotoViewerVisible] = useState(false);
+  const [viewerPhotoIndex, setViewerPhotoIndex] = useState(0);
 
   // Fetch items if not loaded
   useEffect(() => {
@@ -103,6 +107,11 @@ export default function ItemDetailScreen() {
     if (pallet) {
       router.push(`/pallets/${pallet.id}`);
     }
+  };
+
+  const handlePhotoPress = (index: number) => {
+    setViewerPhotoIndex(index);
+    setPhotoViewerVisible(true);
   };
 
   const formatCurrency = (amount: number | null) => {
@@ -223,13 +232,14 @@ export default function ItemDetailScreen() {
                   }}
                   scrollEventThrottle={16}
                 >
-                  {photos.map((photo) => (
-                    <Image
-                      key={photo.id}
-                      source={{ uri: getPhotoUrl(photo.storage_path) }}
-                      style={styles.photo}
-                      resizeMode="cover"
-                    />
+                  {photos.map((photo, index) => (
+                    <Pressable key={photo.id} onPress={() => handlePhotoPress(index)}>
+                      <Image
+                        source={{ uri: getPhotoUrl(photo.storage_path) }}
+                        style={styles.photo}
+                        resizeMode="cover"
+                      />
+                    </Pressable>
                   ))}
                 </ScrollView>
                 {photos.length > 1 && (
@@ -281,7 +291,12 @@ export default function ItemDetailScreen() {
                   </Text>
                 </View>
                 <View style={styles.priceCard}>
-                  <Text style={styles.priceLabel}>{isEstimatedCost ? 'Est. Cost' : 'Cost'}</Text>
+                  <View style={styles.priceLabelRow}>
+                    <Text style={styles.priceLabel}>{isEstimatedCost ? 'Est. Cost' : 'Cost'}</Text>
+                    {isEstimatedCost && (
+                      <FontAwesome name="info-circle" size={12} color={colors.textSecondary} />
+                    )}
+                  </View>
                   <Text style={styles.priceValue}>{formatCurrency(effectiveCost)}</Text>
                 </View>
                 <View style={[styles.priceCard, { backgroundColor: isProfitable ? colors.profit + '15' : colors.loss + '15' }]}>
@@ -298,7 +313,12 @@ export default function ItemDetailScreen() {
                   <Text style={styles.priceValue}>{formatCurrency(item.listing_price)}</Text>
                 </View>
                 <View style={styles.priceCard}>
-                  <Text style={styles.priceLabel}>{isEstimatedCost ? 'Est. Cost' : 'Cost'}</Text>
+                  <View style={styles.priceLabelRow}>
+                    <Text style={styles.priceLabel}>{isEstimatedCost ? 'Est. Cost' : 'Cost'}</Text>
+                    {isEstimatedCost && (
+                      <FontAwesome name="info-circle" size={12} color={colors.textSecondary} />
+                    )}
+                  </View>
                   <Text style={styles.priceValue}>{formatCurrency(effectiveCost)}</Text>
                 </View>
                 <View style={[styles.priceCard, styles.profitCard]}>
@@ -419,6 +439,56 @@ export default function ItemDetailScreen() {
             />
           </View>
         )}
+
+        {/* Full-screen Photo Viewer Modal */}
+        <Modal
+          visible={photoViewerVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setPhotoViewerVisible(false)}
+        >
+          <StatusBar backgroundColor="black" barStyle="light-content" />
+          <View style={styles.photoViewerContainer}>
+            <Pressable
+              style={styles.photoViewerCloseButton}
+              onPress={() => setPhotoViewerVisible(false)}
+            >
+              <FontAwesome name="close" size={24} color={colors.background} />
+            </Pressable>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              contentOffset={{ x: viewerPhotoIndex * screenWidth, y: 0 }}
+              onScroll={(e) => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
+                setViewerPhotoIndex(index);
+              }}
+              scrollEventThrottle={16}
+            >
+              {photos.map((photo) => (
+                <Pressable
+                  key={photo.id}
+                  style={styles.photoViewerImageContainer}
+                  onPress={() => setPhotoViewerVisible(false)}
+                >
+                  <Image
+                    source={{ uri: getPhotoUrl(photo.storage_path) }}
+                    style={styles.photoViewerImage}
+                    resizeMode="contain"
+                  />
+                </Pressable>
+              ))}
+            </ScrollView>
+            {photos.length > 1 && (
+              <View style={styles.photoViewerIndicator}>
+                <Text style={styles.photoViewerIndicatorText}>
+                  {viewerPhotoIndex + 1} / {photos.length}
+                </Text>
+              </View>
+            )}
+          </View>
+        </Modal>
       </View>
     </>
   );
@@ -577,10 +647,15 @@ const styles = StyleSheet.create({
   profitCard: {
     backgroundColor: colors.profit + '15',
   },
+  priceLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: spacing.xs,
+  },
   priceLabel: {
     fontSize: fontSize.xs,
     color: colors.textSecondary,
-    marginBottom: spacing.xs,
   },
   priceValue: {
     fontSize: fontSize.lg,
@@ -689,5 +764,44 @@ const styles = StyleSheet.create({
   },
   soldButton: {
     flex: 1,
+  },
+  photoViewerContainer: {
+    flex: 1,
+    backgroundColor: 'black',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoViewerCloseButton: {
+    position: 'absolute',
+    top: 50,
+    right: spacing.lg,
+    zIndex: 10,
+    padding: spacing.md,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+  },
+  photoViewerImageContainer: {
+    width: screenWidth,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoViewerImage: {
+    width: screenWidth,
+    height: '80%',
+  },
+  photoViewerIndicator: {
+    position: 'absolute',
+    bottom: 50,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+  },
+  photoViewerIndicatorText: {
+    color: colors.background,
+    fontSize: fontSize.md,
+    fontWeight: '600',
   },
 });
