@@ -106,11 +106,16 @@
 
 ### Test Results
 ```
-Test Suites: 7 passed, 7 total
-Tests:       217 passed, 217 total
+Test Suites: 8 passed, 8 total
+Tests:       244 passed, 244 total
 ```
 
 **New Tests Added:**
+- photo-utils.test.ts (27 tests)
+  - calculateResizedDimensions (8 tests)
+  - generateStoragePath (5 tests)
+  - estimateCompressedSize (5 tests)
+  - formatFileSize (9 tests)
 - item-form-schema.test.ts (66 tests)
   - Schema validation (45 tests)
     - Valid data acceptance
@@ -142,6 +147,7 @@ Tests:       217 passed, 217 total
 - `src/features/items/index.ts` - Feature exports
 - `src/components/ui/PhotoPicker.tsx` - Photo picker component
 - `src/lib/photo-utils.ts` - Photo utilities
+- `src/lib/__tests__/photo-utils.test.ts` - Photo utilities tests
 
 ### Files Modified
 - `app/(tabs)/items.tsx` - Real data with FlatList, loading, refresh
