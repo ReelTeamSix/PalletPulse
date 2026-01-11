@@ -555,7 +555,13 @@ export default function PalletDetailScreen() {
                   Expenses ({palletExpenses.length})
                   {palletExpenses.length > 0 && (
                     <Text style={styles.expensesTotalInline}>
-                      {' '} - {formatExpenseAmount(palletExpenses.reduce((sum, e) => sum + e.amount, 0))}
+                      {' '} - {formatExpenseAmount(
+                        palletExpenses.reduce((sum, e) => {
+                          // Calculate this pallet's share of each expense
+                          const palletCount = e.pallet_ids?.length || 1;
+                          return sum + (e.amount / palletCount);
+                        }, 0)
+                      )}
                     </Text>
                   )}
                 </Text>
@@ -572,13 +578,19 @@ export default function PalletDetailScreen() {
                 </View>
               ) : (
                 <View style={styles.expensesList}>
-                  {palletExpenses.map((expense) => (
-                    <ExpenseCardCompact
-                      key={expense.id}
-                      expense={expense}
-                      onPress={() => handleExpensePress(expense.id)}
-                    />
-                  ))}
+                  {palletExpenses.map((expense) => {
+                    const palletCount = expense.pallet_ids?.length || 1;
+                    const splitAmount = expense.amount / palletCount;
+                    return (
+                      <ExpenseCardCompact
+                        key={expense.id}
+                        expense={expense}
+                        onPress={() => handleExpensePress(expense.id)}
+                        splitAmount={splitAmount}
+                        totalPallets={palletCount}
+                      />
+                    );
+                  })}
                 </View>
               )}
             </View>
