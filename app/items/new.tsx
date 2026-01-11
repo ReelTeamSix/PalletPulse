@@ -9,12 +9,20 @@ export default function NewItemScreen() {
   const router = useRouter();
 
   const handleCancel = () => {
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/items');
+    }
   };
 
   const handleSave = () => {
     // Form submission will be implemented in Phase 6
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/items');
+    }
   };
 
   return (

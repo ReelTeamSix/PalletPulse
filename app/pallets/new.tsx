@@ -8,12 +8,20 @@ export default function NewPalletScreen() {
   const router = useRouter();
 
   const handleCancel = () => {
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/pallets');
+    }
   };
 
   const handleSave = () => {
     // Form submission will be implemented in Phase 5
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/pallets');
+    }
   };
 
   return (
