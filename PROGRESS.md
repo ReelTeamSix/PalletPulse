@@ -102,6 +102,12 @@
   - Confirmation dialog warns about permanent deletion
   - Works on both Items tab and Pallet Detail screen
   - Updated swipe hints to show "← Delete | Sell →"
+- [x] UI polish based on user feedback
+  - Removed redundant Stack headers on tab screens (no more "Pallets/Pallets")
+  - Added safe area insets to all tab screens for proper notch handling
+  - Added pallet dropdown to ItemForm - users can assign items to pallets from Items tab
+  - Muted red (70% opacity) for dashboard hero negative profit - less harsh than dark red
+  - Added `isRealized` parameter to formatProfit/getROIColor utilities for future use
 
 ### Test Results
 ```
@@ -148,11 +154,16 @@ Tests:       374 passed, 374 total
 
 ### Files Modified
 - `app/pallets/[id].tsx` - Added quick-sell swipe, swipe-delete, status dropdown, useFocusEffect refresh
-- `app/(tabs)/index.tsx` - Connected to stores, shows real metrics, pull-to-refresh
-- `app/(tabs)/items.tsx` - Added search/filter, quick-sell swipe, swipe-delete, useFocusEffect refresh
-- `app/(tabs)/pallets.tsx` - Connected to items/expenses stores, shows real metrics on pallet cards
+- `app/(tabs)/index.tsx` - Connected to stores, shows real metrics, pull-to-refresh, muted red hero
+- `app/(tabs)/items.tsx` - Added search/filter, quick-sell swipe, swipe-delete, useFocusEffect refresh, safe area insets
+- `app/(tabs)/pallets.tsx` - Connected to items/expenses stores, shows real metrics on pallet cards, safe area insets
+- `app/(tabs)/analytics.tsx` - Added safe area insets
+- `app/(tabs)/settings.tsx` - Added safe area insets
+- `app/(tabs)/_layout.tsx` - Hidden Stack headers on tab screens
 - `src/stores/items-store.ts` - Enhanced markAsSold with buyer notes
 - `src/lib/photo-utils.ts` - Fixed generateStoragePath extension handling
+- `src/lib/profit-utils.ts` - Added isRealized parameter to formatProfit/getROIColor
+- `src/features/items/components/ItemForm.tsx` - Added pallet dropdown for assigning items to pallets
 - `package.json` - Added react-native-gesture-handler
 
 ### Human Verification Checklist
@@ -186,6 +197,10 @@ Tests:       374 passed, 374 total
 - [ ] **Search:** Clear button appears when searching
 - [ ] **Filter Chips:** Tap "Listed" -> shows only listed items
 - [ ] **Filter Chips:** Shows counts in each chip
+- [x] **UI Polish:** Tab screens no longer show redundant headers (e.g., "Pallets/Pallets")
+- [x] **UI Polish:** Dashboard hero uses muted red for negative profit (not harsh dark red)
+- [ ] **Pallet Assignment:** From Items tab, tap "Add Item" -> can select pallet from dropdown
+- [ ] **Pallet Assignment:** "Individual Item (No Pallet)" is default option
 
 ---
 
