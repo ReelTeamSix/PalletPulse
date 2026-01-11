@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xxl * 2, // Extra padding so buttons can scroll above keyboard
   },
   fieldContainer: {
     marginBottom: spacing.md,

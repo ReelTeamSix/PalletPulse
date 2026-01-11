@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
@@ -18,6 +19,7 @@ import { Pallet } from '@/src/types/database';
 
 export default function PalletsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { pallets, isLoading, error, fetchPallets } = usePalletsStore();
 
   // Fetch pallets on mount
@@ -105,7 +107,10 @@ export default function PalletsScreen() {
         />
       )}
 
-      <Pressable style={styles.fab} onPress={handleAddPallet}>
+      <Pressable
+        style={[styles.fab, { bottom: Math.max(insets.bottom, spacing.lg) }]}
+        onPress={handleAddPallet}
+      >
         <FontAwesome name="plus" size={24} color={colors.background} />
       </Pressable>
     </View>
@@ -181,7 +186,6 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: spacing.lg,
-    bottom: spacing.lg,
     width: 56,
     height: 56,
     borderRadius: 28,

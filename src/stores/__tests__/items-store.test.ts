@@ -1,13 +1,22 @@
 // Items Store Tests
 import { useItemsStore } from '../items-store';
 import { supabase } from '@/src/lib/supabase';
+import * as photoUtils from '@/src/lib/photo-utils';
 
 // Mock Supabase
 jest.mock('@/src/lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
     auth: { getUser: jest.fn() },
+    storage: { from: jest.fn() },
   },
+}));
+
+// Mock photo-utils
+jest.mock('@/src/lib/photo-utils', () => ({
+  uploadItemPhoto: jest.fn(),
+  deletePhoto: jest.fn(),
+  getPhotoUrl: jest.fn((path) => `https://example.com/${path}`),
 }));
 
 const mockItem = {
@@ -290,6 +299,132 @@ describe('ItemsStore', () => {
       expect(state.items).toEqual([]);
       expect(state.selectedItemId).toBe(null);
       expect(state.error).toBe(null);
+    });
+  });
+
+  describe('photo management', () => {
+    const mockPhoto = {
+      id: 'photo-1',
+      item_id: 'item-1',
+      user_id: 'user-123',
+      storage_path: 'user-123/item-1/photo1.jpg',
+      display_order: 0,
+      created_at: '2024-01-15T00:00:00Z',
+    };
+
+    describe('fetchItemPhotos', () => {
+      it('should fetch photos for item', async () => {
+        const mockSelect = jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({ data: [mockPhoto], error: null }),
+          }),
+        });
+        (supabase.from as jest.Mock).mockReturnValue({ select: mockSelect });
+
+        const photos = await useItemsStore.getState().fetchItemPhotos('item-1');
+
+        expect(photos).toHaveLength(1);
+        expect(photos[0].storage_path).toBe('user-123/item-1/photo1.jpg');
+      });
+
+      it('should return empty array on error', async () => {
+        const mockSelect = jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({ data: null, error: new Error('Error') }),
+          }),
+        });
+        (supabase.from as jest.Mock).mockReturnValue({ select: mockSelect });
+
+        const photos = await useItemsStore.getState().fetchItemPhotos('item-1');
+
+        expect(photos).toEqual([]);
+      });
+    });
+
+    describe('uploadItemPhotos', () => {
+      it('should upload new photos', async () => {
+        (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+          data: { user: { id: 'user-123' } },
+        });
+        (photoUtils.uploadItemPhoto as jest.Mock).mockResolvedValue({
+          success: true,
+          path: 'user-123/item-1/12345.jpg',
+        });
+
+        const mockInsert = jest.fn().mockReturnValue({
+          select: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: mockPhoto, error: null }),
+          }),
+        });
+        (supabase.from as jest.Mock).mockReturnValue({ insert: mockInsert });
+
+        const newPhotos = [
+          { id: 'new_1', uri: 'file://photo.jpg', isNew: true },
+        ];
+
+        const result = await useItemsStore.getState().uploadItemPhotos('item-1', newPhotos);
+
+        expect(result.success).toBe(true);
+        expect(result.photos).toHaveLength(1);
+        expect(photoUtils.uploadItemPhoto).toHaveBeenCalled();
+      });
+
+      it('should skip non-new photos', async () => {
+        (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+          data: { user: { id: 'user-123' } },
+        });
+
+        const existingPhotos = [
+          { id: 'existing-1', uri: 'https://example.com/photo.jpg', isNew: false, storagePath: 'path.jpg' },
+        ];
+
+        const result = await useItemsStore.getState().uploadItemPhotos('item-1', existingPhotos);
+
+        expect(result.success).toBe(true);
+        expect(result.photos).toHaveLength(0);
+        expect(photoUtils.uploadItemPhoto).not.toHaveBeenCalled();
+      });
+
+      it('should fail when not authenticated', async () => {
+        (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+          data: { user: null },
+        });
+
+        const result = await useItemsStore.getState().uploadItemPhotos('item-1', []);
+
+        expect(result.success).toBe(false);
+        expect(result.error).toBe('User not authenticated');
+      });
+    });
+
+    describe('deleteItemPhoto', () => {
+      it('should delete photo from storage and database', async () => {
+        (photoUtils.deletePhoto as jest.Mock).mockResolvedValue({ success: true });
+
+        const mockDelete = jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ error: null }),
+        });
+        (supabase.from as jest.Mock).mockReturnValue({ delete: mockDelete });
+
+        const result = await useItemsStore.getState().deleteItemPhoto('photo-1', 'path/to/photo.jpg');
+
+        expect(result.success).toBe(true);
+        expect(photoUtils.deletePhoto).toHaveBeenCalledWith('path/to/photo.jpg');
+      });
+
+      it('should handle database delete error', async () => {
+        (photoUtils.deletePhoto as jest.Mock).mockResolvedValue({ success: true });
+
+        const mockDelete = jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ error: new Error('Delete failed') }),
+        });
+        (supabase.from as jest.Mock).mockReturnValue({ delete: mockDelete });
+
+        const result = await useItemsStore.getState().deleteItemPhoto('photo-1', 'path/to/photo.jpg');
+
+        expect(result.success).toBe(false);
+        expect(result.error).toBe('Delete failed');
+      });
     });
   });
 });

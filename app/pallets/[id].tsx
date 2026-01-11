@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -9,11 +9,14 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { usePalletsStore } from '@/src/stores/pallets-store';
-import { PalletStatus } from '@/src/types/database';
+import { useItemsStore } from '@/src/stores/items-store';
+import { PalletStatus, Item } from '@/src/types/database';
+import { formatCondition, getConditionColor, getStatusColor } from '@/src/features/items/schemas/item-form-schema';
 
 const STATUS_CONFIG: Record<PalletStatus, { label: string; color: string }> = {
   unprocessed: { label: 'Unprocessed', color: colors.statusUnprocessed },
@@ -24,7 +27,11 @@ const STATUS_CONFIG: Record<PalletStatus, { label: string; color: string }> = {
 export default function PalletDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { pallets, getPalletById, deletePallet, isLoading, fetchPallets } = usePalletsStore();
+  const { items, fetchItems, fetchItemsByPallet } = useItemsStore();
+  const [palletItems, setPalletItems] = useState<Item[]>([]);
+  const [loadingItems, setLoadingItems] = useState(false);
 
   // Fetch pallets if not loaded
   useEffect(() => {
@@ -33,6 +40,19 @@ export default function PalletDetailScreen() {
     }
   }, []);
 
+  // Fetch items for this pallet
+  useEffect(() => {
+    async function loadItems() {
+      if (id) {
+        setLoadingItems(true);
+        const palletItemsList = await fetchItemsByPallet(id);
+        setPalletItems(palletItemsList);
+        setLoadingItems(false);
+      }
+    }
+    loadItems();
+  }, [id]);
+
   const pallet = useMemo(() => {
     if (!id) return null;
     return getPalletById(id);
@@ -40,6 +60,10 @@ export default function PalletDetailScreen() {
 
   const handleAddItem = () => {
     router.push({ pathname: '/items/new', params: { palletId: id } });
+  };
+
+  const handleItemPress = (itemId: string) => {
+    router.push(`/items/${itemId}`);
   };
 
   const handleEdit = () => {
@@ -170,13 +194,50 @@ export default function PalletDetailScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Items (0)</Text>
-            <View style={styles.placeholder}>
-              <FontAwesome name="cube" size={48} color={colors.neutral} />
-              <Text style={styles.placeholderText}>
-                No items yet. Add items to this pallet to start tracking.
-              </Text>
-            </View>
+            <Text style={styles.sectionTitle}>Items ({palletItems.length})</Text>
+            {loadingItems ? (
+              <View style={styles.placeholder}>
+                <ActivityIndicator size="small" color={colors.primary} />
+                <Text style={styles.placeholderText}>Loading items...</Text>
+              </View>
+            ) : palletItems.length === 0 ? (
+              <View style={styles.placeholder}>
+                <FontAwesome name="cube" size={48} color={colors.neutral} />
+                <Text style={styles.placeholderText}>
+                  No items yet. Add items to this pallet to start tracking.
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.itemsList}>
+                {palletItems.map((item) => (
+                  <Pressable
+                    key={item.id}
+                    style={styles.itemCard}
+                    onPress={() => handleItemPress(item.id)}
+                  >
+                    <View style={styles.itemInfo}>
+                      <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                      <View style={styles.itemMeta}>
+                        <View style={[styles.itemConditionBadge, { backgroundColor: getConditionColor(item.condition) }]}>
+                          <Text style={styles.itemConditionText}>{formatCondition(item.condition)}</Text>
+                        </View>
+                        <View style={[styles.itemStatusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+                          <Text style={styles.itemStatusText}>
+                            {item.status === 'unlisted' ? 'Unlisted' : item.status === 'listed' ? 'Listed' : 'Sold'}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                    <View style={styles.itemPriceSection}>
+                      {item.listing_price !== null && (
+                        <Text style={styles.itemPrice}>{formatCurrency(item.listing_price)}</Text>
+                      )}
+                      <FontAwesome name="chevron-right" size={14} color={colors.textSecondary} />
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            )}
           </View>
 
           <View style={styles.section}>
@@ -230,7 +291,10 @@ export default function PalletDetailScreen() {
           </View>
         </ScrollView>
 
-        <Pressable style={styles.fab} onPress={handleAddItem}>
+        <Pressable
+          style={[styles.fab, { bottom: Math.max(insets.bottom, spacing.lg) }]}
+          onPress={handleAddItem}
+        >
           <FontAwesome name="plus" size={24} color={colors.background} />
         </Pressable>
       </View>
@@ -350,6 +414,61 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.md,
   },
+  itemsList: {
+    gap: spacing.sm,
+  },
+  itemCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  itemInfo: {
+    flex: 1,
+    marginRight: spacing.md,
+  },
+  itemName: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  itemMeta: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
+  itemConditionBadge: {
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  itemConditionText: {
+    fontSize: fontSize.xs,
+    color: colors.background,
+    fontWeight: '500',
+  },
+  itemStatusBadge: {
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  itemStatusText: {
+    fontSize: fontSize.xs,
+    color: colors.background,
+    fontWeight: '500',
+  },
+  itemPriceSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  itemPrice: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
   detailsCard: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
@@ -397,7 +516,6 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: spacing.lg,
-    bottom: spacing.lg,
     width: 56,
     height: 56,
     borderRadius: 28,
