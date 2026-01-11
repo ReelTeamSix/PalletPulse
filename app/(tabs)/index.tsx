@@ -33,33 +33,27 @@ export default function DashboardScreen() {
   const metrics = useMemo(() => {
     const soldItems = items.filter(item => item.status === 'sold');
 
-    // Calculate total profit from sold items
-    // For pallet items, use allocated_cost; for individual items, use purchase_cost
-    let totalProfit = 0;
+    // Calculate total revenue from sold items
+    const totalRevenue = soldItems.reduce((sum, item) => {
+      return sum + (item.sale_price ?? 0);
+    }, 0);
 
-    soldItems.forEach(item => {
-      if (item.sale_price !== null) {
-        // Get the cost - allocated_cost for pallet items, purchase_cost for individual
-        let cost = item.allocated_cost ?? item.purchase_cost ?? 0;
+    // Calculate total costs:
+    // 1. All pallet costs (purchase_cost + sales_tax)
+    const totalPalletCosts = pallets.reduce((sum, pallet) => {
+      return sum + pallet.purchase_cost + (pallet.sales_tax || 0);
+    }, 0);
 
-        // If item is from a pallet and has no allocated_cost, calculate it
-        if (item.pallet_id && item.allocated_cost === null) {
-          const pallet = pallets.find(p => p.id === item.pallet_id);
-          if (pallet) {
-            const palletItems = items.filter(i => i.pallet_id === pallet.id);
-            const palletCost = pallet.purchase_cost + (pallet.sales_tax || 0);
-            cost = palletItems.length > 0 ? palletCost / palletItems.length : 0;
-          }
-        }
+    // 2. Individual item costs (items without pallet_id)
+    const individualItemsCost = items
+      .filter(item => !item.pallet_id && item.purchase_cost)
+      .reduce((sum, item) => sum + (item.purchase_cost ?? 0), 0);
 
-        totalProfit += item.sale_price - cost;
-      }
-    });
+    // 3. All expenses
+    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-    // Subtract general expenses (expenses not tied to pallets)
-    const generalExpenses = expenses.filter(e => !e.pallet_id);
-    const totalGeneralExpenses = generalExpenses.reduce((sum, e) => sum + e.amount, 0);
-    totalProfit -= totalGeneralExpenses;
+    // Total profit = Revenue - All Costs - All Expenses
+    const totalProfit = totalRevenue - totalPalletCosts - individualItemsCost - totalExpenses;
 
     return {
       totalProfit,
@@ -94,7 +88,6 @@ export default function DashboardScreen() {
         <Text style={styles.heroValue}>
           {metrics.isProfitable ? '' : '-'}{formatCurrency(Math.abs(metrics.totalProfit))}
         </Text>
-        <Text style={styles.heroSubtext}>From sold items</Text>
       </View>
 
       <View style={styles.statsRow}>
@@ -223,12 +216,6 @@ const styles = StyleSheet.create({
     fontSize: 48,
     fontWeight: 'bold',
     color: colors.background,
-    marginBottom: spacing.xs,
-  },
-  heroSubtext: {
-    fontSize: fontSize.sm,
-    color: colors.background,
-    opacity: 0.8,
   },
   statsRow: {
     flexDirection: 'row',

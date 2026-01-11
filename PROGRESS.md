@@ -117,6 +117,15 @@
   - Can assign individual item to a pallet (calculates allocated_cost)
   - Can move item between pallets (recalculates both old and new pallet items)
   - Can remove item from pallet (clears allocated_cost, recalculates old pallet)
+- [x] Fix timezone/date display bugs
+  - Fixed `getLocalDateString()` helper to generate correct YYYY-MM-DD in local time
+  - Fixed `formatDisplayDate()` to parse dates as local time (not UTC)
+  - Fixed DateTimePicker value to use local date parsing
+  - Dates now display correctly regardless of timezone
+- [x] Fix dashboard profit calculation
+  - Changed from per-item realized profit to total financial position
+  - Now shows: Total Revenue - All Pallet Costs - Individual Item Costs - All Expenses
+  - Accurately reflects overall profit/loss including unsold inventory investment
 
 ### Test Results
 ```
@@ -176,6 +185,8 @@ Tests:       376 passed, 376 total
 - `src/lib/photo-utils.ts` - Fixed generateStoragePath extension handling
 - `src/lib/profit-utils.ts` - Added isRealized parameter to formatProfit/getROIColor
 - `src/features/items/components/ItemForm.tsx` - Added pallet dropdown for assigning items to pallets
+- `src/features/pallets/components/PalletForm.tsx` - Fixed date timezone issues (getLocalDateString, formatDisplayDate, DateTimePicker)
+- `src/features/pallets/components/PalletCard.tsx` - Fixed date timezone issue in formatDate
 - `package.json` - Added react-native-gesture-handler
 
 ### Human Verification Checklist
@@ -218,6 +229,10 @@ Tests:       376 passed, 376 total
 - [ ] **Edit Reassignment:** Edit individual item -> can assign to pallet via dropdown
 - [ ] **Edit Reassignment:** After saving, item appears in pallet detail with allocated_cost
 - [ ] **Edit Reassignment:** Edit pallet item -> can move to different pallet or make individual
+- [ ] **Date Display:** Add pallet screen shows correct date (today, not yesterday)
+- [ ] **Date Display:** Pallet card shows correct purchase date
+- [ ] **Dashboard Profit:** Shows total profit = Revenue - All Costs - Expenses
+- [ ] **Dashboard Profit:** Adding new pallet correctly decreases profit by pallet cost
 
 ---
 
@@ -281,6 +296,20 @@ Phase 8 will include:
 
 ### Must Have
 - [ ] Logging & diagnostics system
+
+### Should Add
+- [ ] Dashboard time period slider (Week/Month/All-Time profit)
+  - Swipeable hero card showing profit for different periods
+  - Good fit with Analytics phase but adds dashboard value
+- [ ] Smart insights on dashboard (rules-based)
+  - "Your best ROI source is X - avg Y% ROI"
+  - "X items listed 30+ days - consider repricing"
+  - "Inventory at X% of normal level"
+  - No API cost, just well-crafted conditionals
+- [ ] AI-powered deep analysis (Premium feature)
+  - LLM-generated insights on request
+  - Analyze trends, suggest actions
+  - API cost per use - premium only
 
 ### Maybe Add
 - [ ] Optional photo cropping

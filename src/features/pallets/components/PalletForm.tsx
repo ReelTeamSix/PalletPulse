@@ -99,7 +99,9 @@ export function PalletForm({
   };
 
   const formatDisplayDate = (dateString: string) => {
-    const date = new Date(dateString);
+    // Parse date string as local date (not UTC) to avoid timezone issues
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       year: 'numeric',
@@ -331,7 +333,12 @@ export function PalletForm({
         )}
         {showDatePicker && (
           <DateTimePicker
-            value={watchPurchaseDate ? new Date(watchPurchaseDate) : new Date()}
+            value={(() => {
+              if (!watchPurchaseDate) return new Date();
+              // Parse as local date to avoid timezone issues
+              const [year, month, day] = watchPurchaseDate.split('-').map(Number);
+              return new Date(year, month - 1, day);
+            })()}
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             onChange={handleDateChange}

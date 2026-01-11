@@ -85,18 +85,6 @@ export const palletFormSchema = z.object({
 // Type inference
 export type PalletFormData = z.infer<typeof palletFormSchema>;
 
-// Default values for new pallet form
-export const defaultPalletFormValues: Partial<PalletFormData> = {
-  name: '',
-  supplier: null,
-  source_name: null,
-  purchase_cost: 0,
-  sales_tax: null,
-  purchase_date: getLocalDateString(),
-  status: 'unprocessed',
-  notes: null,
-};
-
 // Helper to get local date as YYYY-MM-DD string (avoids timezone issues with toISOString)
 export function getLocalDateString(date: Date = new Date()): string {
   const year = date.getFullYear();
@@ -104,6 +92,23 @@ export function getLocalDateString(date: Date = new Date()): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+// Default values for new pallet form (function to ensure fresh date each time)
+export function getDefaultPalletFormValues(): Partial<PalletFormData> {
+  return {
+    name: '',
+    supplier: null,
+    source_name: null,
+    purchase_cost: 0,
+    sales_tax: null,
+    purchase_date: getLocalDateString(),
+    status: 'unprocessed',
+    notes: null,
+  };
+}
+
+// Legacy export for backwards compatibility
+export const defaultPalletFormValues = getDefaultPalletFormValues();
 
 // Helper to generate auto-suggested pallet name
 export function generatePalletName(existingPallets: { name: string }[]): string {
