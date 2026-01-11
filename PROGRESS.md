@@ -1,7 +1,7 @@
 # PalletPulse Development Progress
 
 ## Current Phase: Phase 8 - Expense System Redesign
-**Status:** Phase 8E Complete - Settings & Expense Tracking Opt-In
+**Status:** Tab Restructure Complete - Inventory & Expenses Tabs
 **Branch:** feature/expenses
 
 ---
@@ -390,6 +390,56 @@ Settings
 Test Suites: 14 passed, 14 total
 Tests:       658 passed, 658 total
 ```
+
+---
+
+### Tab Restructure: Inventory + Expenses Tabs
+
+**Completed:** Jan 11, 2026
+
+**Overview:**
+Restructured app tabs from Dashboard | Pallets | Items | Analytics | Settings to:
+Dashboard | Inventory | Expenses | Analytics | Settings
+
+**Bug Fixes (Multi-Pallet Expenses):**
+- [x] Fixed `app/expenses/new.tsx` - now passes `pallet_ids` array instead of legacy `pallet_id`
+- [x] Fixed `app/expenses/edit.tsx` - now passes `pallet_ids` array on update
+- [x] Fixed `app/expenses/[id].tsx` - now shows all linked pallets, not just legacy single pallet
+
+**New Files Created:**
+- `app/(tabs)/inventory.tsx` - Combined Pallets + Items tab with segmented control
+- `app/(tabs)/expenses.tsx` - Dedicated Expenses tab (conditionally visible)
+
+**Files Deleted:**
+- `app/(tabs)/pallets.tsx` - Merged into inventory.tsx
+- `app/(tabs)/items.tsx` - Merged into inventory.tsx
+
+**Files Modified:**
+- `app/(tabs)/_layout.tsx` - Updated tab config with new tabs, added expense gating
+- `app/(tabs)/index.tsx` - Updated dashboard navigation to use inventory tab
+
+**Inventory Tab Features:**
+- Segmented control (Pallets | Items) with persistence to AsyncStorage
+- All features from both original tabs preserved:
+  - Pallets: List view, FAB, pull-to-refresh, profit metrics
+  - Items: Search, filter chips, swipe gestures, quick-sell modal
+- Context-aware FAB (adds pallet or item based on active segment)
+- Segment selection persists across app restarts
+
+**Expenses Tab Features:**
+- List all expenses with category filter
+- Shows total expenses amount
+- Multi-pallet indicators on expense cards
+- FAB for quick expense logging
+- Conditionally visible based on `expense_tracking_enabled` setting
+
+**Tab Gating:**
+- Expenses tab uses `href: null` to hide when expenses disabled
+- Controlled by `isExpenseTrackingEnabled()` from user-settings-store
+
+**Commits:**
+- `fix(expenses): send pallet_ids array for multi-pallet linking`
+- `feat(tabs): restructure tabs with Inventory and Expenses`
 
 ---
 
