@@ -472,9 +472,9 @@ describe('PLATFORM_PRESETS', () => {
 
 describe('PLATFORM_OPTIONS', () => {
   it('should have options for all platforms', () => {
-    expect(PLATFORM_OPTIONS.length).toBe(8);
+    expect(PLATFORM_OPTIONS.length).toBe(9);
     expect(PLATFORM_OPTIONS.map(o => o.value)).toEqual([
-      'ebay', 'poshmark', 'mercari', 'whatnot', 'facebook', 'offerup', 'craigslist', 'other'
+      'ebay', 'poshmark', 'mercari', 'whatnot', 'facebook', 'offerup', 'letgo', 'craigslist', 'other'
     ]);
   });
 
@@ -536,6 +536,14 @@ describe('calculatePlatformFee', () => {
 
   it('should calculate OfferUp shipped fee correctly (12.9%)', () => {
     expect(calculatePlatformFee(100, 'offerup', true)).toBe(12.9);
+  });
+
+  it('should return 0 for LetGo local sale', () => {
+    expect(calculatePlatformFee(100, 'letgo', false)).toBe(0);
+  });
+
+  it('should calculate LetGo shipped fee correctly (12.9%)', () => {
+    expect(calculatePlatformFee(100, 'letgo', true)).toBe(12.9);
   });
 
   it('should return 0 for "other" platform', () => {

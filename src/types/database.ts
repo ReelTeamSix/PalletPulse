@@ -16,7 +16,7 @@ export type PayoutStatus = 'pending' | 'processing' | 'completed' | 'failed'
 export type PayoutMethod = 'stripe' | 'paypal'
 
 // New enum types for Phase 8
-export type SalesPlatform = 'ebay' | 'poshmark' | 'mercari' | 'whatnot' | 'facebook' | 'offerup' | 'craigslist' | 'other'
+export type SalesPlatform = 'ebay' | 'poshmark' | 'mercari' | 'whatnot' | 'facebook' | 'offerup' | 'letgo' | 'craigslist' | 'other'
 export type TripPurpose = 'pallet_pickup' | 'thrift_run' | 'garage_sale' | 'post_office' | 'auction' | 'sourcing' | 'other'
 export type UserType = 'hobby' | 'side_hustle' | 'business'
 

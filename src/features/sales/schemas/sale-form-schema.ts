@@ -42,6 +42,13 @@ export const PLATFORM_PRESETS: Record<SalesPlatform, PlatformFeeConfig> = {
     description: '0% local, 12.9% shipped',
     hasShippedRate: true,
   },
+  letgo: {
+    name: 'LetGo',
+    rate: 0, // 0% local (merged with OfferUp)
+    rateShipped: 0.129, // 12.9% shipped
+    description: '0% local, 12.9% shipped',
+    hasShippedRate: true,
+  },
   craigslist: {
     name: 'Craigslist',
     rate: 0,
@@ -75,6 +82,7 @@ export const PLATFORM_OPTIONS: { value: SalesPlatform; label: string; descriptio
   { value: 'whatnot', label: 'Whatnot', description: '8.9% fee' },
   { value: 'facebook', label: 'Facebook', description: '0%/5% shipped' },
   { value: 'offerup', label: 'OfferUp', description: '0%/12.9% shipped' },
+  { value: 'letgo', label: 'LetGo', description: '0%/12.9% shipped' },
   { value: 'craigslist', label: 'Craigslist', description: 'Free' },
   { value: 'other', label: 'Other', description: 'Manual' },
 ];
@@ -97,7 +105,7 @@ export const SALES_CHANNEL_SUGGESTIONS = [
 ] as const;
 
 // Valid platform values
-const VALID_PLATFORMS = ['ebay', 'poshmark', 'mercari', 'whatnot', 'facebook', 'offerup', 'craigslist', 'other'] as const;
+const VALID_PLATFORMS = ['ebay', 'poshmark', 'mercari', 'whatnot', 'facebook', 'offerup', 'letgo', 'craigslist', 'other'] as const;
 
 // Sale form schema
 export const saleFormSchema = z.object({
