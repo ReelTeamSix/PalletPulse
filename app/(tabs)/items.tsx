@@ -282,7 +282,7 @@ export default function ItemsScreen() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
         <View style={styles.headerTop}>
           <Text style={styles.title}>Items</Text>
           <Text style={styles.swipeHint}>
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
   },
   headerTop: {

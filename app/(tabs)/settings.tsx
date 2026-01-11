@@ -1,10 +1,12 @@
 import { StyleSheet, View, Text, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize } from '@/src/constants/spacing';
 import { Button } from '@/src/components/ui';
 import { useAuthStore } from '@/src/stores/auth-store';
 
 export default function SettingsScreen() {
+  const insets = useSafeAreaInsets();
   const { signOut, isLoading, user } = useAuthStore();
 
   const handleSignOut = () => {
@@ -25,7 +27,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
       <Text style={styles.title}>Settings</Text>
       <Text style={styles.subtitle}>Customize your experience</Text>
 

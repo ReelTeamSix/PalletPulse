@@ -113,7 +113,7 @@ export default function PalletsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
         <Text style={styles.title}>Pallets</Text>
         <Text style={styles.subtitle}>
           {pallets.length > 0
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
   },
   title: {

@@ -264,14 +264,24 @@ export function formatCurrency(amount: number): string {
 /**
  * Format profit with color indicator.
  * Returns object with formatted value and color.
+ * @param amount - The profit amount
+ * @param isRealized - Whether profit is realized (pallet completed). If false, uses neutral color.
  */
-export function formatProfit(amount: number): { value: string; color: string; isPositive: boolean } {
+export function formatProfit(
+  amount: number,
+  isRealized: boolean = true
+): { value: string; color: string; isPositive: boolean } {
   const formatted = formatCurrency(Math.abs(amount));
   const isPositive = amount >= 0;
 
+  // Use neutral color for unrealized profit/loss
+  const color = isRealized
+    ? (isPositive ? '#2E7D32' : '#D32F2F')
+    : '#9E9E9E';
+
   return {
     value: isPositive ? formatted : `-${formatted}`,
-    color: isPositive ? '#2E7D32' : '#D32F2F',
+    color,
     isPositive,
   };
 }
@@ -286,8 +296,13 @@ export function formatROI(roi: number): string {
 
 /**
  * Get color for ROI value.
+ * @param roi - The ROI percentage
+ * @param isRealized - Whether profit is realized (pallet completed). If false, uses neutral color.
  */
-export function getROIColor(roi: number): string {
+export function getROIColor(roi: number, isRealized: boolean = true): string {
+  // Use neutral color for unrealized ROI
+  if (!isRealized) return '#9E9E9E';
+
   if (roi > 20) return '#2E7D32';      // Strong positive - green
   if (roi > 0) return '#4CAF50';        // Positive - light green
   if (roi === 0) return '#9E9E9E';      // Neutral - grey

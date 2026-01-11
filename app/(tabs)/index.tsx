@@ -2,6 +2,7 @@ import { useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
@@ -12,6 +13,7 @@ import { formatCurrency, calculateItemProfit } from '@/src/lib/profit-utils';
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { pallets, fetchPallets, isLoading: palletsLoading } = usePalletsStore();
   const { items, fetchItems, isLoading: itemsLoading } = useItemsStore();
   const { expenses, fetchExpenses, isLoading: expensesLoading } = useExpensesStore();
@@ -79,7 +81,7 @@ export default function DashboardScreen() {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + spacing.md }]}
       refreshControl={
         <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
       }
@@ -87,12 +89,12 @@ export default function DashboardScreen() {
       <Text style={styles.title}>Dashboard</Text>
       <Text style={styles.subtitle}>Your PalletPulse overview</Text>
 
-      <View style={[styles.heroCard, { backgroundColor: metrics.isProfitable ? colors.profit : colors.loss }]}>
+      <View style={[styles.heroCard, { backgroundColor: metrics.isProfitable ? colors.profit : colors.neutral }]}>
         <Text style={styles.heroLabel}>Total Profit</Text>
         <Text style={styles.heroValue}>
           {metrics.isProfitable ? '' : '-'}{formatCurrency(Math.abs(metrics.totalProfit))}
         </Text>
-        <Text style={styles.heroSubtext}>All time</Text>
+        <Text style={styles.heroSubtext}>From sold items</Text>
       </View>
 
       <View style={styles.statsRow}>

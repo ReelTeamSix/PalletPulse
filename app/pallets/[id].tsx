@@ -298,8 +298,9 @@ export default function PalletDetailScreen() {
   const totalProfit = profitMetrics?.netProfit ?? 0;
   const roi = profitMetrics?.roi ?? 0;
   const isProfitable = totalProfit >= 0;
-  const profitFormatted = formatProfit(totalProfit);
-  const roiColor = getROIColor(roi);
+  const isCompleted = pallet.status === 'completed';
+  const profitFormatted = formatProfit(totalProfit, isCompleted);
+  const roiColor = getROIColor(roi, isCompleted);
 
   // Quick sell profit preview
   const quickSellProfit = quickSellItem ? (() => {
@@ -345,11 +346,11 @@ export default function PalletDetailScreen() {
               <Text style={styles.statValue}>{formatCurrency(totalCost)}</Text>
               <Text style={styles.statLabel}>Cost</Text>
             </View>
-            <View style={[styles.statCard, { backgroundColor: profitFormatted.isPositive ? colors.profit + '15' : colors.loss + '15' }]}>
+            <View style={[styles.statCard, { backgroundColor: isCompleted ? (profitFormatted.isPositive ? colors.profit + '15' : colors.loss + '15') : colors.surface }]}>
               <Text style={[styles.statValue, { color: profitFormatted.color }]}>
                 {profitFormatted.value}
               </Text>
-              <Text style={styles.statLabel}>Profit</Text>
+              <Text style={styles.statLabel}>{isCompleted ? 'Profit' : 'Est. Profit'}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={[styles.statValue, { color: roiColor }]}>

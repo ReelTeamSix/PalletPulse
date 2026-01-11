@@ -29,6 +29,12 @@ export function PalletCard({
   const totalCost = pallet.purchase_cost + (pallet.sales_tax || 0);
   const roi = totalCost > 0 ? ((totalProfit / totalCost) * 100).toFixed(0) : '0';
   const isProfitable = totalProfit >= 0;
+  const isCompleted = pallet.status === 'completed';
+
+  // Profit color: only show green/red for completed pallets, otherwise neutral
+  const profitColor = isCompleted
+    ? (isProfitable ? colors.profit : colors.loss)
+    : colors.neutral;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -77,7 +83,7 @@ export function PalletCard({
           <Text
             style={[
               styles.statValue,
-              { color: isProfitable ? colors.profit : colors.loss },
+              { color: profitColor },
             ]}
           >
             {formatCurrency(totalProfit)}
@@ -88,7 +94,7 @@ export function PalletCard({
           <Text
             style={[
               styles.statValue,
-              { color: isProfitable ? colors.profit : colors.loss },
+              { color: profitColor },
             ]}
           >
             {roi}%

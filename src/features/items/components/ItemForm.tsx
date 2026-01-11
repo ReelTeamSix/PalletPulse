@@ -52,6 +52,7 @@ export function ItemForm({
 }: ItemFormProps) {
   const [showStorageSuggestions, setShowStorageSuggestions] = useState(false);
   const [showSourceSuggestions, setShowSourceSuggestions] = useState(false);
+  const [showPalletPicker, setShowPalletPicker] = useState(false);
   const [localPhotos, setLocalPhotos] = useState<PhotoItem[]>(photos);
 
   // Sync localPhotos when photos prop changes (e.g., after async load in edit mode)
@@ -113,6 +114,18 @@ export function ItemForm({
   const watchStorageLocation = watch('storage_location');
   const watchSourceName = watch('source_name');
   const watchCondition = watch('condition');
+  const watchPalletId = watch('pallet_id') as string | null | undefined;
+
+  // Get selected pallet (from form value)
+  const selectedPallet = useMemo(() => {
+    return watchPalletId ? getPalletById(watchPalletId) : null;
+  }, [watchPalletId, pallets, getPalletById]);
+
+  // Check if pallet was pre-selected (came from pallet detail screen)
+  const isPalletPreSelected = !!palletId;
+
+  // Check if this is a pallet item (either pre-selected or user-selected)
+  const isPalletItem = !!selectedPallet || !!linkedPallet;
 
   // Filter suggestions based on current input
   const filteredStorageSuggestions = uniqueStorageLocations.filter(
@@ -122,9 +135,6 @@ export function ItemForm({
   const filteredSourceSuggestions = uniqueSourceNames.filter(
     (s) => !watchSourceName || s.toLowerCase().includes(watchSourceName.toLowerCase())
   );
-
-  // Check if this is a pallet item or individual item
-  const isPalletItem = !!linkedPallet;
 
   // Handle photo changes
   const handlePhotosChange = (newPhotos: PhotoItem[]) => {
@@ -143,12 +153,74 @@ export function ItemForm({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Pallet Link Banner */}
-        {isPalletItem && (
+        {/* Pallet Link Banner (when pre-selected) */}
+        {isPalletPreSelected && linkedPallet && (
           <View style={styles.palletBanner}>
             <Text style={styles.palletBannerText}>
               Adding to: {linkedPallet.name}
             </Text>
+          </View>
+        )}
+
+        {/* Pallet Selector (when NOT pre-selected and pallets exist) */}
+        {!isPalletPreSelected && pallets.length > 0 && (
+          <View style={styles.palletSelector}>
+            <Text style={styles.label}>Link to Pallet (Optional)</Text>
+            <Controller
+              control={control}
+              name="pallet_id"
+              render={({ field: { onChange, value } }) => (
+                <>
+                  <Pressable
+                    style={styles.palletPickerButton}
+                    onPress={() => setShowPalletPicker(!showPalletPicker)}
+                  >
+                    <Text style={[
+                      styles.palletPickerText,
+                      !value && styles.palletPickerPlaceholder
+                    ]}>
+                      {selectedPallet ? selectedPallet.name : 'Individual Item (No Pallet)'}
+                    </Text>
+                    <Text style={styles.palletPickerArrow}>
+                      {showPalletPicker ? '▲' : '▼'}
+                    </Text>
+                  </Pressable>
+                  {showPalletPicker && (
+                    <View style={styles.palletPickerDropdown}>
+                      <Pressable
+                        style={[
+                          styles.palletOption,
+                          !value && styles.palletOptionSelected
+                        ]}
+                        onPress={() => {
+                          onChange(null);
+                          setShowPalletPicker(false);
+                        }}
+                      >
+                        <Text style={styles.palletOptionText}>Individual Item (No Pallet)</Text>
+                        {!value && <Text style={styles.palletOptionCheck}>✓</Text>}
+                      </Pressable>
+                      {pallets.map((p) => (
+                        <Pressable
+                          key={p.id}
+                          style={[
+                            styles.palletOption,
+                            value === p.id && styles.palletOptionSelected
+                          ]}
+                          onPress={() => {
+                            onChange(p.id);
+                            setShowPalletPicker(false);
+                          }}
+                        >
+                          <Text style={styles.palletOptionText}>{p.name}</Text>
+                          {value === p.id && <Text style={styles.palletOptionCheck}>✓</Text>}
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
+                </>
+              )}
+            />
           </View>
         )}
 
@@ -539,6 +611,65 @@ const styles = StyleSheet.create({
   palletBannerText: {
     color: colors.background,
     fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  palletSelector: {
+    marginBottom: spacing.md,
+  },
+  palletPickerButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  palletPickerText: {
+    fontSize: fontSize.md,
+    color: colors.textPrimary,
+  },
+  palletPickerPlaceholder: {
+    color: colors.textSecondary,
+  },
+  palletPickerArrow: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  palletPickerDropdown: {
+    marginTop: spacing.xs,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 10,
+    maxHeight: 200,
+  },
+  palletOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  palletOptionSelected: {
+    backgroundColor: colors.primary + '10',
+  },
+  palletOptionText: {
+    fontSize: fontSize.md,
+    color: colors.textPrimary,
+  },
+  palletOptionCheck: {
+    fontSize: fontSize.md,
+    color: colors.primary,
     fontWeight: '600',
   },
   sectionTitle: {

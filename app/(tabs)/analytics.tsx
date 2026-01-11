@@ -1,10 +1,13 @@
 import { StyleSheet, View, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize } from '@/src/constants/spacing';
 
 export default function AnalyticsScreen() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
       <Text style={styles.title}>Analytics</Text>
       <Text style={styles.subtitle}>Track your business performance</Text>
       <View style={styles.placeholder}>

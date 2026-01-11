@@ -25,10 +25,7 @@ export default function TabLayout() {
           backgroundColor: isDark ? colors.surfaceDark : colors.background,
           borderTopColor: isDark ? colors.borderDark : colors.border,
         },
-        headerStyle: {
-          backgroundColor: isDark ? colors.surfaceDark : colors.background,
-        },
-        headerTintColor: isDark ? colors.textPrimaryDark : colors.textPrimary,
+        headerShown: false,
       }}>
       <Tabs.Screen
         name="index"
