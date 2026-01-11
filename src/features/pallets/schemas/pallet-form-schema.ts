@@ -92,10 +92,18 @@ export const defaultPalletFormValues: Partial<PalletFormData> = {
   source_name: null,
   purchase_cost: 0,
   sales_tax: null,
-  purchase_date: new Date().toISOString().split('T')[0],
+  purchase_date: getLocalDateString(),
   status: 'unprocessed',
   notes: null,
 };
+
+// Helper to get local date as YYYY-MM-DD string (avoids timezone issues with toISOString)
+export function getLocalDateString(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 // Helper to generate auto-suggested pallet name
 export function generatePalletName(existingPallets: { name: string }[]): string {

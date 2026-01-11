@@ -21,6 +21,7 @@ import {
   getUniqueSuppliers,
   getUniqueSourceNames,
   calculateSalesTaxFromRate,
+  getLocalDateString,
 } from '../schemas/pallet-form-schema';
 import { Pallet } from '@/src/types/database';
 import { usePalletsStore } from '@/src/stores/pallets-store';
@@ -69,7 +70,7 @@ export function PalletForm({
       source_name: pallet?.source_name ?? initialValues?.source_name ?? null,
       purchase_cost: pallet?.purchase_cost ?? initialValues?.purchase_cost ?? 0,
       sales_tax: pallet?.sales_tax ?? initialValues?.sales_tax ?? null,
-      purchase_date: pallet?.purchase_date ?? initialValues?.purchase_date ?? new Date().toISOString().split('T')[0],
+      purchase_date: pallet?.purchase_date ?? initialValues?.purchase_date ?? getLocalDateString(),
       status: pallet?.status ?? initialValues?.status ?? 'unprocessed',
       notes: pallet?.notes ?? initialValues?.notes ?? null,
     } as PalletFormData,
@@ -93,7 +94,7 @@ export function PalletForm({
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(Platform.OS === 'ios');
     if (selectedDate) {
-      setValue('purchase_date', selectedDate.toISOString().split('T')[0]);
+      setValue('purchase_date', getLocalDateString(selectedDate));
     }
   };
 
