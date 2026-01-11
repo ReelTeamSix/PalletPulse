@@ -4,10 +4,13 @@ import { Image } from 'react-native';
 import { supabase } from './supabase';
 
 // Configuration for image compression
+// Aggressive compression to minimize storage costs on free tier
+// 800px is plenty for inventory photos (phones display at ~400px width)
+// 50% JPEG quality is still very readable for product identification
 const COMPRESSION_CONFIG = {
-  maxWidth: 1200,
-  maxHeight: 1200,
-  quality: 0.7, // 70% quality - good balance between size and quality
+  maxWidth: 800,
+  maxHeight: 800,
+  quality: 0.5, // 50% quality - optimized for storage, still clear for inventory
 };
 
 // Storage bucket name
@@ -269,8 +272,8 @@ export function getPhotoUrl(storagePath: string): string {
  * Helps users understand the storage impact
  */
 export function estimateCompressedSize(width: number, height: number): number {
-  // Rough estimate: compressed JPEG is about 0.5-1 byte per pixel at 70% quality
-  const pixels = width * height;
+  // Rough estimate: compressed JPEG at 50% quality, 800px max
+  // Typical result: 50-120KB per photo (vs 200-400KB at previous settings)
   const { width: newWidth, height: newHeight } = calculateResizedDimensions(
     width,
     height,
@@ -278,7 +281,7 @@ export function estimateCompressedSize(width: number, height: number): number {
     COMPRESSION_CONFIG.maxHeight
   );
   const resizedPixels = newWidth * newHeight;
-  const bytesPerPixel = 0.7; // Conservative estimate for compressed JPEG
+  const bytesPerPixel = 0.4; // Conservative estimate for 50% quality JPEG
   return Math.round(resizedPixels * bytesPerPixel * COMPRESSION_CONFIG.quality);
 }
 
