@@ -97,7 +97,8 @@ export default function EditItemScreen() {
         updateData.platform = data.platform;
         updateData.platform_fee = data.platform_fee;
         updateData.shipping_cost = data.shipping_cost;
-      } else if (item.status === 'sold' && data.status !== 'sold') {
+      } else if (item.status === 'sold') {
+        // data.status is not 'sold' here (control flow) - clear sale fields
         // If changing from sold to another status, clear sale fields
         updateData.sale_price = null;
         updateData.sale_date = null;

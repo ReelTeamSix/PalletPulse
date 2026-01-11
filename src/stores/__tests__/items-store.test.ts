@@ -41,6 +41,9 @@ const mockItem = {
   source_type: 'pallet' as const,
   source_name: null,
   notes: null,
+  platform: null,
+  platform_fee: null,
+  shipping_cost: null,
   version: 1,
   created_at: '2024-01-15T00:00:00Z',
   updated_at: '2024-01-15T00:00:00Z',
@@ -331,7 +334,11 @@ describe('ItemsStore', () => {
       });
       (supabase.from as jest.Mock).mockReturnValue({ update: mockUpdate });
 
-      const result = await useItemsStore.getState().markAsSold('item-1', 35, '2024-01-20', 'eBay');
+      const result = await useItemsStore.getState().markAsSold('item-1', {
+        sale_price: 35,
+        sale_date: '2024-01-20',
+        sales_channel: 'eBay',
+      });
 
       expect(result.success).toBe(true);
       expect(useItemsStore.getState().items[0].status).toBe('sold');
