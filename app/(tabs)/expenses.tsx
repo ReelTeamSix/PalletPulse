@@ -21,6 +21,7 @@ import { ExpenseCard } from '@/src/features/expenses/components/ExpenseCard';
 import {
   formatExpenseAmount,
   EXPENSE_CATEGORIES,
+  EXPENSE_CATEGORY_LABELS,
   ExpenseCategory,
 } from '@/src/features/expenses';
 
@@ -80,12 +81,11 @@ export default function ExpensesScreen() {
   const renderExpenseCard = ({ item }: { item: ExpenseWithPallets }) => {
     const linkedPallets = getLinkedPallets(item);
     return (
-      <Pressable onPress={() => handleExpensePress(item)}>
-        <ExpenseCard
-          expense={item}
-          linkedPalletNames={linkedPallets.map(p => p.name)}
-        />
-      </Pressable>
+      <ExpenseCard
+        expense={item}
+        palletNames={linkedPallets.map(p => p.name)}
+        onPress={() => handleExpensePress(item)}
+      />
     );
   };
 
@@ -129,7 +129,7 @@ export default function ExpensesScreen() {
   // Category options for filter
   const categoryOptions: { value: CategoryFilter; label: string }[] = [
     { value: 'all', label: 'All' },
-    ...EXPENSE_CATEGORIES.map(cat => ({ value: cat.value as CategoryFilter, label: cat.label })),
+    ...EXPENSE_CATEGORIES.map(cat => ({ value: cat as CategoryFilter, label: EXPENSE_CATEGORY_LABELS[cat] })),
   ];
 
   return (
