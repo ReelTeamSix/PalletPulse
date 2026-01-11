@@ -1,5 +1,5 @@
 // ItemForm Component - Form for creating and editing items
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -53,6 +53,13 @@ export function ItemForm({
   const [showStorageSuggestions, setShowStorageSuggestions] = useState(false);
   const [showSourceSuggestions, setShowSourceSuggestions] = useState(false);
   const [localPhotos, setLocalPhotos] = useState<PhotoItem[]>(photos);
+
+  // Sync localPhotos when photos prop changes (e.g., after async load in edit mode)
+  useEffect(() => {
+    if (photos.length > 0 && localPhotos.length === 0) {
+      setLocalPhotos(photos);
+    }
+  }, [photos]);
 
   // Text state for price fields to allow decimal input
   const [retailPriceText, setRetailPriceText] = useState(
@@ -520,7 +527,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xxl * 2, // Extra padding so buttons can scroll above keyboard
   },
   palletBanner: {
     backgroundColor: colors.primary,
