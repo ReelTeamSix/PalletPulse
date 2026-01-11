@@ -1,8 +1,8 @@
 # PalletPulse Development Progress
 
 ## Current Phase: Phase 4 - Core Navigation
-**Status:** Ready to Begin
-**Branch:** main
+**Status:** Ready for Review
+**Branch:** feature/core-navigation
 
 ---
 
@@ -229,3 +229,98 @@ Tests:       79 passed, 79 total
 - [x] Verified triggers work: profile → auto-creates user_settings with defaults
 
 ---
+
+## Phase 4: Core Navigation - COMPLETED
+
+### All Tasks Completed
+- [x] Create feature branch (`feature/core-navigation`)
+- [x] Create pallet detail screen (`app/pallets/[id].tsx`)
+  - Shows pallet stats (cost, profit, ROI)
+  - Items list section with placeholder
+  - Details card with supplier, source type, status
+  - FAB to add items to pallet
+- [x] Create new pallet form screen (`app/pallets/new.tsx`)
+  - Form placeholder with field list
+  - Cancel/Save footer buttons
+  - Modal presentation
+- [x] Create item detail screen (`app/items/[id].tsx`)
+  - Photo section with placeholder
+  - Pricing row (listing, cost, profit)
+  - Details card with condition, quantity, location
+  - Edit/Mark as Sold footer buttons
+- [x] Create new item form screen (`app/items/new.tsx`)
+  - Supports both pallet items and individual items
+  - Shows pallet badge when adding to pallet
+  - Form sections: Info, Pricing, Organization
+  - Modal presentation
+- [x] Update root layout with stack screen routes
+- [x] Update tab screens with navigation
+  - Dashboard: Quick action cards for Add Pallet, Add Item, View Pallets, Analytics
+  - Pallets tab: FAB + demo pallet card to test navigation
+  - Items tab: FAB + demo item card to test navigation
+
+### Test Results
+```
+Test Suites: 5 passed, 5 total
+Tests:       79 passed, 79 total
+```
+TypeScript compiles with no errors.
+
+### Files Created
+- `app/pallets/[id].tsx` - Pallet detail screen
+- `app/pallets/new.tsx` - New pallet form screen
+- `app/items/[id].tsx` - Item detail screen
+- `app/items/new.tsx` - New item form screen
+
+### Files Modified
+- `app/_layout.tsx` - Added stack screen routes for pallets and items
+- `app/(tabs)/index.tsx` - Added hero card, stats row, and quick action cards
+- `app/(tabs)/pallets.tsx` - Added FAB, demo card, and navigation
+- `app/(tabs)/items.tsx` - Added FAB, demo card, and navigation
+
+### Human Verification - PASSED
+- [x] Tab navigation: Tap each tab → correct screen loads
+- [x] Stack navigation: Navigate to detail screen → screen animates in
+- [x] Back navigation: Android back button works correctly on all screens
+- [x] FAB navigation: Tap + button → modal form opens
+- [x] Demo cards: Tap demo pallet/item → detail screen opens
+- [x] Quick actions: Dashboard action cards navigate correctly
+- [x] Screen shells: Each screen shows placeholder content (no crashes)
+
+---
+
+## How to Test Phase 4
+
+### Manual Testing Steps
+1. Run `npx expo start`
+2. Open on device/simulator
+3. Test the following navigation paths:
+
+**Tab Navigation:**
+- Dashboard (home icon) → Dashboard screen
+- Pallets (archive icon) → Pallets screen
+- Items (cube icon) → Items screen
+- Analytics (chart icon) → Analytics screen
+- Settings (cog icon) → Settings screen
+
+**Stack Navigation from Pallets:**
+- Tap FAB (+) on Pallets → Add Pallet modal
+- Tap "Demo Pallet" card → Pallet detail screen
+- Tap FAB (+) on Pallet detail → Add Item modal (with pallet ID)
+
+**Stack Navigation from Items:**
+- Tap FAB (+) on Items → Add Item modal (no pallet ID)
+- Tap "Demo Item" card → Item detail screen
+
+**Dashboard Quick Actions:**
+- Tap "Add Pallet" → Add Pallet modal
+- Tap "Add Item" → Add Item modal
+- Tap "View Pallets" → Pallets tab
+- Tap "Analytics" → Analytics tab
+
+**Back Navigation:**
+- From any detail screen, press back button or swipe → returns to previous screen
+
+---
+
+**Reply "approved" to continue to Phase 5, or provide feedback.**
