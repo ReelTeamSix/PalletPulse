@@ -94,6 +94,15 @@
 - Implemented photo persistence (photos now save and display)
 - Added cost allocation calculation for pallet items
 - Renamed item status "Unprocessed" to "Unlisted" (clearer for individual items)
+- Created `item-photos` storage bucket with RLS policies (fixes 400 upload error)
+- Added info icon (ⓘ) next to "Est. Cost" label in price cards
+- Added items list to pallet detail screen (shows all items in pallet)
+- Fixed FAB buttons overlapping Android nav bar (using useSafeAreaInsets)
+- Fixed form buttons hidden by keyboard (increased bottom padding in ScrollView)
+- Fixed photo upload 400 error (changed blob() to arrayBuffer() for React Native)
+- Removed forced cropping from photo picker (better UX - users keep full images)
+- Fixed photos not displaying on item edit screen (sync localPhotos with props via useEffect)
+- Added full-screen photo viewer on item detail (tap photo to view full screen, swipe between photos)
 
 ### Test Results
 ```
@@ -324,6 +333,13 @@ Phase 7 will include:
 - ROI calculation
 - Cost allocation from pallet to items
 - Sold items display in analytics
+
+---
+
+## Phase 11 Backlog (Polish)
+
+### Maybe Add
+- [ ] Optional photo cropping - Add a "Crop" button to photo previews after capture, letting users optionally crop/adjust photos instead of forcing crop on capture
 
 ---
 
