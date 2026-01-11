@@ -1,8 +1,8 @@
 # PalletPulse Development Progress
 
 ## Current Phase: Phase 8 - Expense System Redesign
-**Status:** Phase 8D Complete - Multi-Pallet Expense Linking Implemented
-**Branch:** feature/sales-profit
+**Status:** Phase 8E Complete - Settings & Expense Tracking Opt-In
+**Branch:** feature/expenses
 
 ---
 
@@ -337,24 +337,59 @@ Tests:       626 passed, 626 total
 ```
 Settings
 ├── Account
-│   └── ...
+│   ├── Email: user@example.com
+│   └── User Type: [Hobby Flipper ▼]
+│       ├── Hobby Flipper - Track profits simply
+│       ├── Side Income - Basic tracking with shipping/fees
+│       └── Serious Business - Full expense tracking (auto-enables expenses)
+├── Expense Tracking
+│   ├── Enable Expense Tracking: [Toggle] ← with disclaimer alert
+│   └── (When ON, shows features list)
+│       ├── ✓ Mileage Tracking (IRS standard rate)
+│       ├── ✓ Overhead Expenses
+│       ├── ✓ Multi-Pallet Cost Allocation
+│       └── ✓ Receipt Photo Storage
 ├── Preferences
 │   ├── Stale Inventory Threshold: 30 days
 │   └── Include Unsellable in Cost: OFF
-├── Expense Tracking ← NEW SECTION
-│   ├── Enable Expense Tracking: [Toggle] ← master switch
-│   └── (When ON, shows sub-options)
-│       ├── Track Mileage: ON
-│       └── Track Overhead Expenses: ON
 └── About
+    ├── Version: 1.0.0
+    ├── Terms of Service
+    └── Privacy Policy
 ```
 
 **Tasks:**
-- [ ] Add "Expense Tracking" section to Settings screen
-- [ ] Create expense tracking toggle with confirmation
-- [ ] Conditionally show/hide expense-related UI based on toggle
-- [ ] Update user_settings store with new fields
-- [ ] Create settings migration for expense_tracking_enabled
+- [x] Create user-settings-store.ts with expense tracking controls ✅
+- [x] Add "Expense Tracking" section to Settings screen ✅
+- [x] Create expense tracking toggle with legal disclaimer confirmation ✅
+- [x] Add user type picker (hobby, side_hustle, business) ✅
+- [x] Auto-enable expense tracking when setting user type to "business" ✅
+- [x] Conditionally show/hide expense-related UI based on toggle ✅
+  - Pallet detail: expenses section hidden when disabled
+  - Dashboard: expenses excluded from calculations when disabled
+- [x] Write tests for user-settings-store (32 tests) ✅
+
+**Completed Files:**
+- `src/stores/user-settings-store.ts` - Zustand store with persist middleware
+- `src/stores/__tests__/user-settings-store.test.ts` - 32 tests
+- `app/(tabs)/settings.tsx` - Complete redesign with sections
+- `app/(tabs)/index.tsx` - Conditional expense fetching/calculation
+- `app/pallets/[id].tsx` - Conditional expenses section
+
+**Features Implemented:**
+- User type selection: Hobby Flipper, Side Income, Serious Business
+- Expense tracking toggle with legal disclaimer on enable
+- Features list shown when expense tracking enabled
+- Stale threshold and include unsellable toggles in Preferences
+- Conditional UI: expenses section hidden when disabled
+- Conditional data: expenses not fetched/calculated when disabled
+- Auto-enable expense tracking for business users
+
+**Test Results:**
+```
+Test Suites: 14 passed, 14 total
+Tests:       658 passed, 658 total
+```
 
 ---
 
