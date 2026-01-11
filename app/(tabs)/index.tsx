@@ -89,7 +89,7 @@ export default function DashboardScreen() {
       <Text style={styles.title}>Dashboard</Text>
       <Text style={styles.subtitle}>Your PalletPulse overview</Text>
 
-      <View style={[styles.heroCard, { backgroundColor: metrics.isProfitable ? colors.profit : colors.neutral }]}>
+      <View style={[styles.heroCard, { backgroundColor: metrics.isProfitable ? colors.profit : colors.loss + 'B0' }]}>
         <Text style={styles.heroLabel}>Total Profit</Text>
         <Text style={styles.heroValue}>
           {metrics.isProfitable ? '' : '-'}{formatCurrency(Math.abs(metrics.totalProfit))}
