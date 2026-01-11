@@ -36,7 +36,13 @@ import {
   getPriceWarning,
   calculateDiscount,
   formatSaleDate,
+  PLATFORM_OPTIONS,
+  PLATFORM_PRESETS,
+  calculatePlatformFee,
+  calculateNetProfit,
+  getSalesChannelFromPlatform,
 } from '@/src/features/sales/schemas/sale-form-schema';
+import type { SalesPlatform } from '@/src/types/database';
 import {
   formatCurrency,
   formatProfit,
@@ -53,6 +59,8 @@ export default function SellItemScreen() {
   const { getPalletById, pallets } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showChannelSuggestions, setShowChannelSuggestions] = useState(false);
+  const [isShipped, setIsShipped] = useState(false); // For platforms with shipped rates
+  const [manualFeeOverride, setManualFeeOverride] = useState(false); // Allow manual fee entry
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Fetch items if not loaded
@@ -95,13 +103,46 @@ export default function SellItemScreen() {
     defaultValues: getDefaultSaleFormValues(item?.listing_price),
   });
 
-  // Watch sale price for live calculations
+  // Watch form values for live calculations
   const salePrice = watch('sale_price');
   const salesChannel = watch('sales_channel');
+  const platform = watch('platform');
+  const platformFee = watch('platform_fee');
+  const shippingCost = watch('shipping_cost');
 
-  // Calculate profit preview
-  const previewProfit = calculateItemProfit(salePrice, effectiveCost, null);
-  const previewROI = calculateItemROIFromValues(salePrice, effectiveCost, null);
+  // Get platform config for display
+  const platformConfig = platform ? PLATFORM_PRESETS[platform] : null;
+
+  // Auto-calculate platform fee when platform or sale price changes
+  useEffect(() => {
+    if (platform && !manualFeeOverride) {
+      const autoFee = calculatePlatformFee(salePrice || 0, platform, isShipped);
+      setValue('platform_fee', autoFee);
+    }
+  }, [platform, salePrice, isShipped, manualFeeOverride, setValue]);
+
+  // Auto-fill sales channel from platform
+  useEffect(() => {
+    if (platform && !salesChannel) {
+      const channelName = getSalesChannelFromPlatform(platform);
+      if (channelName) {
+        setValue('sales_channel', channelName);
+      }
+    }
+  }, [platform, setValue]);
+
+  // Calculate profit preview with all costs
+  const actualPlatformFee = platformFee ?? 0;
+  const actualShippingCost = shippingCost ?? 0;
+  const previewProfit = calculateNetProfit(
+    salePrice || 0,
+    effectiveCost,
+    actualPlatformFee,
+    actualShippingCost
+  );
+  const previewROI = effectiveCost > 0
+    ? ((previewProfit / effectiveCost) * 100)
+    : previewProfit > 0 ? 100 : 0;
   const profitFormatted = formatProfit(previewProfit);
   const roiColor = getROIColor(previewROI);
 
@@ -119,18 +160,20 @@ export default function SellItemScreen() {
       channel.toLowerCase().includes(salesChannel.toLowerCase())
   );
 
-  const onSubmit = async (data: { sale_price: number; sale_date: string; sales_channel?: string | null; buyer_notes?: string | null }) => {
+  const onSubmit = async (data: SaleFormData) => {
     if (!id) return;
 
     setIsSubmitting(true);
     try {
-      const result = await markAsSold(
-        id,
-        data.sale_price,
-        data.sale_date,
-        data.sales_channel ?? undefined,
-        data.buyer_notes ?? undefined
-      );
+      const result = await markAsSold(id, {
+        sale_price: data.sale_price,
+        sale_date: data.sale_date,
+        sales_channel: data.sales_channel ?? undefined,
+        buyer_notes: data.buyer_notes ?? undefined,
+        platform: data.platform ?? undefined,
+        platform_fee: data.platform_fee ?? undefined,
+        shipping_cost: data.shipping_cost ?? undefined,
+      });
 
       if (result.success) {
         router.back();
@@ -304,6 +347,145 @@ export default function SellItemScreen() {
               )}
             />
 
+            {/* Platform Selection */}
+            <Controller
+              control={control}
+              name="platform"
+              render={({ field: { onChange, value } }) => (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Sales Platform</Text>
+                  <View style={styles.platformGrid}>
+                    {PLATFORM_OPTIONS.map((option) => (
+                      <Pressable
+                        key={option.value}
+                        style={[
+                          styles.platformOption,
+                          value === option.value && styles.platformOptionSelected,
+                        ]}
+                        onPress={() => {
+                          onChange(option.value);
+                          setManualFeeOverride(false); // Reset manual override on platform change
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.platformOptionLabel,
+                            value === option.value && styles.platformOptionLabelSelected,
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.platformOptionDesc,
+                            value === option.value && styles.platformOptionDescSelected,
+                          ]}
+                        >
+                          {option.description}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+              )}
+            />
+
+            {/* Shipped Toggle (for FB/OfferUp) */}
+            {platformConfig?.hasShippedRate && (
+              <View style={styles.inputGroup}>
+                <View style={styles.toggleRow}>
+                  <View>
+                    <Text style={styles.inputLabel}>Was this item shipped?</Text>
+                    <Text style={styles.helperText}>
+                      {isShipped
+                        ? `${((platformConfig.rateShipped || 0) * 100).toFixed(1)}% fee for shipped items`
+                        : `${(platformConfig.rate * 100).toFixed(1)}% fee for local pickup`}
+                    </Text>
+                  </View>
+                  <Pressable
+                    style={[styles.toggle, isShipped && styles.toggleActive]}
+                    onPress={() => setIsShipped(!isShipped)}
+                  >
+                    <View style={[styles.toggleThumb, isShipped && styles.toggleThumbActive]} />
+                  </Pressable>
+                </View>
+              </View>
+            )}
+
+            {/* Platform Fee (auto-calculated or manual) */}
+            {platform && (
+              <Controller
+                control={control}
+                name="platform_fee"
+                render={({ field: { onChange, value } }) => (
+                  <View style={styles.inputGroup}>
+                    <View style={styles.feeHeaderRow}>
+                      <Text style={styles.inputLabel}>Platform Fee</Text>
+                      {!platformConfig?.isManual && (
+                        <Pressable onPress={() => setManualFeeOverride(!manualFeeOverride)}>
+                          <Text style={styles.overrideLink}>
+                            {manualFeeOverride ? 'Auto-calculate' : 'Override'}
+                          </Text>
+                        </Pressable>
+                      )}
+                    </View>
+                    <View style={styles.currencyInputContainer}>
+                      <Text style={styles.currencySymbol}>$</Text>
+                      <TextInput
+                        style={[
+                          styles.currencyInput,
+                          !manualFeeOverride && !platformConfig?.isManual && styles.inputDisabled,
+                        ]}
+                        value={value?.toFixed(2) || '0.00'}
+                        onChangeText={(text) => {
+                          const num = parseFloat(text.replace(/[^0-9.]/g, ''));
+                          onChange(isNaN(num) ? 0 : num);
+                          setManualFeeOverride(true);
+                        }}
+                        keyboardType="decimal-pad"
+                        editable={manualFeeOverride || platformConfig?.isManual}
+                        placeholder="0.00"
+                        placeholderTextColor={colors.textSecondary}
+                      />
+                    </View>
+                    {!manualFeeOverride && !platformConfig?.isManual && (
+                      <Text style={styles.helperText}>
+                        Auto-calculated: {platformConfig?.description}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              />
+            )}
+
+            {/* Shipping Cost */}
+            <Controller
+              control={control}
+              name="shipping_cost"
+              render={({ field: { onChange, value } }) => (
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Shipping Cost (paid by you)</Text>
+                  <View style={styles.currencyInputContainer}>
+                    <Text style={styles.currencySymbol}>$</Text>
+                    <TextInput
+                      style={styles.currencyInput}
+                      value={value?.toString() || ''}
+                      onChangeText={(text) => {
+                        const num = parseFloat(text.replace(/[^0-9.]/g, ''));
+                        onChange(isNaN(num) ? null : num);
+                      }}
+                      keyboardType="decimal-pad"
+                      placeholder="0.00"
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                  </View>
+                  <Text style={styles.helperText}>
+                    Only enter shipping costs you paid (not buyer-paid shipping)
+                  </Text>
+                </View>
+              )}
+            />
+
             <Controller
               control={control}
               name="sales_channel"
@@ -385,9 +567,23 @@ export default function SellItemScreen() {
                 <Text style={styles.profitValue}>{formatCurrency(salePrice || 0)}</Text>
               </View>
               <View style={styles.profitRow}>
-                <Text style={styles.profitLabel}>Cost</Text>
-                <Text style={styles.profitValue}>- {formatCurrency(effectiveCost)}</Text>
+                <Text style={styles.profitLabel}>Item Cost</Text>
+                <Text style={styles.profitValueRed}>- {formatCurrency(effectiveCost)}</Text>
               </View>
+              {actualPlatformFee > 0 && (
+                <View style={styles.profitRow}>
+                  <Text style={styles.profitLabel}>
+                    Platform Fee {platform ? `(${PLATFORM_PRESETS[platform]?.name})` : ''}
+                  </Text>
+                  <Text style={styles.profitValueRed}>- {formatCurrency(actualPlatformFee)}</Text>
+                </View>
+              )}
+              {actualShippingCost > 0 && (
+                <View style={styles.profitRow}>
+                  <Text style={styles.profitLabel}>Shipping Cost</Text>
+                  <Text style={styles.profitValueRed}>- {formatCurrency(actualShippingCost)}</Text>
+                </View>
+              )}
               <View style={styles.profitDivider} />
               <View style={styles.profitRow}>
                 <Text style={styles.profitLabelBold}>Net Profit</Text>
@@ -633,6 +829,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     marginVertical: spacing.sm,
   },
+  profitValueRed: {
+    fontSize: fontSize.md,
+    color: colors.loss,
+  },
   footer: {
     flexDirection: 'row',
     gap: spacing.md,
@@ -646,5 +846,83 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 1,
+  },
+  // Platform selection styles
+  platformGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  platformOption: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minWidth: '30%',
+  },
+  platformOptionSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  platformOptionLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  platformOptionLabelSelected: {
+    color: colors.background,
+  },
+  platformOptionDesc: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+  },
+  platformOptionDescSelected: {
+    color: colors.background,
+    opacity: 0.8,
+  },
+  // Toggle styles
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  toggle: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.border,
+    padding: 2,
+    justifyContent: 'center',
+  },
+  toggleActive: {
+    backgroundColor: colors.primary,
+  },
+  toggleThumb: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.background,
+  },
+  toggleThumbActive: {
+    alignSelf: 'flex-end',
+  },
+  // Fee header styles
+  feeHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  overrideLink: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  inputDisabled: {
+    opacity: 0.6,
+    backgroundColor: colors.surface,
   },
 });

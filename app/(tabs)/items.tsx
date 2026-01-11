@@ -23,13 +23,18 @@ import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { ItemCard } from '@/src/features/items';
-import { Item } from '@/src/types/database';
+import { Item, SalesPlatform } from '@/src/types/database';
 import {
   formatCurrency,
   formatROI,
   getROIColor,
   calculateItemROIFromValues,
 } from '@/src/lib/profit-utils';
+import {
+  PLATFORM_OPTIONS,
+  calculatePlatformFee,
+  calculateNetProfit,
+} from '@/src/features/sales/schemas/sale-form-schema';
 
 type FilterType = 'all' | 'listed' | 'sold' | 'unlisted';
 
@@ -46,6 +51,7 @@ export default function ItemsScreen() {
   // Quick sell state
   const [quickSellItem, setQuickSellItem] = useState<Item | null>(null);
   const [quickSellPrice, setQuickSellPrice] = useState('');
+  const [quickSellPlatform, setQuickSellPlatform] = useState<SalesPlatform | null>(null);
   const [isQuickSelling, setIsQuickSelling] = useState(false);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
 
@@ -75,8 +81,9 @@ export default function ItemsScreen() {
     // Close the swipeable
     swipeableRefs.current.get(item.id)?.close();
 
-    // Pre-fill with listing price
+    // Pre-fill with listing price and reset platform
     setQuickSellPrice(item.listing_price?.toString() || '');
+    setQuickSellPlatform(null);
     setQuickSellItem(item);
   };
 
@@ -89,12 +96,22 @@ export default function ItemsScreen() {
       return;
     }
 
+    // Calculate platform fee if platform selected
+    const platformFee = quickSellPlatform
+      ? calculatePlatformFee(price, quickSellPlatform, false)
+      : undefined;
+
     setIsQuickSelling(true);
     try {
-      const result = await markAsSold(quickSellItem.id, price);
+      const result = await markAsSold(quickSellItem.id, {
+        sale_price: price,
+        platform: quickSellPlatform ?? undefined,
+        platform_fee: platformFee,
+      });
       if (result.success) {
         setQuickSellItem(null);
         setQuickSellPrice('');
+        setQuickSellPlatform(null);
         // Refresh the items list
         fetchItems();
       } else {
@@ -268,16 +285,19 @@ export default function ItemsScreen() {
     );
   };
 
-  // Quick sell profit preview
+  // Quick sell profit preview (now includes platform fees)
+  const quickSellPriceNum = parseFloat(quickSellPrice) || 0;
+  const quickSellPlatformFee = quickSellPlatform
+    ? calculatePlatformFee(quickSellPriceNum, quickSellPlatform, false)
+    : 0;
   const quickSellProfit = quickSellItem ? (() => {
-    const price = parseFloat(quickSellPrice) || 0;
     const cost = getItemCost(quickSellItem);
-    return price - cost;
+    return calculateNetProfit(quickSellPriceNum, cost, quickSellPlatformFee, null);
   })() : 0;
   const quickSellROI = quickSellItem ? (() => {
-    const price = parseFloat(quickSellPrice) || 0;
     const cost = getItemCost(quickSellItem);
-    return calculateItemROIFromValues(price, cost, null);
+    // ROI = profit / cost
+    return cost > 0 ? (quickSellProfit / cost) * 100 : quickSellProfit > 0 ? 100 : 0;
   })() : 0;
 
   return (
@@ -441,9 +461,47 @@ export default function ItemsScreen() {
                   />
                 </View>
 
+                {/* Platform Quick Select */}
+                <Text style={styles.quickSellLabel}>Platform (optional)</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.quickSellPlatformScroll}
+                >
+                  {PLATFORM_OPTIONS.slice(0, 6).map((option) => (
+                    <Pressable
+                      key={option.value}
+                      style={[
+                        styles.quickSellPlatformChip,
+                        quickSellPlatform === option.value && styles.quickSellPlatformChipSelected,
+                      ]}
+                      onPress={() => setQuickSellPlatform(
+                        quickSellPlatform === option.value ? null : option.value
+                      )}
+                    >
+                      <Text
+                        style={[
+                          styles.quickSellPlatformText,
+                          quickSellPlatform === option.value && styles.quickSellPlatformTextSelected,
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+
                 <View style={styles.quickSellPreview}>
+                  {quickSellPlatformFee > 0 && (
+                    <View style={styles.quickSellPreviewRow}>
+                      <Text style={styles.quickSellPreviewLabel}>Platform Fee</Text>
+                      <Text style={[styles.quickSellPreviewValue, { color: colors.loss }]}>
+                        -{formatCurrency(quickSellPlatformFee)}
+                      </Text>
+                    </View>
+                  )}
                   <View style={styles.quickSellPreviewRow}>
-                    <Text style={styles.quickSellPreviewLabel}>Profit</Text>
+                    <Text style={styles.quickSellPreviewLabel}>Net Profit</Text>
                     <Text style={[
                       styles.quickSellPreviewValue,
                       { color: quickSellProfit >= 0 ? colors.profit : colors.loss }
@@ -780,5 +838,29 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.md,
     fontWeight: '600',
+  },
+  // Quick sell platform picker styles
+  quickSellPlatformScroll: {
+    marginBottom: spacing.md,
+  },
+  quickSellPlatformChip: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full || 20,
+    marginRight: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  quickSellPlatformChipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  quickSellPlatformText: {
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
+  },
+  quickSellPlatformTextSelected: {
+    color: colors.background,
   },
 });

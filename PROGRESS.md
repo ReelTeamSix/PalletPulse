@@ -1,8 +1,8 @@
 # PalletPulse Development Progress
 
-## Current Phase: Phase 8 - Expenses
-**Status:** Awaiting Review
-**Branch:** feature/expenses
+## Current Phase: Phase 8 - Expense System Redesign
+**Status:** Phase 8B Complete - Enhanced Sale Form Implemented
+**Branch:** feature/sales-profit
 
 ---
 
@@ -14,135 +14,422 @@
 - [x] Phase 5: Pallet Management (approved)
 - [x] Phase 6: Item Management (approved)
 - [x] Phase 7: Sales & Profit (approved)
-- [ ] Phase 8: Expenses
+- [ ] Phase 8: Expense System Redesign ← **IN PROGRESS**
 - [ ] Phase 9: Analytics
 - [ ] Phase 10: Subscription
 - [ ] Phase 11: Polish
 
 ---
 
-## Phase 8: Expenses - AWAITING REVIEW
+## Phase 8: Expense System Redesign - IMPLEMENTATION PLAN
 
-### All Tasks Completed
-- [x] Create feature branch (`feature/expenses`)
-- [x] Create expense form schema (Zod)
-  - Amount validation (required, positive, max $999,999.99)
-  - Category enum validation (supplies, gas, mileage, storage, fees, shipping, other)
-  - Description (optional, max 500 chars)
-  - Expense date (YYYY-MM-DD, no future dates)
-  - Pallet ID (optional UUID for linking to pallet)
-  - Receipt photo path (optional)
-- [x] Create expense form helper functions
-  - `getLocalDateString` - local timezone date formatting
-  - `getDefaultExpenseFormValues` - default form values
-  - `formatExpenseDate` - date display formatting
-  - `getCategoryLabel` - human-readable category names
-  - `getCategoryColor` - category color coding
-  - `formatExpenseAmount` - USD currency formatting
-  - `parseCurrencyInput` - parse currency strings
-  - `groupExpensesByCategory` - group expenses by category
-  - `calculateTotalByCategory` - totals per category
-  - `calculateTotalExpenses` - overall total
-  - `filterExpensesByDateRange` - date range filtering
-  - `filterExpensesByCategory` - category filtering
-  - `getUniquePalletIds` - unique linked pallets
-  - `isLinkedToPallet` - check pallet link
-  - `sortExpensesByDate` - date sorting
-  - `sortExpensesByAmount` - amount sorting
-- [x] Write tests for expense form schema (87 tests)
-- [x] Create ExpenseForm component
-  - Amount input with currency formatting
-  - Category selection (chips with color coding)
-  - Description text area
-  - Date picker
-  - Pallet dropdown (optional link)
-  - Receipt photo picker
-  - Summary preview
-  - Cancel/Submit buttons
-- [x] Create ExpenseCard component
-  - Full card with category color bar
-  - Amount and category badge display
-  - Description preview
-  - Date and pallet link indicators
-  - Compact version for pallet detail
-- [x] Build Add Expense screen (`app/expenses/new.tsx`)
-  - Form with pre-selected pallet (from URL param)
-  - Receipt photo selection via ImagePicker
-  - Create expense via store
-- [x] Build Expense Detail screen (`app/expenses/[id].tsx`)
-  - Amount header with category indicator
-  - Details section (date, description, pallet link)
-  - Receipt photo viewer (full-screen modal)
-  - Activity timestamps
-  - Delete button with confirmation
-- [x] Build Edit Expense screen (`app/expenses/edit.tsx`)
-  - Pre-populated form from existing expense
-  - Update receipt photo
-  - Save changes via store
-- [x] Add expenses section to Pallet Detail screen
-  - Expenses list with count and total
-  - Add Expense button (pre-links to pallet)
-  - Compact expense cards
-  - Navigate to expense detail on tap
-- [x] Update CLAUDE.md pre-phase checklist
-  - Added requirement to merge previous phase before starting new one
+### Design Philosophy
+Expense tracking is **opt-in** to keep the app simple for casual/hobby flippers while providing full tax-ready tracking for business users.
 
-### Test Results
-```
-Test Suites: 11 passed, 11 total
-Tests:       463 passed, 463 total
+### User Types & Features
+| User Type | Expense Tracking | Features |
+|-----------|------------------|----------|
+| Casual hobbyist | OFF (default) | Simple profit: sale - purchase cost |
+| Side hustler | Optional | Basic profit + per-item shipping/fees |
+| Business operator | ON | Full tracking: mileage, overhead, tax export |
+
+### Tier Alignment
+| Tier | Expense Features |
+|------|------------------|
+| Free | Per-item costs only (shipping/fees at sale time) |
+| Starter | + Overhead expenses, mileage tracking, receipt photos |
+| Pro | + Auto mileage calculation (future), tax export |
+
+---
+
+### Phase 8A: Database Schema Updates
+
+**New Tables:**
+```sql
+-- Mileage trips (replaces gas tracking)
+mileage_trips (
+  id uuid PRIMARY KEY,
+  user_id uuid REFERENCES profiles(id),
+  trip_date date NOT NULL,
+  purpose text NOT NULL, -- enum: pallet_pickup, thrift_run, garage_sale, post_office, auction, sourcing, other
+  miles decimal NOT NULL,
+  mileage_rate decimal NOT NULL, -- IRS rate at time of trip (e.g., 0.725)
+  deduction decimal GENERATED ALWAYS AS (miles * mileage_rate) STORED,
+  notes text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Junction table for multi-pallet linking
+mileage_trip_pallets (
+  trip_id uuid REFERENCES mileage_trips(id) ON DELETE CASCADE,
+  pallet_id uuid REFERENCES pallets(id) ON DELETE CASCADE,
+  PRIMARY KEY (trip_id, pallet_id)
+);
+
+-- Multi-pallet expense linking
+expense_pallets (
+  expense_id uuid REFERENCES expenses(id) ON DELETE CASCADE,
+  pallet_id uuid REFERENCES pallets(id) ON DELETE CASCADE,
+  PRIMARY KEY (expense_id, pallet_id)
+);
+
+-- Admin-configurable app settings
+app_settings (
+  id uuid PRIMARY KEY,
+  key text UNIQUE NOT NULL, -- e.g., 'irs_mileage_rate', 'platform_fee_ebay'
+  value text NOT NULL, -- JSON-encoded if complex
+  updated_at timestamptz DEFAULT now(),
+  updated_by uuid REFERENCES profiles(id)
+);
 ```
 
-**New Tests Added:**
-- expense-form-schema.test.ts (87 tests)
-  - Schema validation (34 tests)
-  - getLocalDateString (3 tests)
-  - getDefaultExpenseFormValues (4 tests)
-  - formatExpenseDate (2 tests)
-  - getCategoryLabel (1 test)
-  - getCategoryColor (1 test)
-  - formatExpenseAmount (5 tests)
-  - parseCurrencyInput (8 tests)
-  - groupExpensesByCategory (3 tests)
-  - calculateTotalByCategory (3 tests)
-  - calculateTotalExpenses (3 tests)
-  - filterExpensesByDateRange (4 tests)
-  - filterExpensesByCategory (2 tests)
-  - getUniquePalletIds (3 tests)
-  - isLinkedToPallet (2 tests)
-  - sortExpensesByDate (3 tests)
-  - sortExpensesByAmount (3 tests)
-  - Constants tests (3 tests)
+**Modified Tables:**
+```sql
+-- items: Add per-item cost fields
+ALTER TABLE items ADD COLUMN platform text; -- enum: ebay, poshmark, mercari, facebook, offerup, craigslist, other
+ALTER TABLE items ADD COLUMN platform_fee decimal;
+ALTER TABLE items ADD COLUMN shipping_cost decimal;
 
-### Files Created
-- `src/features/expenses/schemas/expense-form-schema.ts` - Form schema and helpers
-- `src/features/expenses/schemas/expense-form-schema.test.ts` - Schema tests
-- `src/features/expenses/components/ExpenseForm.tsx` - Form component
-- `src/features/expenses/components/ExpenseCard.tsx` - Card components
-- `src/features/expenses/index.ts` - Feature exports
-- `app/expenses/new.tsx` - Add expense screen
-- `app/expenses/[id].tsx` - Expense detail screen
-- `app/expenses/edit.tsx` - Edit expense screen
+-- user_settings: Add expense tracking preferences
+ALTER TABLE user_settings ADD COLUMN expense_tracking_enabled boolean DEFAULT false;
+ALTER TABLE user_settings ADD COLUMN user_type text DEFAULT 'hobby'; -- hobby, side_hustle, business
 
-### Files Modified
-- `app/pallets/[id].tsx` - Added expenses section with list and add button
-- `CLAUDE.md` - Updated pre-phase checklist with merge requirement
+-- expenses: Simplify categories (overhead only)
+-- Categories: storage, supplies, subscriptions, equipment, other
+-- Remove: gas, mileage, fees, shipping (handled elsewhere now)
+```
 
-### Human Verification Checklist
-- [ ] **Add expense:** Tap "Add" in pallet expenses section → form opens
-- [ ] **Form fields:** Amount, category chips, description, date picker work
-- [ ] **Pallet link:** Pallet pre-selected when coming from pallet detail
-- [ ] **Receipt photo:** Can add photo via camera/gallery
-- [ ] **Save expense:** Creates expense, returns to previous screen
-- [ ] **Expense in pallet:** New expense appears in pallet's expense list
-- [ ] **Total updates:** Expense total in pallet header updates
-- [ ] **Expense detail:** Tap expense card → detail screen opens
-- [ ] **Edit expense:** Tap edit → can modify all fields
-- [ ] **Delete expense:** Tap delete → confirmation → removes expense
-- [ ] **Profit impact:** Add $50 expense to pallet → pallet profit decreases by $50
-- [ ] **Categories:** All 7 categories available with correct colors
-- [ ] **Date validation:** Cannot select future date
-- [ ] **Pallet dropdown:** Can change or remove pallet link
+**Tasks:**
+- [x] Create migration: Add items.platform, items.platform_fee, items.shipping_cost ✅
+- [x] Create migration: Add user_settings.expense_tracking_enabled, user_settings.user_type ✅
+- [x] Create migration: Create mileage_trips table with RLS ✅
+- [x] Create migration: Create mileage_trip_pallets junction table ✅
+- [x] Create migration: Create expense_pallets junction table ✅
+- [x] Create migration: Create app_settings table ✅
+- [x] Seed app_settings with IRS rate ($0.725 for 2026) and platform fee presets ✅
+- [ ] Update expenses table: Simplify categories to overhead-only (deferred - keeping for backward compat)
+- [x] Generate updated TypeScript types ✅
+
+**Migrations Applied:**
+- `add_per_item_cost_fields` - Added platform, platform_fee, shipping_cost to items
+- `add_expense_tracking_settings` - Added expense_tracking_enabled, user_type to user_settings
+- `create_mileage_trips_table` - New table with RLS for mileage tracking
+- `create_mileage_trip_pallets_junction` - Junction table for multi-pallet trips
+- `create_expense_pallets_junction` - Junction table for multi-pallet expenses
+- `create_app_settings_table` - Admin-configurable settings table
+- `seed_app_settings` - Seeded IRS rate and platform fee presets
+
+**New Enums Created:**
+- `sales_platform`: ebay, poshmark, mercari, facebook, offerup, craigslist, other
+- `trip_purpose`: pallet_pickup, thrift_run, garage_sale, post_office, auction, sourcing, other
+- `user_type`: hobby, side_hustle, business
+
+**App Settings Seeded:**
+- `irs_mileage_rate`: $0.725/mile (2026)
+- `irs_mileage_rate_history`: 2024-2026 rates
+- `platform_fee_ebay`: 13.25%
+- `platform_fee_poshmark`: 20%
+- `platform_fee_mercari`: 10%
+- `platform_fee_facebook`: 0% local / 5% shipped
+- `platform_fee_offerup`: 0% local / 12.9% shipped
+- `platform_fee_craigslist`: 0%
+
+**Legal Disclaimers Added:**
+- Added comprehensive liability disclaimer section to PALLETPULSE_ONESHOT_CONTEXT.md
+- Disclaimers required at: first expense tracking enable, onboarding, settings, mileage log, tax export, ToS
+- Key message: "PalletPulse is an inventory tracking tool, not tax software"
+- Users responsible for consulting tax professionals
+
+---
+
+### Phase 8B: Enhanced "Mark as Sold" Flow
+
+**New Sale Form Fields:**
+```
+Mark as Sold
+├── Sale Price: $150.00
+├── Platform: [eBay ▼] ← new dropdown
+├── Platform Fee: $19.88 ← auto-calculated OR manual override
+├── Shipping Cost: $12.50 ← new manual field
+├── Sale Date: Jan 11, 2026
+├── Sales Channel: "eBay" ← auto-filled from platform
+├── Buyer Notes: (optional)
+└── Net Profit: $XX.XX ← updated calculation
+```
+
+**Platform Fee Presets (Admin-configurable):**
+| Platform | Fee % | Auto-Calculate |
+|----------|-------|----------------|
+| eBay | 13.25% | sale_price × 0.1325 |
+| Poshmark | 20% | sale_price × 0.20 |
+| Mercari | 10% | sale_price × 0.10 |
+| Facebook MP | 0% local / 5% shipped | based on shipping_cost > 0 |
+| OfferUp | 0% local / 12.9% shipped | based on shipping_cost > 0 |
+| Craigslist | 0% | 0 |
+| Other/Custom | Manual | user enters |
+
+**Tasks:**
+- [x] Update sale form schema with platform, platform_fee, shipping_cost fields ✅
+- [x] Create platform presets constant with fee calculations ✅
+- [x] Build platform dropdown component with auto-fee calculation ✅
+- [x] Update sell screen UI with new fields ✅
+- [x] Update profit preview to include: Sale - Allocated Cost - Platform Fee - Shipping ✅
+- [x] Update items store markAsSold action to save new fields ✅
+- [x] Update quick sell modals (items.tsx, pallets/[id].tsx) with platform picker ✅
+- [ ] Update profit-utils to include platform_fee and shipping_cost in calculations
+- [x] Write tests for new sale form validation ✅
+- [x] Write tests for platform fee calculations ✅
+
+**Completed Files:**
+- `src/features/sales/schemas/sale-form-schema.ts` - Added PLATFORM_PRESETS, PLATFORM_OPTIONS, platform/shipping fields, helper functions
+- `src/stores/items-store.ts` - Updated markAsSold to accept SaleData object with platform/fee fields
+- `app/items/sell.tsx` - Added platform grid, shipped toggle, platform fee (auto/manual), shipping cost, updated profit preview
+- `app/(tabs)/items.tsx` - Added platform picker to quick sell modal with auto-fee calculation
+- `app/pallets/[id].tsx` - Added platform picker to quick sell modal with auto-fee calculation
+- `src/features/sales/schemas/sale-form-schema.test.ts` - Added 30+ new tests for platform fee functions
+
+---
+
+### Phase 8C: Mileage Tracking System
+
+**Trip Form:**
+```
+Add Trip
+├── Date: Jan 11, 2026
+├── Purpose: [Pallet Pickup ▼]
+├── Miles: 45
+├── Linked Pallets: [Pallet #1, Pallet #2] ← multi-select
+├── Notes: "Picked up 2 pallets from GRPL"
+└── Deduction: $32.63 ← auto: 45 × $0.725
+```
+
+**Purpose Presets:**
+- Pallet Pickup
+- Thrift Store Run
+- Garage Sale Circuit
+- Post Office / Shipping
+- Auction
+- Sourcing Run
+- Other
+
+**Tasks:**
+- [ ] Create mileage trip form schema (Zod)
+- [ ] Create mileage-trips store (Zustand)
+- [ ] Build MileageForm component with multi-pallet selector
+- [ ] Build MileageTripCard component
+- [ ] Create Add Trip screen (`app/mileage/new.tsx`)
+- [ ] Create Trip Detail screen (`app/mileage/[id].tsx`)
+- [ ] Create Edit Trip screen (`app/mileage/edit.tsx`)
+- [ ] Create Mileage Log screen with list and export
+- [ ] Add IRS rate fetch from app_settings
+- [ ] Write tests for mileage calculations
+- [ ] Write tests for mileage store
+
+---
+
+### Phase 8D: Overhead Expenses (Simplified)
+
+**Categories (Overhead Only):**
+| Category | Examples |
+|----------|----------|
+| Storage | Storage unit rent, warehouse fees |
+| Supplies | Boxes, tape, bubble wrap, labels |
+| Subscriptions | eBay store fee, software subscriptions |
+| Equipment | Scale, measuring tools, shelving |
+| Other | Miscellaneous business expenses |
+
+**Multi-Pallet Linking:**
+- Overhead expenses can link to 0, 1, or multiple pallets
+- Junction table `expense_pallets` replaces single `pallet_id`
+- UI: Multi-select pallet picker
+
+**Tasks:**
+- [ ] Update expense form schema with simplified categories
+- [ ] Update expense form to use multi-pallet selector
+- [ ] Update expenses store to handle junction table
+- [ ] Update ExpenseCard for multi-pallet display
+- [ ] Update pallet detail to query via junction table
+- [ ] Keep receipt photo functionality (already working)
+- [ ] Write tests for multi-pallet expense linking
+
+---
+
+### Phase 8E: Settings & Opt-In
+
+**Settings Screen Updates:**
+```
+Settings
+├── Account
+│   └── ...
+├── Preferences
+│   ├── Stale Inventory Threshold: 30 days
+│   └── Include Unsellable in Cost: OFF
+├── Expense Tracking ← NEW SECTION
+│   ├── Enable Expense Tracking: [Toggle] ← master switch
+│   └── (When ON, shows sub-options)
+│       ├── Track Mileage: ON
+│       └── Track Overhead Expenses: ON
+└── About
+```
+
+**Tasks:**
+- [ ] Add "Expense Tracking" section to Settings screen
+- [ ] Create expense tracking toggle with confirmation
+- [ ] Conditionally show/hide expense-related UI based on toggle
+- [ ] Update user_settings store with new fields
+- [ ] Create settings migration for expense_tracking_enabled
+
+---
+
+### Phase 8F: Onboarding Integration
+
+**New Onboarding Screen:**
+```
+How do you flip? (Screen 3 of 5)
+
+○ Just for fun
+  Track profits simply - no expense tracking needed
+
+○ Side income
+  Basic tracking with shipping and platform fees
+
+● Serious business
+  Full expense tracking for tax reporting
+
+[This affects which features you see. Change anytime in Settings.]
+```
+
+**Tasks:**
+- [ ] Create user type selection screen
+- [ ] Auto-enable expense tracking for "business" selection
+- [ ] Store user_type in user_settings
+- [ ] Use as upsell CTA for subscription tier
+
+---
+
+### Phase 8G: Admin Dashboard - IRS Rate Management
+
+**Admin Settings Screen:**
+```
+Admin → App Settings
+├── IRS Mileage Rate
+│   ├── Current Rate: $0.725/mile
+│   ├── Effective Date: Jan 1, 2026
+│   └── [Update Rate] → modal with new rate + date
+├── Platform Fee Defaults
+│   ├── eBay: 13.25% [Edit]
+│   ├── Poshmark: 20% [Edit]
+│   ├── Mercari: 10% [Edit]
+│   └── ...
+└── New Year Reminder: "Update IRS rate for 2027"
+```
+
+**Tasks:**
+- [ ] Create admin settings screen (gated by admin role)
+- [ ] Build IRS rate editor with effective date
+- [ ] Build platform fee editor
+- [ ] Add new year reminder logic
+- [ ] Write tests for admin settings
+
+---
+
+### Phase 8H: Cleanup & Migration
+
+**Remove/Deprecate:**
+- [ ] Remove old expense categories: gas, mileage, fees, shipping
+- [ ] Migrate existing "gas" expenses to mileage trips (if possible, or archive)
+- [ ] Update profit calculations to use new structure
+- [ ] Remove single pallet_id from expenses (use junction table)
+
+**Data Migration:**
+- [ ] Create migration script for existing expense data
+- [ ] Handle existing test data in Supabase
+
+---
+
+### Implementation Order
+
+1. **8A: Database Schema** - Foundation for everything
+2. **8B: Enhanced Sale Form** - High value, affects daily workflow
+3. **8E: Settings Opt-In** - Controls visibility of other features
+4. **8C: Mileage Tracking** - Major new feature
+5. **8D: Overhead Expenses** - Simplify existing system
+6. **8F: Onboarding** - User type selection
+7. **8G: Admin Dashboard** - IRS rate management
+8. **8H: Cleanup** - Remove deprecated code
+
+---
+
+### Test Requirements
+
+**Unit Tests:**
+- [ ] Platform fee calculation functions
+- [ ] Mileage deduction calculations
+- [ ] Multi-pallet expense allocation
+- [ ] Sale form validation with new fields
+- [ ] Mileage trip form validation
+- [ ] Settings store expense tracking toggle
+
+**Integration Tests:**
+- [ ] Mark as sold with platform fees
+- [ ] Add mileage trip linked to pallets
+- [ ] Add overhead expense linked to multiple pallets
+- [ ] Profit calculation with all cost types
+
+---
+
+### Human Verification Checklist (Post-Implementation)
+
+**Per-Item Costs:**
+- [ ] Mark item sold → platform dropdown appears
+- [ ] Select eBay → platform fee auto-calculates (13.25%)
+- [ ] Enter shipping cost → net profit updates
+- [ ] Confirm sale → platform_fee and shipping_cost saved
+- [ ] Item detail shows all sale costs
+
+**Mileage Tracking:**
+- [ ] Settings → Enable Expense Tracking → ON
+- [ ] Add Trip button appears (in expenses or dedicated tab)
+- [ ] Enter miles, select purpose, link pallets
+- [ ] Deduction auto-calculates at IRS rate
+- [ ] Trip appears in mileage log
+- [ ] Mileage contributes to total expenses
+
+**Overhead Expenses:**
+- [ ] Add expense → simplified categories (no gas/mileage)
+- [ ] Can link to multiple pallets
+- [ ] Receipt photo still works
+- [ ] Expense appears in linked pallet details
+
+**Settings:**
+- [ ] Expense tracking toggle shows/hides expense UI
+- [ ] User type saved from onboarding
+- [ ] Toggle persists after app restart
+
+**Admin:**
+- [ ] Can update IRS mileage rate
+- [ ] Can update platform fee percentages
+- [ ] Changes reflect immediately in calculations
+
+---
+
+### Previous Implementation (To Be Refactored)
+
+The following files from initial Phase 8 implementation will be refactored:
+- `src/features/expenses/schemas/expense-form-schema.ts` - Update categories, add multi-pallet
+- `src/features/expenses/components/ExpenseForm.tsx` - Simplified categories, multi-pallet picker
+- `src/features/expenses/components/ExpenseCard.tsx` - Multi-pallet display
+- `app/expenses/new.tsx` - Update for new flow
+- `app/expenses/[id].tsx` - Update for multi-pallet
+- `app/expenses/edit.tsx` - Update for new schema
+- `app/pallets/[id].tsx` - Query via junction table
+
+**New Files to Create:**
+- `src/features/mileage/` - New feature module
+- `src/features/sales/schemas/sale-form-schema.ts` - Enhanced with platform/shipping
+- `app/mileage/` - Mileage screens
+- `app/admin/settings.tsx` - Admin IRS rate management
 
 ---
 

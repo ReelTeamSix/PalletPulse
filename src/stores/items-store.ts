@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/src/lib/supabase';
-import { Item, ItemCondition, ItemStatus, SourceType, ItemPhoto } from '@/src/types/database';
+import { Item, ItemCondition, ItemStatus, SourceType, ItemPhoto, SalesPlatform } from '@/src/types/database';
 import { uploadItemPhoto, deletePhoto, getPhotoUrl } from '@/src/lib/photo-utils';
 import { PhotoItem } from '@/src/components/ui/PhotoPicker';
 
@@ -44,6 +44,21 @@ export interface ItemUpdate {
   source_name?: string | null;
   notes?: string | null;
   pallet_id?: string | null;
+  // Phase 8: Per-item cost fields
+  platform?: SalesPlatform | null;
+  platform_fee?: number | null;
+  shipping_cost?: number | null;
+}
+
+// Sale data for marking an item as sold
+export interface SaleData {
+  sale_price: number;
+  sale_date?: string;
+  sales_channel?: string;
+  buyer_notes?: string;
+  platform?: SalesPlatform;
+  platform_fee?: number;
+  shipping_cost?: number;
 }
 
 export interface ItemsState {
@@ -58,7 +73,7 @@ export interface ItemsState {
   addItem: (item: ItemInsert) => Promise<{ success: boolean; data?: Item; error?: string }>;
   updateItem: (id: string, updates: ItemUpdate) => Promise<{ success: boolean; error?: string }>;
   deleteItem: (id: string) => Promise<{ success: boolean; error?: string }>;
-  markAsSold: (id: string, salePrice: number, saleDate?: string, salesChannel?: string, buyerNotes?: string) => Promise<{ success: boolean; error?: string }>;
+  markAsSold: (id: string, saleData: SaleData) => Promise<{ success: boolean; error?: string }>;
   setSelectedItem: (id: string | null) => void;
   clearError: () => void;
   clearItems: () => void;
@@ -359,22 +374,35 @@ export const useItemsStore = create<ItemsState>()(
         }
       },
 
-      markAsSold: async (id: string, salePrice: number, saleDate?: string, salesChannel?: string, buyerNotes?: string) => {
+      markAsSold: async (id: string, saleData: SaleData) => {
         const currentItem = get().items.find(i => i.id === id);
         const existingNotes = currentItem?.notes || '';
         // Append buyer notes to existing notes if provided
-        const updatedNotes = buyerNotes
+        const updatedNotes = saleData.buyer_notes
           ? existingNotes
-            ? `${existingNotes}\n\n--- Sale Notes ---\n${buyerNotes}`
-            : `--- Sale Notes ---\n${buyerNotes}`
+            ? `${existingNotes}\n\n--- Sale Notes ---\n${saleData.buyer_notes}`
+            : `--- Sale Notes ---\n${saleData.buyer_notes}`
           : existingNotes || null;
+
+        // Get local date as YYYY-MM-DD string to avoid timezone issues
+        const getLocalDateString = (): string => {
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
 
         return get().updateItem(id, {
           status: 'sold',
-          sale_price: salePrice,
-          sale_date: saleDate || new Date().toISOString().split('T')[0],
-          sales_channel: salesChannel,
+          sale_price: saleData.sale_price,
+          sale_date: saleData.sale_date || getLocalDateString(),
+          sales_channel: saleData.sales_channel,
           notes: updatedNotes,
+          // Phase 8: Per-item cost fields
+          platform: saleData.platform ?? null,
+          platform_fee: saleData.platform_fee ?? null,
+          shipping_cost: saleData.shipping_cost ?? null,
         });
       },
 

@@ -22,7 +22,7 @@ import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
 import { useExpensesStore } from '@/src/stores/expenses-store';
-import { PalletStatus, Item, Expense } from '@/src/types/database';
+import { PalletStatus, Item, Expense, SalesPlatform } from '@/src/types/database';
 import { formatCondition, getConditionColor, getStatusColor } from '@/src/features/items/schemas/item-form-schema';
 import { PALLET_STATUS_OPTIONS } from '@/src/features/pallets/schemas/pallet-form-schema';
 import {
@@ -39,6 +39,11 @@ import {
   getCategoryLabel,
   getCategoryColor,
 } from '@/src/features/expenses';
+import {
+  PLATFORM_OPTIONS,
+  calculatePlatformFee,
+  calculateNetProfit,
+} from '@/src/features/sales/schemas/sale-form-schema';
 
 const STATUS_CONFIG: Record<PalletStatus, { label: string; color: string }> = {
   unprocessed: { label: 'Unprocessed', color: colors.statusUnprocessed },
@@ -61,6 +66,7 @@ export default function PalletDetailScreen() {
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [quickSellItem, setQuickSellItem] = useState<Item | null>(null);
   const [quickSellPrice, setQuickSellPrice] = useState('');
+  const [quickSellPlatform, setQuickSellPlatform] = useState<SalesPlatform | null>(null);
   const [isQuickSelling, setIsQuickSelling] = useState(false);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
 
@@ -156,8 +162,9 @@ export default function PalletDetailScreen() {
     // Close the swipeable
     swipeableRefs.current.get(item.id)?.close();
 
-    // Pre-fill with listing price
+    // Pre-fill with listing price and reset platform
     setQuickSellPrice(item.listing_price?.toString() || '');
+    setQuickSellPlatform(null);
     setQuickSellItem(item);
   };
 
@@ -170,12 +177,22 @@ export default function PalletDetailScreen() {
       return;
     }
 
+    // Calculate platform fee if platform selected
+    const platformFee = quickSellPlatform
+      ? calculatePlatformFee(price, quickSellPlatform, false)
+      : undefined;
+
     setIsQuickSelling(true);
     try {
-      const result = await markAsSold(quickSellItem.id, price);
+      const result = await markAsSold(quickSellItem.id, {
+        sale_price: price,
+        platform: quickSellPlatform ?? undefined,
+        platform_fee: platformFee,
+      });
       if (result.success) {
         setQuickSellItem(null);
         setQuickSellPrice('');
+        setQuickSellPlatform(null);
         // Refresh the items list
         loadData();
       } else {
@@ -315,16 +332,19 @@ export default function PalletDetailScreen() {
   const profitFormatted = formatProfit(totalProfit);
   const roiColor = getROIColor(roi);
 
-  // Quick sell profit preview
+  // Quick sell profit preview (now includes platform fees)
+  const quickSellPriceNum = parseFloat(quickSellPrice) || 0;
+  const quickSellPlatformFee = quickSellPlatform
+    ? calculatePlatformFee(quickSellPriceNum, quickSellPlatform, false)
+    : 0;
   const quickSellProfit = quickSellItem ? (() => {
-    const price = parseFloat(quickSellPrice) || 0;
     const cost = getItemAllocatedCost(quickSellItem);
-    return price - cost;
+    return calculateNetProfit(quickSellPriceNum, cost, quickSellPlatformFee, null);
   })() : 0;
   const quickSellROI = quickSellItem ? (() => {
-    const price = parseFloat(quickSellPrice) || 0;
     const cost = getItemAllocatedCost(quickSellItem);
-    return calculateItemROIFromValues(price, cost, null);
+    // ROI = profit / cost
+    return cost > 0 ? (quickSellProfit / cost) * 100 : quickSellProfit > 0 ? 100 : 0;
   })() : 0;
 
   return (
@@ -638,9 +658,47 @@ export default function PalletDetailScreen() {
                   />
                 </View>
 
+                {/* Platform Quick Select */}
+                <Text style={styles.quickSellLabel}>Platform (optional)</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.quickSellPlatformScroll}
+                >
+                  {PLATFORM_OPTIONS.slice(0, 6).map((option) => (
+                    <Pressable
+                      key={option.value}
+                      style={[
+                        styles.quickSellPlatformChip,
+                        quickSellPlatform === option.value && styles.quickSellPlatformChipSelected,
+                      ]}
+                      onPress={() => setQuickSellPlatform(
+                        quickSellPlatform === option.value ? null : option.value
+                      )}
+                    >
+                      <Text
+                        style={[
+                          styles.quickSellPlatformText,
+                          quickSellPlatform === option.value && styles.quickSellPlatformTextSelected,
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+
                 <View style={styles.quickSellPreview}>
+                  {quickSellPlatformFee > 0 && (
+                    <View style={styles.quickSellPreviewRow}>
+                      <Text style={styles.quickSellPreviewLabel}>Platform Fee</Text>
+                      <Text style={[styles.quickSellPreviewValue, { color: colors.loss }]}>
+                        -{formatCurrency(quickSellPlatformFee)}
+                      </Text>
+                    </View>
+                  )}
                   <View style={styles.quickSellPreviewRow}>
-                    <Text style={styles.quickSellPreviewLabel}>Profit</Text>
+                    <Text style={styles.quickSellPreviewLabel}>Net Profit</Text>
                     <Text style={[
                       styles.quickSellPreviewValue,
                       { color: quickSellProfit >= 0 ? colors.profit : colors.loss }
@@ -1153,5 +1211,29 @@ const styles = StyleSheet.create({
   },
   expensesList: {
     gap: spacing.sm,
+  },
+  // Quick sell platform picker styles
+  quickSellPlatformScroll: {
+    marginBottom: spacing.md,
+  },
+  quickSellPlatformChip: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full || 20,
+    marginRight: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  quickSellPlatformChipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  quickSellPlatformText: {
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
+  },
+  quickSellPlatformTextSelected: {
+    color: colors.background,
   },
 });

@@ -213,25 +213,183 @@
 - Profit is tracked per item and rolled up to pallet level
 - Pallet profit = Sum of all item profits - pallet cost - expenses
 
-### Workflow 4: Expense Tracking
+### Workflow 4: Expense Tracking (Opt-In Feature)
 
-**Trigger:** User incurs business expense
+> **Design Philosophy:** Expense tracking is opt-in to keep the app simple for casual/hobby flippers while providing full tax-ready tracking for business users.
 
-**Steps:**
-1. User taps "Add Expense"
-2. Enters:
-   - Amount
-   - Category (Supplies, Gas/Mileage, Storage, Fees, Other)
-   - Date
-   - Description
-   - Optional: Receipt photo
-   - Optional: Link to specific pallet
-3. Expense saved and included in profit calculations
+**User Types & Expense Needs:**
+| User Type | Expense Tracking | What They Care About |
+|-----------|------------------|---------------------|
+| Casual hobbyist | OFF (default) | Simple profit: sale - purchase |
+| Side hustler | Optional | Basic profit + occasional big expenses |
+| Business operator | ON | Full tracking for Schedule C taxes |
+
+**Opt-In Trigger:** Settings → "Enable Expense Tracking" toggle
+
+**When Expense Tracking is OFF (Default):**
+- Simple profit calculation: Sale Price - Allocated Cost = Profit
+- No expense-related UI clutters the interface
+- Clean, beginner-friendly experience
+- Can still capture shipping/fees at sale time (see Workflow 3)
+
+**When Expense Tracking is ON:**
+Unlocks the following features:
+
+#### 4A: Per-Item Costs (Captured at Sale Time)
+
+**Trigger:** User marks item as sold (enhanced Workflow 3)
+
+**Enhanced Sale Form:**
+```
+Mark as Sold
+├── Sale Price: $150.00
+├── Platform: [eBay ▼] ← dropdown with presets
+├── Platform Fee: $19.88 ← auto-calculated OR manual
+├── Shipping Cost: $12.50 ← manual entry
+├── Sale Date: Jan 11, 2026
+└── Net Profit: $XX.XX ← live preview
+```
+
+**Platform Fee Presets:**
+| Platform | Fee Structure | Auto-Calculate |
+|----------|---------------|----------------|
+| eBay | 13.25% FVF | Yes |
+| Poshmark | 20% flat | Yes |
+| Mercari | 10% | Yes |
+| Facebook Marketplace | 0% local / 5% shipped | Yes (based on shipping) |
+| OfferUp | 0% local / 12.9% shipped | Yes (based on shipping) |
+| Craigslist | 0% | Yes |
+| Custom | Manual entry | No |
 
 **Business Rules:**
-- Pallet-specific expenses reduce that pallet's profit
-- General expenses tracked separately for tax reporting
-- Mileage tracking (optional): User enters miles, app calculates deduction at IRS rate
+- Platform fees stored on `items.platform_fee` field
+- Shipping costs stored on `items.shipping_cost` field
+- Net profit = Sale Price - Allocated Cost - Platform Fee - Shipping Cost
+- Platform presets are admin-configurable (rates change)
+
+#### 4B: Mileage Tracking (Replaces Gas Tracking)
+
+**Trigger:** User completes a business-related trip
+
+**Why Mileage over Gas:**
+- IRS standard mileage rate ($0.725/mile for 2026) covers gas, maintenance, depreciation
+- Easier for users - just enter miles, not save gas receipts
+- More accurate for tax deductions
+- IRS-compliant documentation
+
+**Mileage Trip Form:**
+```
+Add Trip
+├── Date: Jan 11, 2026
+├── Purpose: [Pallet Pickup ▼] ← dropdown
+├── Miles: 45
+├── Linked Pallets: [Pallet #1, Pallet #2] ← multi-select (optional)
+├── Notes: "Picked up 2 pallets from GRPL" ← optional
+└── Deduction: $32.63 ← auto-calculated (miles × IRS rate)
+```
+
+**Trip Purpose Presets:**
+- Pallet Pickup
+- Thrift Store Run
+- Garage Sale Circuit
+- Post Office / Shipping
+- Auction
+- Sourcing Run
+- Other
+
+**Business Rules:**
+- Mileage rate is admin-configurable (updates annually with IRS rate)
+- Trips can link to multiple pallets (splits deduction evenly)
+- Trip deduction = Miles × Current IRS Rate
+- Mileage log exportable for tax records
+
+**Future Enhancement (High Tier):**
+- Auto-calculate mileage using Maps API (addresses → distance)
+- Trip history with map visualization
+
+#### 4C: Overhead Expenses
+
+**Trigger:** User incurs business expense not tied to specific items
+
+**Overhead Expense Form:**
+```
+Add Expense
+├── Amount: $150.00
+├── Category: [Storage ▼]
+├── Date: Jan 1, 2026
+├── Description: "Monthly storage unit" ← optional
+├── Receipt Photo: [+ Add Photo]
+└── Linked Pallets: [None] ← optional multi-select
+```
+
+**Overhead Categories:**
+| Category | Examples | Pallet-Linkable |
+|----------|----------|-----------------|
+| Storage | Storage unit rent, warehouse fees | Optional |
+| Supplies | Boxes, tape, bubble wrap, labels | Optional |
+| Subscriptions | eBay store fee, software subscriptions | No |
+| Equipment | Scale, measuring tools, shelving | No |
+| Other | Miscellaneous business expenses | Optional |
+
+**Business Rules:**
+- Overhead expenses NOT automatically allocated to items
+- Tracked separately for Schedule C reporting
+- Can optionally link to pallets for attribution
+- Receipt photos stored for documentation
+
+#### 4D: Admin: IRS Rate Management
+
+**Location:** Admin Dashboard → App Settings
+
+**Admin Settings:**
+```
+IRS Mileage Rate
+├── Current Rate: $0.725/mile
+├── Effective Date: Jan 1, 2026
+├── Rate History:
+│   ├── 2026: $0.725
+│   ├── 2025: $0.70
+│   └── 2024: $0.67
+└── [Update Rate] button → prompts for new rate + effective date
+
+Platform Fee Defaults
+├── eBay: 13.25%
+├── Poshmark: 20%
+├── Mercari: 10%
+├── Facebook MP (shipped): 5%
+├── OfferUp (shipped): 12.9%
+└── [Edit] buttons for each
+```
+
+**Notification:** When new year approaches, admin dashboard shows reminder to update IRS rate.
+
+#### 4E: Onboarding Integration
+
+**Onboarding Screen (after signup):**
+```
+How do you flip? (Screen 3 of 5)
+
+○ Just for fun
+  I want to track profits simply
+
+○ Side income
+  I want basic tracking with occasional expenses
+
+● Serious business
+  I need full tax-ready expense tracking
+
+[This affects which features you see. Change anytime in Settings.]
+```
+
+**Tier Alignment:**
+| Tier | Expense Tracking |
+|------|------------------|
+| Free | Per-item costs only (shipping/fees at sale) |
+| Starter | + Overhead expenses, mileage tracking, receipt photos |
+| Pro | + Auto mileage calculation (future), tax export |
+
+**Subscription CTA:** When Free user tries to access mileage/overhead features:
+> "Track mileage and expenses for taxes? Upgrade to Starter for full expense tracking."
 
 ### Workflow 5: Analytics & Insights
 
@@ -375,8 +533,9 @@ user_settings
 ├── stale_threshold_days (default 30)
 ├── storage_locations (jsonb, array of strings, default: ["Garage", "Living Room", "Bedroom", "Storage Unit"])
 ├── default_sales_tax_rate (decimal, nullable, e.g., 0.06 for 6%)
-├── mileage_rate (decimal, default IRS rate, e.g., 0.67)
 ├── include_unsellable_in_cost (boolean, default false)
+├── expense_tracking_enabled (boolean, default false, opt-in for business users)
+├── user_type (enum: hobby, side_hustle, business, default: hobby, set during onboarding)
 ├── notification_stale_inventory (boolean, default true)
 ├── notification_weekly_summary (boolean, default true)
 ├── notification_pallet_milestones (boolean, default true)
@@ -433,16 +592,52 @@ item_photos
 ├── display_order
 └── created_at
 
-expenses
+items (additional fields for per-item costs)
+├── ... (existing fields)
+├── platform (nullable, enum: ebay, poshmark, mercari, facebook, offerup, craigslist, other)
+├── platform_fee (nullable, decimal, auto-calculated or manual)
+├── shipping_cost (nullable, decimal, manual entry)
+└── ... (existing fields)
+
+mileage_trips
 ├── id (uuid, primary key)
 ├── user_id (foreign key → users)
-├── pallet_id (nullable, foreign key → pallets)
-├── amount
-├── category
-├── description
-├── expense_date
+├── trip_date (date)
+├── purpose (enum: pallet_pickup, thrift_run, garage_sale, post_office, auction, sourcing, other)
+├── miles (decimal)
+├── mileage_rate (decimal, IRS rate at time of trip, e.g., 0.725)
+├── deduction (decimal, computed: miles × mileage_rate)
+├── notes (nullable, text)
+├── created_at
+└── updated_at
+
+mileage_trip_pallets (junction table for multi-pallet linking)
+├── trip_id (foreign key → mileage_trips)
+├── pallet_id (foreign key → pallets)
+└── PRIMARY KEY (trip_id, pallet_id)
+
+expenses (overhead expenses only)
+├── id (uuid, primary key)
+├── user_id (foreign key → users)
+├── amount (decimal)
+├── category (enum: storage, supplies, subscriptions, equipment, other)
+├── description (nullable)
+├── expense_date (date)
 ├── receipt_photo_path (nullable)
-└── created_at
+├── created_at
+└── updated_at
+
+expense_pallets (junction table for multi-pallet linking)
+├── expense_id (foreign key → expenses)
+├── pallet_id (foreign key → pallets)
+└── PRIMARY KEY (expense_id, pallet_id)
+
+app_settings (admin-configurable settings)
+├── id (uuid, primary key)
+├── key (unique, e.g., 'irs_mileage_rate', 'platform_fee_ebay')
+├── value (text, JSON-encoded if complex)
+├── updated_at
+└── updated_by (foreign key → users, admin who changed it)
 
 notifications
 ├── id (uuid, primary key)
@@ -799,6 +994,42 @@ subscriptions (managed by RevenueCat, mirrored in DB)
 
 ---
 
+## ⚠️ Legal Disclaimers & Liability
+
+### Expense Tracking Disclaimer
+
+**IMPORTANT:** PalletPulse must include clear disclaimers that it is NOT tax software.
+
+**Required Disclaimer Text (display at key touchpoints):**
+> **Important:** PalletPulse is an inventory tracking tool, not tax software. Expense tracking features are provided for organizational purposes only and should not be considered tax advice. Always consult a qualified tax professional for tax-related decisions. PalletPulse is not liable for any tax reporting errors, omissions, or IRS audit outcomes. Users are solely responsible for maintaining accurate records and consulting with tax professionals.
+
+**Where to Display Disclaimers:**
+
+| Location | Trigger | Display Type |
+|----------|---------|--------------|
+| **First enable expense tracking** | User toggles ON in Settings | Modal with "I Understand" button |
+| **Onboarding (business user type)** | User selects "Serious business" | Inline disclaimer before continue |
+| **Settings screen** | Always visible when expense tracking ON | Small text under toggle |
+| **Mileage log screen** | First visit | Dismissible banner |
+| **Tax export feature** | Before export | Confirmation modal |
+| **Terms of Service** | Signup | Full legal disclaimer section |
+
+**Disclaimer for Mileage Tracking:**
+> Mileage deductions are calculated using the IRS standard mileage rate for reference only. Actual deductible amounts depend on your specific tax situation. The IRS requires contemporaneous records of business mileage. Consult a tax professional to ensure compliance.
+
+**Disclaimer for Platform Fees:**
+> Platform fee estimates are based on publicly available fee structures and may not reflect your actual fees due to seller tiers, promotions, or fee changes. Always verify fees with your actual platform invoices.
+
+### General Liability
+
+- App provides tools for tracking, not tax/legal/financial advice
+- Users responsible for accuracy of their own data entry
+- Users responsible for consulting appropriate professionals
+- No guarantee of tax savings or audit protection
+- Data export is for reference, not official tax documentation
+
+---
+
 ## 🔒 Security Requirements
 
 ### Priority 1: Payment Data Security
@@ -1017,12 +1248,25 @@ subscriptions (managed by RevenueCat, mirrored in DB)
 - ✅ User setting: Include/exclude unsellable items from cost calculation
 - ✅ Manual override: User can edit allocated cost per item
 
-**Expense Tracking:**
-- ✅ Add expense (amount, category, date, description)
-- ✅ Link expense to pallet (optional)
-- ✅ Receipt photo upload
-- ✅ Expense categories: Supplies, Gas/Mileage, Storage, Fees, Other
-- ✅ View expense list
+**Expense Tracking (Opt-In Feature):**
+- ✅ Settings toggle: "Enable Expense Tracking" (default: OFF)
+- ✅ User type selection during onboarding (hobby/side_hustle/business)
+- ✅ Per-item costs at sale time:
+  - Platform dropdown with presets (eBay, Poshmark, Mercari, Facebook, OfferUp, Craigslist)
+  - Auto-calculated platform fees based on sale price
+  - Manual shipping cost entry
+  - Net profit preview (Sale - Cost - Fees - Shipping)
+- ✅ Mileage tracking (replaces gas expenses):
+  - Trip logging with date, purpose, miles
+  - Auto-calculated deduction using IRS rate ($0.725/mile for 2026)
+  - Multi-pallet linking for trips (e.g., pickup 2 pallets = split deduction)
+  - Trip purpose presets (Pallet Pickup, Thrift Run, Post Office, etc.)
+  - Mileage log export for taxes
+- ✅ Overhead expenses (Starter+ tier):
+  - Categories: Storage, Supplies, Subscriptions, Equipment, Other
+  - Multi-pallet linking (optional)
+  - Receipt photo upload
+- ✅ Admin dashboard: IRS rate management, platform fee presets
 
 **Analytics (Basic):**
 - ✅ Dashboard: Total profit, items sold, active inventory value

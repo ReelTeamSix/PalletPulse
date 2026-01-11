@@ -7,7 +7,13 @@ import {
   getUniqueSalesChannels,
   getPriceWarning,
   calculateDiscount,
+  calculatePlatformFee,
+  calculateNetProfit,
+  getPlatformName,
+  getSalesChannelFromPlatform,
   SALES_CHANNEL_SUGGESTIONS,
+  PLATFORM_PRESETS,
+  PLATFORM_OPTIONS,
 } from './sale-form-schema';
 
 // ============================================================================
@@ -420,5 +426,278 @@ describe('SALES_CHANNEL_SUGGESTIONS', () => {
 
   it('should not be empty', () => {
     expect(SALES_CHANNEL_SUGGESTIONS.length).toBeGreaterThan(0);
+  });
+});
+
+// ============================================================================
+// Platform Fee Tests (Phase 8)
+// ============================================================================
+
+describe('PLATFORM_PRESETS', () => {
+  it('should have all expected platforms', () => {
+    expect(PLATFORM_PRESETS).toHaveProperty('ebay');
+    expect(PLATFORM_PRESETS).toHaveProperty('poshmark');
+    expect(PLATFORM_PRESETS).toHaveProperty('mercari');
+    expect(PLATFORM_PRESETS).toHaveProperty('facebook');
+    expect(PLATFORM_PRESETS).toHaveProperty('offerup');
+    expect(PLATFORM_PRESETS).toHaveProperty('craigslist');
+    expect(PLATFORM_PRESETS).toHaveProperty('other');
+  });
+
+  it('should have correct eBay rate (13.25%)', () => {
+    expect(PLATFORM_PRESETS.ebay.rate).toBe(0.1325);
+    expect(PLATFORM_PRESETS.ebay.hasShippedRate).toBe(false);
+  });
+
+  it('should have correct Poshmark rate (20%)', () => {
+    expect(PLATFORM_PRESETS.poshmark.rate).toBe(0.20);
+  });
+
+  it('should have correct Facebook rates (0% local, 5% shipped)', () => {
+    expect(PLATFORM_PRESETS.facebook.rate).toBe(0);
+    expect(PLATFORM_PRESETS.facebook.rateShipped).toBe(0.05);
+    expect(PLATFORM_PRESETS.facebook.hasShippedRate).toBe(true);
+  });
+
+  it('should have correct OfferUp rates (0% local, 12.9% shipped)', () => {
+    expect(PLATFORM_PRESETS.offerup.rate).toBe(0);
+    expect(PLATFORM_PRESETS.offerup.rateShipped).toBe(0.129);
+    expect(PLATFORM_PRESETS.offerup.hasShippedRate).toBe(true);
+  });
+
+  it('should mark "other" as manual entry', () => {
+    expect(PLATFORM_PRESETS.other.isManual).toBe(true);
+  });
+});
+
+describe('PLATFORM_OPTIONS', () => {
+  it('should have options for all platforms', () => {
+    expect(PLATFORM_OPTIONS.length).toBe(7);
+    expect(PLATFORM_OPTIONS.map(o => o.value)).toEqual([
+      'ebay', 'poshmark', 'mercari', 'facebook', 'offerup', 'craigslist', 'other'
+    ]);
+  });
+
+  it('should have labels and descriptions', () => {
+    PLATFORM_OPTIONS.forEach(option => {
+      expect(option.label).toBeTruthy();
+      expect(option.description).toBeTruthy();
+    });
+  });
+});
+
+describe('calculatePlatformFee', () => {
+  it('should return 0 for null platform', () => {
+    expect(calculatePlatformFee(100, null)).toBe(0);
+  });
+
+  it('should return 0 for zero sale price', () => {
+    expect(calculatePlatformFee(0, 'ebay')).toBe(0);
+  });
+
+  it('should return 0 for negative sale price', () => {
+    expect(calculatePlatformFee(-50, 'ebay')).toBe(0);
+  });
+
+  it('should calculate eBay fee correctly (13.25%)', () => {
+    expect(calculatePlatformFee(100, 'ebay')).toBe(13.25);
+    expect(calculatePlatformFee(50, 'ebay')).toBe(6.63); // Rounded to 2 decimals
+  });
+
+  it('should calculate Poshmark fee correctly (20%)', () => {
+    expect(calculatePlatformFee(100, 'poshmark')).toBe(20);
+    expect(calculatePlatformFee(75, 'poshmark')).toBe(15);
+  });
+
+  it('should calculate Mercari fee correctly (10%)', () => {
+    expect(calculatePlatformFee(100, 'mercari')).toBe(10);
+  });
+
+  it('should return 0 for Craigslist (free)', () => {
+    expect(calculatePlatformFee(100, 'craigslist')).toBe(0);
+  });
+
+  it('should return 0 for Facebook local sale', () => {
+    expect(calculatePlatformFee(100, 'facebook', false)).toBe(0);
+  });
+
+  it('should calculate Facebook shipped fee correctly (5%)', () => {
+    expect(calculatePlatformFee(100, 'facebook', true)).toBe(5);
+  });
+
+  it('should return 0 for OfferUp local sale', () => {
+    expect(calculatePlatformFee(100, 'offerup', false)).toBe(0);
+  });
+
+  it('should calculate OfferUp shipped fee correctly (12.9%)', () => {
+    expect(calculatePlatformFee(100, 'offerup', true)).toBe(12.9);
+  });
+
+  it('should return 0 for "other" platform', () => {
+    expect(calculatePlatformFee(100, 'other')).toBe(0);
+  });
+});
+
+describe('calculateNetProfit', () => {
+  it('should calculate profit with just sale price and cost', () => {
+    expect(calculateNetProfit(100, 50, null, null)).toBe(50);
+  });
+
+  it('should deduct platform fee', () => {
+    expect(calculateNetProfit(100, 50, 10, null)).toBe(40);
+  });
+
+  it('should deduct shipping cost', () => {
+    expect(calculateNetProfit(100, 50, null, 15)).toBe(35);
+  });
+
+  it('should deduct both platform fee and shipping', () => {
+    expect(calculateNetProfit(100, 50, 10, 15)).toBe(25);
+  });
+
+  it('should handle null allocated cost as 0', () => {
+    expect(calculateNetProfit(100, null, 10, 5)).toBe(85);
+  });
+
+  it('should handle negative profit (loss)', () => {
+    expect(calculateNetProfit(50, 100, 10, 5)).toBe(-65);
+  });
+});
+
+describe('getPlatformName', () => {
+  it('should return platform name for valid platform', () => {
+    expect(getPlatformName('ebay')).toBe('eBay');
+    expect(getPlatformName('facebook')).toBe('Facebook Marketplace');
+    expect(getPlatformName('poshmark')).toBe('Poshmark');
+  });
+
+  it('should return "Not specified" for null', () => {
+    expect(getPlatformName(null)).toBe('Not specified');
+  });
+});
+
+describe('getSalesChannelFromPlatform', () => {
+  it('should return platform name for valid platform', () => {
+    expect(getSalesChannelFromPlatform('ebay')).toBe('eBay');
+    expect(getSalesChannelFromPlatform('facebook')).toBe('Facebook Marketplace');
+  });
+
+  it('should return null for null platform', () => {
+    expect(getSalesChannelFromPlatform(null)).toBe(null);
+  });
+});
+
+// ============================================================================
+// Schema Platform Field Validation (Phase 8)
+// ============================================================================
+
+describe('saleFormSchema - platform fields', () => {
+  it('should accept valid platform', () => {
+    const result = saleFormSchema.safeParse({
+      sale_price: 100,
+      sale_date: '2025-01-01',
+      platform: 'ebay',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.platform).toBe('ebay');
+    }
+  });
+
+  it('should accept null platform', () => {
+    const result = saleFormSchema.safeParse({
+      sale_price: 100,
+      sale_date: '2025-01-01',
+      platform: null,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.platform).toBe(null);
+    }
+  });
+
+  it('should reject invalid platform', () => {
+    const result = saleFormSchema.safeParse({
+      sale_price: 100,
+      sale_date: '2025-01-01',
+      platform: 'invalid_platform',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should accept valid platform_fee', () => {
+    const result = saleFormSchema.safeParse({
+      sale_price: 100,
+      sale_date: '2025-01-01',
+      platform_fee: 13.25,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.platform_fee).toBe(13.25);
+    }
+  });
+
+  it('should reject negative platform_fee', () => {
+    const result = saleFormSchema.safeParse({
+      sale_price: 100,
+      sale_date: '2025-01-01',
+      platform_fee: -5,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should accept valid shipping_cost', () => {
+    const result = saleFormSchema.safeParse({
+      sale_price: 100,
+      sale_date: '2025-01-01',
+      shipping_cost: 8.50,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.shipping_cost).toBe(8.50);
+    }
+  });
+
+  it('should reject negative shipping_cost', () => {
+    const result = saleFormSchema.safeParse({
+      sale_price: 100,
+      sale_date: '2025-01-01',
+      shipping_cost: -3,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('should accept all new fields together', () => {
+    const result = saleFormSchema.safeParse({
+      sale_price: 100,
+      sale_date: '2025-01-01',
+      platform: 'ebay',
+      platform_fee: 13.25,
+      shipping_cost: 8.50,
+      sales_channel: 'eBay',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.platform).toBe('ebay');
+      expect(result.data.platform_fee).toBe(13.25);
+      expect(result.data.shipping_cost).toBe(8.50);
+    }
+  });
+});
+
+describe('getDefaultSaleFormValues - new fields', () => {
+  it('should include platform as null', () => {
+    const defaults = getDefaultSaleFormValues();
+    expect(defaults.platform).toBe(null);
+  });
+
+  it('should include platform_fee as null', () => {
+    const defaults = getDefaultSaleFormValues();
+    expect(defaults.platform_fee).toBe(null);
+  });
+
+  it('should include shipping_cost as null', () => {
+    const defaults = getDefaultSaleFormValues();
+    expect(defaults.shipping_cost).toBe(null);
   });
 });

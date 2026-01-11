@@ -15,6 +15,11 @@ export type BillingCycle = 'monthly' | 'annual'
 export type PayoutStatus = 'pending' | 'processing' | 'completed' | 'failed'
 export type PayoutMethod = 'stripe' | 'paypal'
 
+// New enum types for Phase 8
+export type SalesPlatform = 'ebay' | 'poshmark' | 'mercari' | 'facebook' | 'offerup' | 'craigslist' | 'other'
+export type TripPurpose = 'pallet_pickup' | 'thrift_run' | 'garage_sale' | 'post_office' | 'auction' | 'sourcing' | 'other'
+export type UserType = 'hobby' | 'side_hustle' | 'business'
+
 // Table types
 export interface Profile {
   id: string
@@ -34,6 +39,8 @@ export interface UserSettings {
   default_sales_tax_rate: number | null
   mileage_rate: number
   include_unsellable_in_cost: boolean
+  expense_tracking_enabled: boolean // New: master toggle for expense features
+  user_type: UserType // New: hobby, side_hustle, business
   notification_stale_inventory: boolean
   notification_weekly_summary: boolean
   notification_pallet_milestones: boolean
@@ -84,6 +91,10 @@ export interface Item {
   source_name: string | null
   notes: string | null
   version: number
+  // New per-item cost fields for Phase 8
+  platform: SalesPlatform | null // Sales platform where item was sold
+  platform_fee: number | null // Platform/marketplace fee deducted from sale
+  shipping_cost: number | null // Shipping cost paid by seller
   created_at: string
   updated_at: string
 }
@@ -108,6 +119,44 @@ export interface Expense {
   receipt_photo_path: string | null
   created_at: string
   updated_at: string
+}
+
+// New table for multi-pallet expense linking
+export interface ExpensePallet {
+  expense_id: string
+  pallet_id: string
+  created_at: string
+}
+
+// New table for mileage tracking (replaces gas expenses)
+export interface MileageTrip {
+  id: string
+  user_id: string
+  trip_date: string
+  purpose: TripPurpose
+  miles: number
+  mileage_rate: number // IRS rate at time of trip
+  deduction: number | null // Auto-calculated: miles × mileage_rate
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+// New table for multi-pallet mileage trip linking
+export interface MileageTripPallet {
+  trip_id: string
+  pallet_id: string
+  created_at: string
+}
+
+// New table for admin-configurable app settings
+export interface AppSetting {
+  id: string
+  key: string
+  value: Json
+  description: string | null
+  updated_at: string
+  updated_by: string | null
 }
 
 export interface Notification {
@@ -180,6 +229,10 @@ export interface Database {
       items: { Row: Item; Insert: Partial<Item> & { user_id: string; name: string }; Update: Partial<Item> }
       item_photos: { Row: ItemPhoto; Insert: Partial<ItemPhoto> & { item_id: string; user_id: string; storage_path: string }; Update: Partial<ItemPhoto> }
       expenses: { Row: Expense; Insert: Partial<Expense> & { user_id: string; amount: number }; Update: Partial<Expense> }
+      expense_pallets: { Row: ExpensePallet; Insert: Partial<ExpensePallet> & { expense_id: string; pallet_id: string }; Update: Partial<ExpensePallet> }
+      mileage_trips: { Row: MileageTrip; Insert: Partial<MileageTrip> & { user_id: string; miles: number }; Update: Partial<MileageTrip> }
+      mileage_trip_pallets: { Row: MileageTripPallet; Insert: Partial<MileageTripPallet> & { trip_id: string; pallet_id: string }; Update: Partial<MileageTripPallet> }
+      app_settings: { Row: AppSetting; Insert: Partial<AppSetting> & { key: string; value: Json }; Update: Partial<AppSetting> }
       notifications: { Row: Notification; Insert: Partial<Notification> & { user_id: string; type: NotificationType; title: string; body: string }; Update: Partial<Notification> }
       affiliates: { Row: Affiliate; Insert: Partial<Affiliate> & { code: string; name: string; email: string }; Update: Partial<Affiliate> }
       referrals: { Row: Referral; Insert: Partial<Referral> & { affiliate_id: string; user_id: string }; Update: Partial<Referral> }
@@ -198,6 +251,9 @@ export interface Database {
       billing_cycle: BillingCycle
       payout_status: PayoutStatus
       payout_method: PayoutMethod
+      sales_platform: SalesPlatform
+      trip_purpose: TripPurpose
+      user_type: UserType
     }
   }
 }
@@ -206,3 +262,8 @@ export interface Database {
 export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
 export type TablesInsert<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
 export type TablesUpdate<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update']
+
+// Constants for enum values (useful for UI dropdowns)
+export const SALES_PLATFORMS: SalesPlatform[] = ['ebay', 'poshmark', 'mercari', 'facebook', 'offerup', 'craigslist', 'other']
+export const TRIP_PURPOSES: TripPurpose[] = ['pallet_pickup', 'thrift_run', 'garage_sale', 'post_office', 'auction', 'sourcing', 'other']
+export const USER_TYPES: UserType[] = ['hobby', 'side_hustle', 'business']
