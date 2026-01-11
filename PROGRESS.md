@@ -1,8 +1,8 @@
 # PalletPulse Development Progress
 
-## Current Phase: Phase 5 - Pallet Management
+## Current Phase: Phase 6 - Item Management
 **Status:** Ready to Begin
-**Branch:** main
+**Branch:** feature/item-management
 
 ---
 
@@ -11,13 +11,93 @@
 - [x] Phase 2: Authentication (approved)
 - [x] Phase 3: Database & Data Layer (approved)
 - [x] Phase 4: Core Navigation (approved)
-- [ ] Phase 5: Pallet Management
+- [x] Phase 5: Pallet Management (approved)
 - [ ] Phase 6: Item Management
 - [ ] Phase 7: Sales & Profit
 - [ ] Phase 8: Expenses
 - [ ] Phase 9: Analytics
 - [ ] Phase 10: Subscription
 - [ ] Phase 11: Polish
+
+---
+
+## Phase 5: Pallet Management - COMPLETED
+
+### All Tasks Completed
+- [x] Create feature branch (`feature/pallet-management`)
+- [x] Create pallet form validation schema (Zod)
+  - Name, supplier, source_name fields with validation
+  - Purchase cost and sales tax handling
+  - Purchase date with future date prevention
+  - Status enum (unprocessed, processing, completed)
+- [x] Build PalletForm component
+  - Freeform supplier field with autocomplete from history
+  - Freeform source/type field with autocomplete from history
+  - Tax calculation with auto-calculate toggle
+  - Total cost display
+  - KeyboardAvoidingView for proper form scrolling
+- [x] Build PalletCard component for list display
+  - Shows name, supplier, status badge, cost, items count, profit, ROI
+- [x] Database migration: Add source_name column to pallets table
+- [x] Update Pallets tab with real data from store
+  - FlatList with PalletCard components
+  - Pull-to-refresh functionality
+  - Loading and error states
+  - Empty state with guidance
+- [x] Update pallet detail screen with real data
+  - Edit and Delete buttons in header
+  - Full pallet information display
+  - Delete confirmation dialog
+- [x] Create edit pallet screen
+  - Pre-filled form with existing data
+  - Update functionality via store
+- [x] Fix UI issues
+  - Keyboard hiding form fields (KeyboardAvoidingView)
+  - Supplier suggestions z-index (appears above source field)
+
+### Test Results
+```
+Test Suites: 6 passed, 6 total
+Tests:       133 passed, 133 total
+```
+
+**New Tests Added:**
+- pallet-form-schema.test.ts (54 tests)
+  - Validation tests for all fields (27 tests)
+  - generatePalletName helper (5 tests)
+  - calculateTotalCost helper (4 tests)
+  - calculateSalesTaxFromRate helper (5 tests)
+  - splitCostEvenly helper (5 tests)
+  - getUniqueSuppliers helper (5 tests)
+  - getUniqueSourceNames helper (3 tests)
+
+### Files Created
+- `app/pallets/edit.tsx` - Edit pallet screen
+- `src/features/pallets/schemas/__tests__/pallet-form-schema.test.ts` - Schema tests
+
+### Files Modified
+- `app/(tabs)/pallets.tsx` - Real data with FlatList, loading, refresh
+- `app/pallets/[id].tsx` - Real data, edit/delete functionality
+- `app/pallets/new.tsx` - Connected to store with source_name
+- `src/features/pallets/components/PalletForm.tsx` - Freeform fields, tax calc, keyboard fix
+- `src/features/pallets/schemas/pallet-form-schema.ts` - Simplified with helpers
+- `src/stores/pallets-store.ts` - Added source_name to types
+- `src/stores/__tests__/pallets-store.test.ts` - Added source_name to mock
+- `src/types/database.ts` - Added source_name to Pallet interface
+
+### Human Verification - PASSED
+- [x] Empty state shows "No pallets yet" message
+- [x] With pallets, cards show name, supplier, cost, profit
+- [x] Pull to refresh works
+- [x] Create pallet with all fields → saves successfully
+- [x] Validation errors display for required fields
+- [x] Pallet appears in list after creation
+- [x] Tap pallet card → detail screen with real data
+- [x] Edit pallet → form pre-filled, saves changes
+- [x] Delete pallet → confirmation, removed from list
+- [x] Supplier/Source autocomplete works
+- [x] Keyboard doesn't hide form fields
+- [x] Supplier suggestions appear above source field
 
 ---
 
@@ -37,50 +117,19 @@
 
 ---
 
-## Phase 2: Authentication - Task Breakdown
+## Phase 2: Authentication - COMPLETED
 
 ### All Tasks Completed
 - [x] Create auth Zustand store (`src/stores/auth-store.ts`)
-  - Session management with Supabase
-  - Sign in / Sign up / Sign out actions
-  - Password reset functionality
-  - Error handling with user-friendly messages
-  - Auth state change listener
 - [x] Create Zod validation schemas (`src/features/auth/schemas/auth-schemas.ts`)
-  - Login schema (email + password)
-  - Signup schema (email + password + confirm + affiliate code)
-  - Forgot password schema
-  - Reset password schema
-- [x] Create reusable UI components
-  - Button component (`src/components/ui/Button.tsx`) - variants, sizes, loading state
-  - Input component (`src/components/ui/Input.tsx`) - password toggle, error display, icons
+- [x] Create reusable UI components (Button, Input)
 - [x] Create Login screen (`app/(auth)/login.tsx`)
-  - Email/password form with validation
-  - Error display
-  - Forgot password link
-  - Sign up link
 - [x] Create Signup screen (`app/(auth)/signup.tsx`)
-  - Email/password/confirm form with validation
-  - Affiliate code field (optional)
-  - Email verification message after signup
 - [x] Create Forgot Password screen (`app/(auth)/forgot-password.tsx`)
-  - Email form
-  - Success state with instructions
 - [x] Create Auth layout (`app/(auth)/_layout.tsx`)
-- [x] Update Root layout (`app/_layout.tsx`)
-  - Auth initialization on app start
-  - Protected route handling
-  - Redirect logic (auth -> tabs, tabs -> auth)
-  - Loading state while initializing
+- [x] Update Root layout with auth initialization and protected routes
 - [x] **Unit tests for auth store (15 tests passing)**
 - [x] **Unit tests for validation schemas (17 tests passing)**
-- [x] TypeScript compiles with no errors
-
-### Test Results
-```
-Test Suites: 2 passed, 2 total
-Tests:       32 passed, 32 total
-```
 
 ### Human Verification - PASSED
 - [x] Test auth UI on physical device
@@ -90,237 +139,56 @@ Tests:       32 passed, 32 total
 
 ---
 
-## Phase 2 Notes
-
-**To test full authentication flow, you'll need to:**
-1. Create a Supabase project at https://supabase.com
-2. Copy `.env.example` to `.env` and fill in:
-   ```
-   EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   ```
-3. Enable Email auth in Supabase dashboard (Authentication > Providers)
-
-**Note:** The auth UI can be tested without Supabase - forms, validation, and navigation all work.
-
----
-
-## Technical Decisions Made (Phase 2)
-
-1. **Disabled typed routes** - Expo Router's typed routes were causing issues with dynamic route generation. Disabled for now.
-2. **Auth state in Zustand** - Using Zustand for auth state, session persistence handled by Supabase's built-in AsyncStorage integration.
-3. **User-friendly error messages** - Mapped Supabase auth errors to friendly messages.
-4. **Password visibility toggle** - Input component has built-in password show/hide functionality.
-5. **Jest + Testing Library** - Configured Jest with proper mocks for Supabase and AsyncStorage.
-
----
-
-## Files Created/Modified (Phase 2)
-
-### New Files
-- src/stores/auth-store.ts
-- src/stores/index.ts
-- src/stores/__tests__/auth-store.test.ts
-- src/features/auth/schemas/auth-schemas.ts
-- src/features/auth/schemas/__tests__/auth-schemas.test.ts
-- src/components/ui/Button.tsx
-- src/components/ui/Input.tsx
-- src/components/ui/index.ts
-- app/(auth)/_layout.tsx
-- app/(auth)/login.tsx
-- app/(auth)/signup.tsx
-- app/(auth)/forgot-password.tsx
-- jest.config.js
-- jest.setup.js
-
-### Modified Files
-- app/_layout.tsx - Added auth initialization and protected routes
-- app.json - Disabled typed routes
-- package.json - Added @types/jest
-
----
-
-## How to Test Phase 2
-
-### Run unit tests:
-```bash
-npm test
-```
-
-### Test UI without Supabase:
-1. Run `npx expo start`
-2. App should show login screen
-3. Verify:
-   - Login form renders with email/password fields
-   - Validation errors appear for empty/invalid fields
-   - "Sign Up" link navigates to signup screen
-   - "Forgot password?" link navigates to forgot password screen
-   - Password visibility toggle works
-
-### Test with Supabase (full flow):
-1. Set up Supabase project and `.env` file
-2. Run `npx expo start`
-3. Test: signup -> verify email -> login -> dashboard
-
----
-
-## Next Steps (After Phase 2 Approval)
-
-Begin Phase 3: Database & Data Layer, which includes:
-- Create Supabase database schema (tables for pallets, items, expenses, etc.)
-- Set up Row Level Security (RLS) policies
-- Generate TypeScript types from schema
-- Create Zustand stores for pallets, items, expenses
-- Implement data fetching and caching
-
----
-
-**Reply "approved" to continue to Phase 3, or provide feedback.**
-
----
-
 ## Phase 3: Database & Data Layer - COMPLETED
 
-### Database Schema Created (via Supabase MCP)
+### All Tasks Completed
 - [x] Created 11 Postgres enums for type safety
-- [x] Created profiles table (extends auth.users)
-- [x] Created user_settings table with defaults
-- [x] Created pallets table with status tracking
-- [x] Created items table with full inventory fields
-- [x] Created item_photos table for photo storage
-- [x] Created expenses table with categories
-- [x] Created notifications table
-- [x] Created affiliate tables (affiliates, referrals, payouts)
-- [x] Created subscriptions table (RevenueCat mirror)
-
-### Row Level Security (RLS) - All Enabled
-- [x] All tables have RLS enabled
-- [x] Users can only view/edit their own data
-- [x] Auto-create profile on user signup (trigger)
-- [x] Auto-create user_settings on profile creation (trigger)
-- [x] updated_at auto-update triggers on all relevant tables
-
-### TypeScript Types
-- [x] Generated types from Supabase schema
-- [x] Created enum types (PalletStatus, ItemCondition, etc.)
-- [x] Created interface types for all tables
-- [x] Helper types for Insert/Update operations
-
-### Zustand Stores Created
-- [x] pallets-store.ts - Full CRUD with optimistic concurrency
-- [x] items-store.ts - Full CRUD + markAsSold helper
-- [x] expenses-store.ts - Full CRUD + expense totals
-
-### Test Results
-```
-Test Suites: 5 passed, 5 total
-Tests:       79 passed, 79 total
-```
-
-**New Tests Added:**
-- pallets-store.test.ts (13 tests) - CRUD operations, error handling, helper methods
-- items-store.test.ts (17 tests) - CRUD, markAsSold, pallet filtering, helper methods
-- expenses-store.test.ts (17 tests) - CRUD, expense totals, pallet filtering, helper methods
+- [x] Created all tables (profiles, user_settings, pallets, items, item_photos, expenses, notifications, affiliates, referrals, payouts, subscriptions)
+- [x] Row Level Security (RLS) enabled on all tables
+- [x] Auto-create triggers for profile and user_settings
+- [x] Generated TypeScript types from Supabase schema
+- [x] Created Zustand stores (pallets, items, expenses)
+- [x] **Unit tests: 79 tests passing**
 
 ### Human Verification - PASSED
-- [x] Verify tables in Supabase dashboard - All 11 tables have RLS enabled
-- [x] Test RLS policies - Fixed function search_path warnings, added missing policies
-- [x] Create a test pallet and verify it saves - Test pallet created successfully
-- [x] Verified triggers work: profile → auto-creates user_settings with defaults
+- [x] Verify tables in Supabase dashboard
+- [x] Test RLS policies
+- [x] Create test pallet and verify it saves
+- [x] Verified triggers work
 
 ---
 
 ## Phase 4: Core Navigation - COMPLETED
 
 ### All Tasks Completed
-- [x] Create feature branch (`feature/core-navigation`)
 - [x] Create pallet detail screen (`app/pallets/[id].tsx`)
-  - Shows pallet stats (cost, profit, ROI)
-  - Items list section with placeholder
-  - Details card with supplier, source type, status
-  - FAB to add items to pallet
 - [x] Create new pallet form screen (`app/pallets/new.tsx`)
-  - Form placeholder with field list
-  - Cancel/Save footer buttons
-  - Modal presentation
 - [x] Create item detail screen (`app/items/[id].tsx`)
-  - Photo section with placeholder
-  - Pricing row (listing, cost, profit)
-  - Details card with condition, quantity, location
-  - Edit/Mark as Sold footer buttons
 - [x] Create new item form screen (`app/items/new.tsx`)
-  - Supports both pallet items and individual items
-  - Shows pallet badge when adding to pallet
-  - Form sections: Info, Pricing, Organization
-  - Modal presentation
 - [x] Update root layout with stack screen routes
-- [x] Update tab screens with navigation
-  - Dashboard: Quick action cards for Add Pallet, Add Item, View Pallets, Analytics
-  - Pallets tab: FAB + demo pallet card to test navigation
-  - Items tab: FAB + demo item card to test navigation
-
-### Test Results
-```
-Test Suites: 5 passed, 5 total
-Tests:       79 passed, 79 total
-```
-TypeScript compiles with no errors.
-
-### Files Created
-- `app/pallets/[id].tsx` - Pallet detail screen
-- `app/pallets/new.tsx` - New pallet form screen
-- `app/items/[id].tsx` - Item detail screen
-- `app/items/new.tsx` - New item form screen
-
-### Files Modified
-- `app/_layout.tsx` - Added stack screen routes for pallets and items
-- `app/(tabs)/index.tsx` - Added hero card, stats row, and quick action cards
-- `app/(tabs)/pallets.tsx` - Added FAB, demo card, and navigation
-- `app/(tabs)/items.tsx` - Added FAB, demo card, and navigation
+- [x] Update tab screens with navigation (FABs, quick actions)
 
 ### Human Verification - PASSED
-- [x] Tab navigation: Tap each tab → correct screen loads
-- [x] Stack navigation: Navigate to detail screen → screen animates in
-- [x] Back navigation: Android back button works correctly on all screens
-- [x] FAB navigation: Tap + button → modal form opens
-- [x] Demo cards: Tap demo pallet/item → detail screen opens
-- [x] Quick actions: Dashboard action cards navigate correctly
-- [x] Screen shells: Each screen shows placeholder content (no crashes)
+- [x] Tab navigation works
+- [x] Stack navigation works
+- [x] Back navigation works
+- [x] FAB navigation works
+- [x] Dashboard quick actions work
 
 ---
 
-## How to Test Phase 4
+## Next Steps: Phase 6 - Item Management
 
-### Manual Testing Steps
-1. Run `npx expo start`
-2. Open on device/simulator
-3. Test the following navigation paths:
-
-**Tab Navigation:**
-- Dashboard (home icon) → Dashboard screen
-- Pallets (archive icon) → Pallets screen
-- Items (cube icon) → Items screen
-- Analytics (chart icon) → Analytics screen
-- Settings (cog icon) → Settings screen
-
-**Stack Navigation from Pallets:**
-- Tap FAB (+) on Pallets → Add Pallet modal
-- Tap "Demo Pallet" card → Pallet detail screen
-- Tap FAB (+) on Pallet detail → Add Item modal (with pallet ID)
-
-**Stack Navigation from Items:**
-- Tap FAB (+) on Items → Add Item modal (no pallet ID)
-- Tap "Demo Item" card → Item detail screen
-
-**Dashboard Quick Actions:**
-- Tap "Add Pallet" → Add Pallet modal
-- Tap "Add Item" → Add Item modal
-- Tap "View Pallets" → Pallets tab
-- Tap "Analytics" → Analytics tab
-
-**Back Navigation:**
-- From any detail screen, press back button or swipe → returns to previous screen
+Phase 6 will include:
+- Item CRUD (create, read, update, delete)
+- Photo upload with tier limits
+- Barcode scanning
+- Link items to pallets
+- Item conditions (new, open box, used, damaged, etc.)
+- Cost allocation from pallet to items
+- Item form validation schema
+- Unit tests for item functionality
 
 ---
 
-**Reply "approved" to continue to Phase 5, or provide feedback.**
+**Reply "approved" to continue to Phase 6, or provide feedback.**
