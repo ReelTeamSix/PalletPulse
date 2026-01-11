@@ -24,6 +24,11 @@ import {
   EXPENSE_CATEGORY_LABELS,
   ExpenseCategory,
 } from '@/src/features/expenses';
+import {
+  DateRangeFilter,
+  DateRange,
+  isWithinDateRange,
+} from '@/src/components/ui/DateRangeFilter';
 
 type CategoryFilter = 'all' | ExpenseCategory;
 
@@ -34,6 +39,11 @@ export default function ExpensesScreen() {
   const { pallets, getPalletById, fetchPallets } = usePalletsStore();
 
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
+  const [dateRange, setDateRange] = useState<DateRange>({
+    start: null,
+    end: null,
+    preset: 'all',
+  });
 
   // Fetch data on focus
   useFocusEffect(
@@ -43,11 +53,20 @@ export default function ExpensesScreen() {
     }, [])
   );
 
-  // Filter expenses by category
+  // Filter expenses by category and date range
   const filteredExpenses = useMemo(() => {
-    if (activeCategory === 'all') return expenses;
-    return expenses.filter(e => e.category === activeCategory);
-  }, [expenses, activeCategory]);
+    return expenses.filter(e => {
+      // Category filter
+      if (activeCategory !== 'all' && e.category !== activeCategory) {
+        return false;
+      }
+      // Date range filter
+      if (!isWithinDateRange(e.date, dateRange)) {
+        return false;
+      }
+      return true;
+    });
+  }, [expenses, activeCategory, dateRange]);
 
   // Calculate total
   const totalExpenses = useMemo(() => {
@@ -144,6 +163,14 @@ export default function ExpensesScreen() {
             ? `${filteredExpenses.length} expense${filteredExpenses.length === 1 ? '' : 's'}${activeCategory !== 'all' ? ` in ${activeCategory}` : ''}`
             : 'Track your business expenses'}
         </Text>
+
+        {/* Date Range Filter */}
+        {expenses.length > 0 && (
+          <DateRangeFilter
+            value={dateRange}
+            onChange={setDateRange}
+          />
+        )}
 
         {/* Category Filter */}
         {expenses.length > 0 && (

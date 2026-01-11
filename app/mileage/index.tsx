@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useMemo, useCallback, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -16,6 +16,11 @@ import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { useMileageStore, MileageTripWithPallets } from '@/src/stores/mileage-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { MileageTripCard, formatDeduction, formatMiles } from '@/src/features/mileage';
+import {
+  DateRangeFilter,
+  DateRange,
+  isWithinDateRange,
+} from '@/src/components/ui/DateRangeFilter';
 
 export default function MileageLogScreen() {
   const router = useRouter();
@@ -30,6 +35,12 @@ export default function MileageLogScreen() {
   } = useMileageStore();
   const { pallets, fetchPallets, getPalletById } = usePalletsStore();
 
+  const [dateRange, setDateRange] = useState<DateRange>({
+    start: null,
+    end: null,
+    preset: 'all',
+  });
+
   // Fetch data on mount and focus
   useFocusEffect(
     useCallback(() => {
@@ -39,8 +50,25 @@ export default function MileageLogScreen() {
     }, [])
   );
 
-  // Get YTD summary
-  const ytdSummary = useMemo(() => getYTDSummary(), [trips]);
+  // Filter trips by date range
+  const filteredTrips = useMemo(() => {
+    return trips.filter(trip => isWithinDateRange(trip.date, dateRange));
+  }, [trips, dateRange]);
+
+  // Calculate summary based on filtered trips
+  const filteredSummary = useMemo(() => {
+    const totalMiles = filteredTrips.reduce((sum, trip) => sum + trip.miles, 0);
+    const totalDeduction = filteredTrips.reduce(
+      (sum, trip) => sum + trip.miles * trip.mileage_rate,
+      0
+    );
+    return { totalMiles, totalDeduction };
+  }, [filteredTrips]);
+
+  // Get YTD summary (for "All Time" preset only, otherwise use filtered)
+  const displaySummary = dateRange.preset === 'all'
+    ? getYTDSummary()
+    : filteredSummary;
 
   // Get pallet names for display
   const getPalletNames = useCallback(
@@ -74,14 +102,44 @@ export default function MileageLogScreen() {
     </View>
   );
 
+  // Get dynamic title based on date range
+  const getSummaryTitle = () => {
+    if (dateRange.preset === 'all') {
+      return `${new Date().getFullYear()} Year-to-Date`;
+    }
+    if (dateRange.preset === 'this_month') {
+      return new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+    if (dateRange.preset === 'this_quarter') {
+      const month = new Date().getMonth();
+      const quarter = month <= 2 ? 1 : month <= 5 ? 2 : month <= 8 ? 3 : 4;
+      return `Q${quarter} ${new Date().getFullYear()}`;
+    }
+    if (dateRange.preset === 'last_quarter') {
+      const month = new Date().getMonth();
+      const currentQ = month <= 2 ? 1 : month <= 5 ? 2 : month <= 8 ? 3 : 4;
+      const lastQ = currentQ === 1 ? 4 : currentQ - 1;
+      const year = currentQ === 1 ? new Date().getFullYear() - 1 : new Date().getFullYear();
+      return `Q${lastQ} ${year}`;
+    }
+    if (dateRange.preset === 'this_year') {
+      return `${new Date().getFullYear()} Full Year`;
+    }
+    return 'Custom Period';
+  };
+
   const renderHeader = () => (
     <View style={styles.header}>
-      {/* YTD Summary Card */}
+      {/* Date Range Filter */}
+      <DateRangeFilter
+        value={dateRange}
+        onChange={setDateRange}
+      />
+
+      {/* Summary Card */}
       <View style={styles.summaryCard}>
         <View style={styles.summaryHeader}>
-          <Text style={styles.summaryTitle}>
-            {new Date().getFullYear()} Year-to-Date
-          </Text>
+          <Text style={styles.summaryTitle}>{getSummaryTitle()}</Text>
           <View style={styles.rateTag}>
             <Text style={styles.rateTagText}>
               ${currentMileageRate.toFixed(3)}/mi
@@ -90,18 +148,18 @@ export default function MileageLogScreen() {
         </View>
         <View style={styles.summaryStats}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{trips.length}</Text>
+            <Text style={styles.statValue}>{filteredTrips.length}</Text>
             <Text style={styles.statLabel}>Trips</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{formatMiles(ytdSummary.totalMiles)}</Text>
+            <Text style={styles.statValue}>{formatMiles(displaySummary.totalMiles)}</Text>
             <Text style={styles.statLabel}>Miles</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, styles.deductionValue]}>
-              {formatDeduction(ytdSummary.totalDeduction)}
+              {formatDeduction(displaySummary.totalDeduction)}
             </Text>
             <Text style={styles.statLabel}>Deduction</Text>
           </View>
@@ -145,14 +203,14 @@ export default function MileageLogScreen() {
           </View>
         ) : (
           <FlatList
-            data={trips}
+            data={filteredTrips}
             keyExtractor={(item) => item.id}
             renderItem={renderTrip}
             ListHeaderComponent={trips.length > 0 ? renderHeader : null}
             ListEmptyComponent={renderEmptyState}
             contentContainerStyle={[
               styles.listContent,
-              trips.length === 0 && styles.emptyContent,
+              filteredTrips.length === 0 && styles.emptyContent,
             ]}
             refreshControl={
               <RefreshControl
