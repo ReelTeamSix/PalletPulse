@@ -95,7 +95,7 @@ export function ItemForm({
       listing_price: item?.listing_price ?? initialValues?.listing_price ?? null,
       purchase_cost: item?.purchase_cost ?? initialValues?.purchase_cost ?? null,
       storage_location: item?.storage_location ?? initialValues?.storage_location ?? null,
-      status: item?.status ?? initialValues?.status ?? 'unprocessed',
+      status: item?.status ?? initialValues?.status ?? 'unlisted',
       barcode: item?.barcode ?? initialValues?.barcode ?? null,
       source_name: item?.source_name ?? initialValues?.source_name ?? null,
       notes: item?.notes ?? initialValues?.notes ?? null,

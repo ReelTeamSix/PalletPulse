@@ -56,7 +56,7 @@ describe('itemFormSchema', () => {
         expect(result.data.name).toBe('Minimal Item');
         expect(result.data.quantity).toBe(1); // Default
         expect(result.data.condition).toBe('used_good'); // Default
-        expect(result.data.status).toBe('unprocessed'); // Default
+        expect(result.data.status).toBe('unlisted'); // Default
       }
     });
 
@@ -188,7 +188,7 @@ describe('itemFormSchema', () => {
 
   describe('status validation', () => {
     it('should accept all valid status values', () => {
-      const statuses = ['unprocessed', 'listed', 'sold'];
+      const statuses = ['unlisted', 'listed', 'sold'];
       statuses.forEach(status => {
         const result = itemFormSchema.safeParse({ name: 'Test', status });
         expect(result.success).toBe(true);
@@ -416,8 +416,8 @@ describe('getConditionColor', () => {
 });
 
 describe('getStatusColor', () => {
-  it('should return grey for unprocessed status', () => {
-    expect(getStatusColor('unprocessed')).toBe('#9E9E9E');
+  it('should return grey for unlisted status', () => {
+    expect(getStatusColor('unlisted')).toBe('#9E9E9E');
   });
 
   it('should return blue for listed status', () => {
@@ -533,7 +533,7 @@ describe('formatCondition', () => {
 
 describe('formatStatus', () => {
   it('should format all status values correctly', () => {
-    expect(formatStatus('unprocessed')).toBe('Unprocessed');
+    expect(formatStatus('unlisted')).toBe('Unlisted');
     expect(formatStatus('listed')).toBe('Listed');
     expect(formatStatus('sold')).toBe('Sold');
   });
@@ -552,7 +552,7 @@ describe('constants', () => {
 
   it('should have all status options', () => {
     expect(ITEM_STATUS_OPTIONS).toHaveLength(3);
-    expect(ITEM_STATUS_OPTIONS.map(o => o.value)).toContain('unprocessed');
+    expect(ITEM_STATUS_OPTIONS.map(o => o.value)).toContain('unlisted');
     expect(ITEM_STATUS_OPTIONS.map(o => o.value)).toContain('sold');
   });
 
@@ -566,7 +566,7 @@ describe('constants', () => {
     expect(defaultItemFormValues.name).toBe('');
     expect(defaultItemFormValues.quantity).toBe(1);
     expect(defaultItemFormValues.condition).toBe('used_good');
-    expect(defaultItemFormValues.status).toBe('unprocessed');
+    expect(defaultItemFormValues.status).toBe('unlisted');
     expect(defaultItemFormValues.description).toBeNull();
     expect(defaultItemFormValues.pallet_id).toBeNull();
   });

@@ -15,7 +15,7 @@ export const ITEM_CONDITION_OPTIONS: { label: string; value: ItemCondition }[] =
 
 // Item status options
 export const ITEM_STATUS_OPTIONS: { label: string; value: ItemStatus }[] = [
-  { label: 'Unlisted', value: 'unprocessed' },
+  { label: 'Unlisted', value: 'unlisted' },
   { label: 'Listed', value: 'listed' },
   { label: 'Sold', value: 'sold' },
 ];
@@ -98,8 +98,8 @@ export const itemFormSchema = z.object({
     .transform(val => val || null),
 
   status: z
-    .enum(['unprocessed', 'listed', 'sold'] as const)
-    .default('unprocessed'),
+    .enum(['unlisted', 'listed', 'sold'] as const)
+    .default('unlisted'),
 
   barcode: z
     .string()
@@ -150,7 +150,7 @@ export const defaultItemFormValues: Partial<ItemFormData> = {
   listing_price: null,
   purchase_cost: null,
   storage_location: null,
-  status: 'unprocessed',
+  status: 'unlisted',
   barcode: null,
   source_name: null,
   notes: null,
@@ -205,7 +205,7 @@ export function getConditionColor(condition: ItemCondition): string {
 // Get status display color
 export function getStatusColor(status: ItemStatus): string {
   switch (status) {
-    case 'unprocessed':
+    case 'unlisted':
       return '#9E9E9E'; // Grey
     case 'listed':
       return '#1976D2'; // Blue
