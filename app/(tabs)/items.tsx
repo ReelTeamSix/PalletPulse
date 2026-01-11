@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
@@ -19,6 +20,7 @@ import { Item } from '@/src/types/database';
 
 export default function ItemsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { items, isLoading, error, fetchItems } = useItemsStore();
   const { getPalletById } = usePalletsStore();
 
@@ -116,7 +118,10 @@ export default function ItemsScreen() {
         />
       )}
 
-      <Pressable style={styles.fab} onPress={handleAddItem}>
+      <Pressable
+        style={[styles.fab, { bottom: Math.max(insets.bottom, spacing.lg) }]}
+        onPress={handleAddItem}
+      >
         <FontAwesome name="plus" size={24} color={colors.background} />
       </Pressable>
     </View>
@@ -192,7 +197,6 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: spacing.lg,
-    bottom: spacing.lg,
     width: 56,
     height: 56,
     borderRadius: 28,
