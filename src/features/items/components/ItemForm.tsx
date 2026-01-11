@@ -18,10 +18,11 @@ import {
   itemFormSchema,
   ItemFormData,
   ITEM_CONDITION_OPTIONS,
+  ITEM_STATUS_OPTIONS,
   getUniqueStorageLocations,
   getUniqueItemSourceNames,
 } from '../schemas/item-form-schema';
-import { Item } from '@/src/types/database';
+import { Item, SalesPlatform } from '@/src/types/database';
 import { PLATFORM_PRESETS } from '@/src/features/sales/schemas/sale-form-schema';
 import { formatCurrency } from '@/src/lib/profit-utils';
 import { useItemsStore } from '@/src/stores/items-store';
@@ -74,6 +75,18 @@ export function ItemForm({
   const [purchaseCostText, setPurchaseCostText] = useState(
     item?.purchase_cost?.toString() ?? initialValues?.purchase_cost?.toString() ?? ''
   );
+  // Sale fields text state (for sold items)
+  const [salePriceText, setSalePriceText] = useState(
+    item?.sale_price?.toString() ?? ''
+  );
+  const [platformFeeText, setPlatformFeeText] = useState(
+    item?.platform_fee?.toString() ?? ''
+  );
+  const [shippingCostText, setShippingCostText] = useState(
+    item?.shipping_cost?.toString() ?? ''
+  );
+  const [showStatusPicker, setShowStatusPicker] = useState(false);
+  const [showPlatformPicker, setShowPlatformPicker] = useState(false);
 
   const { items } = useItemsStore();
   const { pallets, getPalletById } = usePalletsStore();
@@ -110,6 +123,12 @@ export function ItemForm({
       source_name: item?.source_name ?? initialValues?.source_name ?? null,
       notes: item?.notes ?? initialValues?.notes ?? null,
       pallet_id: item?.pallet_id ?? palletId ?? initialValues?.pallet_id ?? null,
+      // Sale fields
+      sale_price: item?.sale_price ?? null,
+      sale_date: item?.sale_date ?? null,
+      platform: item?.platform ?? null,
+      platform_fee: item?.platform_fee ?? null,
+      shipping_cost: item?.shipping_cost ?? null,
     } as ItemFormData,
   });
 
@@ -117,6 +136,8 @@ export function ItemForm({
   const watchSourceName = watch('source_name');
   const watchCondition = watch('condition');
   const watchPalletId = watch('pallet_id') as string | null | undefined;
+  const watchStatus = watch('status');
+  const watchPlatform = watch('platform') as SalesPlatform | null | undefined;
 
   // Get selected pallet (from form value)
   const selectedPallet = useMemo(() => {
@@ -154,6 +175,16 @@ export function ItemForm({
     setValue('retail_price', retailNum);
     setValue('listing_price', listingNum);
     setValue('purchase_cost', purchaseNum);
+
+    // Sync sale fields if editing a sold item
+    if (watchStatus === 'sold') {
+      const saleNum = parseFloat(salePriceText) || null;
+      const platformFeeNum = parseFloat(platformFeeText) || null;
+      const shippingNum = parseFloat(shippingCostText) || null;
+      setValue('sale_price', saleNum);
+      setValue('platform_fee', platformFeeNum);
+      setValue('shipping_cost', shippingNum);
+    }
   };
 
   return (
@@ -176,44 +207,215 @@ export function ItemForm({
           </View>
         )}
 
-        {/* Sale Details (read-only, shown when editing a sold item) */}
-        {item?.status === 'sold' && item.sale_price !== null && (
+        {/* Sale Details (editable when editing a sold item) */}
+        {item?.status === 'sold' && (
           <View style={styles.saleDetailsSection}>
             <Text style={styles.saleDetailsTitle}>Sale Details</Text>
-            <View style={styles.saleDetailsGrid}>
-              <View style={styles.saleDetailItem}>
-                <Text style={styles.saleDetailLabel}>Sale Price</Text>
-                <Text style={styles.saleDetailValue}>{formatCurrency(item.sale_price)}</Text>
-              </View>
-              {item.sale_date && (
-                <View style={styles.saleDetailItem}>
-                  <Text style={styles.saleDetailLabel}>Sale Date</Text>
-                  <Text style={styles.saleDetailValue}>
-                    {new Date(item.sale_date + 'T00:00:00').toLocaleDateString()}
-                  </Text>
-                </View>
-              )}
-              {item.platform && (
-                <View style={styles.saleDetailItem}>
-                  <Text style={styles.saleDetailLabel}>Platform</Text>
-                  <Text style={styles.saleDetailValue}>
-                    {PLATFORM_PRESETS[item.platform]?.name || item.platform}
-                  </Text>
-                </View>
-              )}
-              {item.platform_fee !== null && item.platform_fee > 0 && (
-                <View style={styles.saleDetailItem}>
-                  <Text style={styles.saleDetailLabel}>Platform Fee</Text>
-                  <Text style={styles.saleDetailValue}>{formatCurrency(item.platform_fee)}</Text>
-                </View>
-              )}
-              {item.shipping_cost !== null && item.shipping_cost > 0 && (
-                <View style={styles.saleDetailItem}>
-                  <Text style={styles.saleDetailLabel}>Shipping Cost</Text>
-                  <Text style={styles.saleDetailValue}>{formatCurrency(item.shipping_cost)}</Text>
-                </View>
-              )}
+
+            {/* Status Selector - allows changing from sold back to listed */}
+            <View style={styles.statusSelector}>
+              <Text style={styles.label}>Status</Text>
+              <Controller
+                control={control}
+                name="status"
+                render={({ field: { onChange, value } }) => (
+                  <>
+                    <Pressable
+                      style={styles.statusPickerButton}
+                      onPress={() => setShowStatusPicker(!showStatusPicker)}
+                    >
+                      <Text style={styles.statusPickerText}>
+                        {ITEM_STATUS_OPTIONS.find(o => o.value === value)?.label || value}
+                      </Text>
+                      <Text style={styles.statusPickerArrow}>
+                        {showStatusPicker ? '▲' : '▼'}
+                      </Text>
+                    </Pressable>
+                    {showStatusPicker && (
+                      <View style={styles.statusPickerDropdown}>
+                        {ITEM_STATUS_OPTIONS.map((option) => (
+                          <Pressable
+                            key={option.value}
+                            style={[
+                              styles.statusOption,
+                              value === option.value && styles.statusOptionSelected
+                            ]}
+                            onPress={() => {
+                              onChange(option.value);
+                              setShowStatusPicker(false);
+                            }}
+                          >
+                            <Text style={styles.statusOptionText}>{option.label}</Text>
+                            {value === option.value && <Text style={styles.statusOptionCheck}>✓</Text>}
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                  </>
+                )}
+              />
+              <Text style={styles.statusHint}>
+                Change to "Listed" to undo the sale
+              </Text>
             </View>
+
+            {/* Only show sale fields if status is still 'sold' */}
+            {watchStatus === 'sold' && (
+              <>
+                {/* Sale Price */}
+                <Controller
+                  control={control}
+                  name="sale_price"
+                  render={({ field: { onChange, onBlur } }) => (
+                    <Input
+                      label="Sale Price"
+                      placeholder="Final sale price"
+                      value={salePriceText}
+                      onChangeText={(text) => {
+                        const cleaned = text.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                        setSalePriceText(cleaned);
+                      }}
+                      onBlur={() => {
+                        const num = parseFloat(salePriceText) || null;
+                        onChange(num);
+                        if (num !== null) {
+                          setSalePriceText(num.toString());
+                        }
+                        onBlur();
+                      }}
+                      error={errors.sale_price?.message}
+                      keyboardType="decimal-pad"
+                      leftIcon="dollar"
+                    />
+                  )}
+                />
+
+                {/* Platform Selector */}
+                <View style={styles.platformSelector}>
+                  <Text style={styles.label}>Sales Platform</Text>
+                  <Controller
+                    control={control}
+                    name="platform"
+                    render={({ field: { onChange, value } }) => (
+                      <>
+                        <Pressable
+                          style={styles.platformPickerButton}
+                          onPress={() => setShowPlatformPicker(!showPlatformPicker)}
+                        >
+                          <Text style={[
+                            styles.platformPickerText,
+                            !value && styles.platformPickerPlaceholder
+                          ]}>
+                            {value ? PLATFORM_PRESETS[value]?.name || value : 'Select platform'}
+                          </Text>
+                          <Text style={styles.platformPickerArrow}>
+                            {showPlatformPicker ? '▲' : '▼'}
+                          </Text>
+                        </Pressable>
+                        {showPlatformPicker && (
+                          <View style={styles.platformPickerDropdown}>
+                            {Object.entries(PLATFORM_PRESETS).map(([key, preset]) => (
+                              <Pressable
+                                key={key}
+                                style={[
+                                  styles.platformOption,
+                                  value === key && styles.platformOptionSelected
+                                ]}
+                                onPress={() => {
+                                  onChange(key as SalesPlatform);
+                                  setShowPlatformPicker(false);
+                                }}
+                              >
+                                <View style={styles.platformOptionContent}>
+                                  <Text style={styles.platformOptionText}>{preset.name}</Text>
+                                  <Text style={styles.platformOptionDesc}>{preset.description}</Text>
+                                </View>
+                                {value === key && <Text style={styles.platformOptionCheck}>✓</Text>}
+                              </Pressable>
+                            ))}
+                          </View>
+                        )}
+                      </>
+                    )}
+                  />
+                </View>
+
+                {/* Platform Fee and Shipping Row */}
+                <View style={styles.row}>
+                  <View style={styles.halfField}>
+                    <Controller
+                      control={control}
+                      name="platform_fee"
+                      render={({ field: { onChange, onBlur } }) => (
+                        <Input
+                          label="Platform Fee"
+                          placeholder="0.00"
+                          value={platformFeeText}
+                          onChangeText={(text) => {
+                            const cleaned = text.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                            setPlatformFeeText(cleaned);
+                          }}
+                          onBlur={() => {
+                            const num = parseFloat(platformFeeText) || null;
+                            onChange(num);
+                            if (num !== null) {
+                              setPlatformFeeText(num.toString());
+                            }
+                            onBlur();
+                          }}
+                          error={errors.platform_fee?.message}
+                          keyboardType="decimal-pad"
+                          leftIcon="dollar"
+                        />
+                      )}
+                    />
+                  </View>
+                  <View style={styles.halfField}>
+                    <Controller
+                      control={control}
+                      name="shipping_cost"
+                      render={({ field: { onChange, onBlur } }) => (
+                        <Input
+                          label="Shipping Cost"
+                          placeholder="0.00"
+                          value={shippingCostText}
+                          onChangeText={(text) => {
+                            const cleaned = text.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                            setShippingCostText(cleaned);
+                          }}
+                          onBlur={() => {
+                            const num = parseFloat(shippingCostText) || null;
+                            onChange(num);
+                            if (num !== null) {
+                              setShippingCostText(num.toString());
+                            }
+                            onBlur();
+                          }}
+                          error={errors.shipping_cost?.message}
+                          keyboardType="decimal-pad"
+                          leftIcon="dollar"
+                        />
+                      )}
+                    />
+                  </View>
+                </View>
+
+                {/* Sale Date */}
+                <Controller
+                  control={control}
+                  name="sale_date"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label="Sale Date"
+                      placeholder="YYYY-MM-DD"
+                      value={value || ''}
+                      onChangeText={onChange}
+                      hint="Date format: YYYY-MM-DD"
+                    />
+                  )}
+                />
+              </>
+            )}
           </View>
         )}
 
@@ -874,5 +1076,136 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     flex: 1,
+  },
+  // Status picker styles
+  statusSelector: {
+    marginBottom: spacing.md,
+  },
+  statusPickerButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  statusPickerText: {
+    fontSize: fontSize.md,
+    color: colors.textPrimary,
+  },
+  statusPickerArrow: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  statusPickerDropdown: {
+    marginTop: spacing.xs,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  statusOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  statusOptionSelected: {
+    backgroundColor: colors.primary + '10',
+  },
+  statusOptionText: {
+    fontSize: fontSize.md,
+    color: colors.textPrimary,
+  },
+  statusOptionCheck: {
+    fontSize: fontSize.md,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  statusHint: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+    fontStyle: 'italic',
+  },
+  // Platform picker styles
+  platformSelector: {
+    marginBottom: spacing.md,
+  },
+  platformPickerButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  platformPickerText: {
+    fontSize: fontSize.md,
+    color: colors.textPrimary,
+  },
+  platformPickerPlaceholder: {
+    color: colors.textSecondary,
+  },
+  platformPickerArrow: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  platformPickerDropdown: {
+    marginTop: spacing.xs,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 10,
+    maxHeight: 300,
+  },
+  platformOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  platformOptionSelected: {
+    backgroundColor: colors.primary + '10',
+  },
+  platformOptionContent: {
+    flex: 1,
+  },
+  platformOptionText: {
+    fontSize: fontSize.md,
+    color: colors.textPrimary,
+  },
+  platformOptionDesc: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  platformOptionCheck: {
+    fontSize: fontSize.md,
+    color: colors.primary,
+    fontWeight: '600',
+    marginLeft: spacing.sm,
   },
 });

@@ -73,7 +73,8 @@ export default function EditItemScreen() {
 
     setIsSubmitting(true);
     try {
-      const result = await updateItem(id, {
+      // Build update object with basic fields
+      const updateData: Parameters<typeof updateItem>[1] = {
         name: data.name,
         description: data.description,
         quantity: data.quantity,
@@ -87,7 +88,25 @@ export default function EditItemScreen() {
         source_name: data.source_name,
         notes: data.notes,
         pallet_id: data.pallet_id || null,
-      });
+      };
+
+      // Include sale fields if item was sold (or is being marked as sold)
+      if (data.status === 'sold') {
+        updateData.sale_price = data.sale_price;
+        updateData.sale_date = data.sale_date;
+        updateData.platform = data.platform;
+        updateData.platform_fee = data.platform_fee;
+        updateData.shipping_cost = data.shipping_cost;
+      } else if (item.status === 'sold' && data.status !== 'sold') {
+        // If changing from sold to another status, clear sale fields
+        updateData.sale_price = null;
+        updateData.sale_date = null;
+        updateData.platform = null;
+        updateData.platform_fee = null;
+        updateData.shipping_cost = null;
+      }
+
+      const result = await updateItem(id, updateData);
 
       if (result.success) {
         // Handle photo changes
@@ -161,12 +180,12 @@ export default function EditItemScreen() {
             </View>
             <Text style={styles.confirmTitle}>Edit Sold Item?</Text>
             <Text style={styles.confirmText}>
-              This item has already been marked as sold. Editing item details may affect profit calculations for this item and its associated pallet.
+              This item has already been marked as sold. You can edit sale details (price, fees, platform) directly, or change the status back to "Listed" to undo the sale.
             </Text>
             <View style={styles.warningBox}>
               <FontAwesome name="info-circle" size={16} color={colors.textSecondary} />
               <Text style={styles.warningText}>
-                If you need to update sale details (price, fees, platform), you should mark the item as unsold first, then re-sell it with the correct information.
+                Changes to sale details will update profit calculations for this item and its associated pallet.
               </Text>
             </View>
             <View style={styles.confirmButtons}>

@@ -319,6 +319,88 @@ describe('itemFormSchema', () => {
       expect(result.success).toBe(false);
     });
   });
+
+  describe('sale fields validation', () => {
+    it('should accept valid sale fields for sold items', () => {
+      const data = {
+        name: 'Test Item',
+        status: 'sold' as const,
+        sale_price: 99.99,
+        sale_date: '2024-01-15',
+        platform: 'ebay' as const,
+        platform_fee: 13.25,
+        shipping_cost: 5.00,
+      };
+      const result = itemFormSchema.safeParse(data);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.sale_price).toBe(99.99);
+        expect(result.data.platform).toBe('ebay');
+        expect(result.data.platform_fee).toBe(13.25);
+        expect(result.data.shipping_cost).toBe(5.00);
+      }
+    });
+
+    it('should accept all valid platform values', () => {
+      const platforms = ['ebay', 'poshmark', 'mercari', 'whatnot', 'facebook', 'offerup', 'letgo', 'craigslist', 'other'];
+      platforms.forEach(platform => {
+        const result = itemFormSchema.safeParse({ name: 'Test', platform });
+        expect(result.success).toBe(true);
+      });
+    });
+
+    it('should reject invalid platform value', () => {
+      const data = { name: 'Test', platform: 'invalid_platform' };
+      const result = itemFormSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject negative sale_price', () => {
+      const data = { name: 'Test', sale_price: -10 };
+      const result = itemFormSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe('Sale price cannot be negative');
+      }
+    });
+
+    it('should reject negative platform_fee', () => {
+      const data = { name: 'Test', platform_fee: -10 };
+      const result = itemFormSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe('Platform fee cannot be negative');
+      }
+    });
+
+    it('should reject negative shipping_cost', () => {
+      const data = { name: 'Test', shipping_cost: -10 };
+      const result = itemFormSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe('Shipping cost cannot be negative');
+      }
+    });
+
+    it('should accept null/undefined sale fields', () => {
+      const data = { name: 'Test' };
+      const result = itemFormSchema.safeParse(data);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.sale_price).toBeNull();
+        expect(result.data.sale_date).toBeNull();
+        expect(result.data.platform).toBeNull();
+        expect(result.data.platform_fee).toBeNull();
+        expect(result.data.shipping_cost).toBeNull();
+      }
+    });
+
+    it('should accept zero sale_price, platform_fee, and shipping_cost', () => {
+      const data = { name: 'Test', sale_price: 0, platform_fee: 0, shipping_cost: 0 };
+      const result = itemFormSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+  });
 });
 
 describe('calculateItemProfit', () => {
@@ -349,6 +431,34 @@ describe('calculateItemProfit', () => {
   it('should handle zero sale price', () => {
     expect(calculateItemProfit(0, 30, null)).toBe(-30);
   });
+
+  it('should subtract platform fee from profit', () => {
+    // Sale: $100, Cost: $30, Platform Fee: $13.25
+    // Profit = 100 - 30 - 13.25 = 56.75
+    expect(calculateItemProfit(100, 30, null, 13.25)).toBe(56.75);
+  });
+
+  it('should subtract shipping cost from profit', () => {
+    // Sale: $100, Cost: $30, Shipping: $8
+    // Profit = 100 - 30 - 8 = 62
+    expect(calculateItemProfit(100, 30, null, null, 8)).toBe(62);
+  });
+
+  it('should subtract both platform fee and shipping cost from profit', () => {
+    // Sale: $100, Cost: $30, Platform Fee: $13.25, Shipping: $8
+    // Profit = 100 - 30 - 13.25 - 8 = 48.75
+    expect(calculateItemProfit(100, 30, null, 13.25, 8)).toBe(48.75);
+  });
+
+  it('should handle null fees as zero', () => {
+    expect(calculateItemProfit(100, 30, null, null, null)).toBe(70);
+  });
+
+  it('should calculate loss including fees', () => {
+    // Sale: $50, Cost: $30, Platform Fee: $10, Shipping: $15
+    // Profit = 50 - 30 - 10 - 15 = -5 (loss)
+    expect(calculateItemProfit(50, 30, null, 10, 15)).toBe(-5);
+  });
 });
 
 describe('calculateItemROI', () => {
@@ -378,6 +488,27 @@ describe('calculateItemROI', () => {
 
   it('should handle all null costs', () => {
     expect(calculateItemROI(100, null, null)).toBe(100);
+  });
+
+  it('should include platform fee in ROI calculation', () => {
+    // Sale: $100, Cost: $50, Platform Fee: $10
+    // Profit = 100 - 50 - 10 = 40
+    // ROI = 40 / 50 * 100 = 80%
+    expect(calculateItemROI(100, 50, null, 10)).toBe(80);
+  });
+
+  it('should include shipping cost in ROI calculation', () => {
+    // Sale: $100, Cost: $50, Shipping: $10
+    // Profit = 100 - 50 - 10 = 40
+    // ROI = 40 / 50 * 100 = 80%
+    expect(calculateItemROI(100, 50, null, null, 10)).toBe(80);
+  });
+
+  it('should include both fees in ROI calculation', () => {
+    // Sale: $100, Cost: $50, Platform Fee: $10, Shipping: $5
+    // Profit = 100 - 50 - 10 - 5 = 35
+    // ROI = 35 / 50 * 100 = 70%
+    expect(calculateItemROI(100, 50, null, 10, 5)).toBe(70);
   });
 });
 
@@ -569,5 +700,13 @@ describe('constants', () => {
     expect(defaultItemFormValues.status).toBe('unlisted');
     expect(defaultItemFormValues.description).toBeNull();
     expect(defaultItemFormValues.pallet_id).toBeNull();
+  });
+
+  it('should have correct default sale field values', () => {
+    expect(defaultItemFormValues.sale_price).toBeNull();
+    expect(defaultItemFormValues.sale_date).toBeNull();
+    expect(defaultItemFormValues.platform).toBeNull();
+    expect(defaultItemFormValues.platform_fee).toBeNull();
+    expect(defaultItemFormValues.shipping_cost).toBeNull();
   });
 });

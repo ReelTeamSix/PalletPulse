@@ -1,6 +1,6 @@
 // Item Form Validation Schema
 import { z } from 'zod';
-import { ItemCondition, ItemStatus } from '@/src/types/database';
+import { ItemCondition, ItemStatus, SalesPlatform } from '@/src/types/database';
 
 // Item condition options for dropdown
 export const ITEM_CONDITION_OPTIONS: { label: string; value: ItemCondition }[] = [
@@ -135,6 +135,43 @@ export const itemFormSchema = z.object({
     .optional()
     .nullable()
     .transform(val => val || null),
+
+  // Sale fields (for editing sold items)
+  sale_price: z
+    .number({ message: 'Sale price must be a number' })
+    .min(0, 'Sale price cannot be negative')
+    .max(999999.99, 'Sale price cannot exceed $999,999.99')
+    .optional()
+    .nullable()
+    .transform(val => val ?? null),
+
+  sale_date: z
+    .string()
+    .optional()
+    .nullable()
+    .transform(val => val || null),
+
+  platform: z
+    .enum(['ebay', 'poshmark', 'mercari', 'whatnot', 'facebook', 'offerup', 'letgo', 'craigslist', 'other'] as const)
+    .optional()
+    .nullable()
+    .transform(val => val ?? null),
+
+  platform_fee: z
+    .number({ message: 'Platform fee must be a number' })
+    .min(0, 'Platform fee cannot be negative')
+    .max(999999.99, 'Platform fee cannot exceed $999,999.99')
+    .optional()
+    .nullable()
+    .transform(val => val ?? null),
+
+  shipping_cost: z
+    .number({ message: 'Shipping cost must be a number' })
+    .min(0, 'Shipping cost cannot be negative')
+    .max(999999.99, 'Shipping cost cannot exceed $999,999.99')
+    .optional()
+    .nullable()
+    .transform(val => val ?? null),
 });
 
 // Type inference
@@ -155,6 +192,11 @@ export const defaultItemFormValues: Partial<ItemFormData> = {
   source_name: null,
   notes: null,
   pallet_id: null,
+  sale_price: null,
+  sale_date: null,
+  platform: null,
+  platform_fee: null,
+  shipping_cost: null,
 };
 
 // Helper to calculate profit for an item (includes fees if provided)
