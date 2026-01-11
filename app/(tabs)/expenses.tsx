@@ -76,6 +76,16 @@ export default function ExpensesScreen() {
     return filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
   }, [filteredExpenses]);
 
+  // Break down operating expenses by category
+  const expensesByCategory = useMemo(() => {
+    const breakdown: Record<string, number> = {};
+    filteredExpenses.forEach(e => {
+      const category = e.category || 'other';
+      breakdown[category] = (breakdown[category] || 0) + e.amount;
+    });
+    return breakdown;
+  }, [filteredExpenses]);
+
   // Calculate sales costs (platform fees + shipping) from sold items
   const salesCosts = useMemo(() => {
     const soldItems = items.filter(item => {
@@ -134,10 +144,28 @@ export default function ExpensesScreen() {
 
   // Summary card showing sales costs + operating expenses breakdown
   const hasSalesCosts = salesCosts.platformFees > 0 || salesCosts.shippingCosts > 0;
+  const hasOperatingExpenses = totalOperatingExpenses > 0;
+
+  // Get icon for expense category
+  const getCategoryIcon = (category: string): React.ComponentProps<typeof FontAwesome>['name'] => {
+    switch (category) {
+      case 'storage': return 'home';
+      case 'supplies': return 'shopping-bag';
+      case 'subscriptions': return 'refresh';
+      case 'equipment': return 'wrench';
+      case 'gas': return 'car';
+      case 'mileage': return 'road';
+      case 'fees': return 'money';
+      case 'shipping': return 'truck';
+      default: return 'ellipsis-h';
+    }
+  };
 
   const renderSummaryCard = () => {
-    // Only show if there are sales costs to display
-    if (!hasSalesCosts) return null;
+    // Show if there are sales costs OR operating expenses
+    if (!hasSalesCosts && !hasOperatingExpenses) return null;
+
+    const categoryEntries = Object.entries(expensesByCategory).filter(([_, amount]) => amount > 0);
 
     return (
       <View style={styles.summaryCard}>
@@ -146,36 +174,46 @@ export default function ExpensesScreen() {
           <Text style={styles.summaryTitle}>Cost Breakdown</Text>
         </View>
 
-        {/* From Sales section */}
-        <View style={styles.summarySection}>
-          <Text style={styles.summarySectionLabel}>From Sales ({salesCosts.itemCount} items)</Text>
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryRowLeft}>
-              <FontAwesome name="credit-card" size={12} color={colors.textSecondary} />
-              <Text style={styles.summaryRowLabel}>Platform Fees</Text>
-            </View>
-            <Text style={styles.summaryRowValue}>{formatExpenseAmount(salesCosts.platformFees)}</Text>
+        {/* From Sales section - only show if there are sales costs */}
+        {hasSalesCosts && (
+          <View style={styles.summarySection}>
+            <Text style={styles.summarySectionLabel}>From Sales ({salesCosts.itemCount} items)</Text>
+            {salesCosts.platformFees > 0 && (
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryRowLeft}>
+                  <FontAwesome name="credit-card" size={12} color={colors.textSecondary} />
+                  <Text style={styles.summaryRowLabel}>Platform Fees</Text>
+                </View>
+                <Text style={styles.summaryRowValue}>{formatExpenseAmount(salesCosts.platformFees)}</Text>
+              </View>
+            )}
+            {salesCosts.shippingCosts > 0 && (
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryRowLeft}>
+                  <FontAwesome name="truck" size={12} color={colors.textSecondary} />
+                  <Text style={styles.summaryRowLabel}>Shipping</Text>
+                </View>
+                <Text style={styles.summaryRowValue}>{formatExpenseAmount(salesCosts.shippingCosts)}</Text>
+              </View>
+            )}
           </View>
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryRowLeft}>
-              <FontAwesome name="truck" size={12} color={colors.textSecondary} />
-              <Text style={styles.summaryRowLabel}>Shipping</Text>
-            </View>
-            <Text style={styles.summaryRowValue}>{formatExpenseAmount(salesCosts.shippingCosts)}</Text>
-          </View>
-        </View>
+        )}
 
-        {/* Operating Expenses section */}
-        <View style={styles.summarySection}>
-          <Text style={styles.summarySectionLabel}>Operating Expenses</Text>
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryRowLeft}>
-              <FontAwesome name="building-o" size={12} color={colors.textSecondary} />
-              <Text style={styles.summaryRowLabel}>Overhead</Text>
-            </View>
-            <Text style={styles.summaryRowValue}>{formatExpenseAmount(totalOperatingExpenses)}</Text>
+        {/* Operating Expenses section - broken down by category */}
+        {hasOperatingExpenses && (
+          <View style={styles.summarySection}>
+            <Text style={styles.summarySectionLabel}>Operating Expenses</Text>
+            {categoryEntries.map(([category, amount]) => (
+              <View key={category} style={styles.summaryRow}>
+                <View style={styles.summaryRowLeft}>
+                  <FontAwesome name={getCategoryIcon(category)} size={12} color={colors.textSecondary} />
+                  <Text style={styles.summaryRowLabel}>{EXPENSE_CATEGORY_LABELS[category as ExpenseCategory] || category}</Text>
+                </View>
+                <Text style={styles.summaryRowValue}>{formatExpenseAmount(amount)}</Text>
+              </View>
+            ))}
           </View>
-        </View>
+        )}
 
         {/* Total */}
         <View style={styles.summaryTotal}>
@@ -183,13 +221,15 @@ export default function ExpensesScreen() {
           <Text style={styles.summaryTotalValue}>{formatExpenseAmount(totalAllExpenses)}</Text>
         </View>
 
-        {/* Note about already accounted */}
-        <View style={styles.summaryNote}>
-          <FontAwesome name="info-circle" size={10} color={colors.textSecondary} />
-          <Text style={styles.summaryNoteText}>
-            Sales costs are already deducted from item profits
-          </Text>
-        </View>
+        {/* Note about already accounted - only show if there are sales costs */}
+        {hasSalesCosts && (
+          <View style={styles.summaryNote}>
+            <FontAwesome name="info-circle" size={10} color={colors.textSecondary} />
+            <Text style={styles.summaryNoteText}>
+              Sales costs are already deducted from item profits
+            </Text>
+          </View>
+        )}
       </View>
     );
   };
