@@ -1,5 +1,6 @@
 import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { Button } from '@/src/components/ui';
@@ -7,22 +8,15 @@ import { Button } from '@/src/components/ui';
 export default function NewItemScreen() {
   const { palletId } = useLocalSearchParams<{ palletId?: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const handleCancel = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)/items');
-    }
+    router.dismiss();
   };
 
   const handleSave = () => {
     // Form submission will be implemented in Phase 6
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)/items');
-    }
+    router.dismiss();
   };
 
   return (
@@ -34,7 +28,11 @@ export default function NewItemScreen() {
         }}
       />
       <View style={styles.container}>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.header}>
             <Text style={styles.title}>New Item</Text>
             <Text style={styles.subtitle}>
@@ -98,7 +96,7 @@ export default function NewItemScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
           <Button
             title="Cancel"
             onPress={handleCancel}

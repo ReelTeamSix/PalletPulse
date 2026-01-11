@@ -1,5 +1,6 @@
 import { StyleSheet, View, Text, ScrollView, Image } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
@@ -7,6 +8,7 @@ import { Button } from '@/src/components/ui';
 
 export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const insets = useSafeAreaInsets();
 
   const handleMarkAsSold = () => {
     // Mark as sold will be implemented in Phase 7
@@ -98,7 +100,7 @@ export default function ItemDetailScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
           <Button
             title="Edit Item"
             onPress={handleEdit}

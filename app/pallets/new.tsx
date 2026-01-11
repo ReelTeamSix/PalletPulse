@@ -1,27 +1,21 @@
 import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { Button } from '@/src/components/ui';
 
 export default function NewPalletScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const handleCancel = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)/pallets');
-    }
+    router.dismiss();
   };
 
   const handleSave = () => {
     // Form submission will be implemented in Phase 5
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)/pallets');
-    }
+    router.dismiss();
   };
 
   return (
@@ -33,7 +27,11 @@ export default function NewPalletScreen() {
         }}
       />
       <View style={styles.container}>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.header}>
             <Text style={styles.title}>New Pallet</Text>
             <Text style={styles.subtitle}>Enter pallet details to start tracking</Text>
@@ -59,7 +57,7 @@ export default function NewPalletScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
           <Button
             title="Cancel"
             onPress={handleCancel}
