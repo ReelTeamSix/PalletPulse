@@ -13,6 +13,7 @@
 3. **Explain your reasoning** — Comments explain "why", not "what"
 4. **Test as you go** — Don't accumulate technical debt
 5. **Ask when uncertain** — Better to clarify than assume wrong
+6. **Propose ideas, don't implement without approval** — When you discover optimizations, feature improvements, design changes, or new ideas while working, bring them to the human's attention for approval before implementing. Share your reasoning and wait for explicit approval.
 
 ---
 
