@@ -15,7 +15,7 @@ export const ITEM_CONDITION_OPTIONS: { label: string; value: ItemCondition }[] =
 
 // Item status options
 export const ITEM_STATUS_OPTIONS: { label: string; value: ItemStatus }[] = [
-  { label: 'Unprocessed', value: 'unprocessed' },
+  { label: 'Unlisted', value: 'unprocessed' },
   { label: 'Listed', value: 'listed' },
   { label: 'Sold', value: 'sold' },
 ];
