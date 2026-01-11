@@ -17,18 +17,21 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
-import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
+import { useItemsStore } from '@/src/stores/items-store';
+import { useExpensesStore } from '@/src/stores/expenses-store';
+import { PalletCard } from '@/src/features/pallets';
 import { ItemCard } from '@/src/features/items';
-import { Item, SalesPlatform } from '@/src/types/database';
+import { Pallet, Item, SalesPlatform } from '@/src/types/database';
 import {
   formatCurrency,
   formatROI,
   getROIColor,
-  calculateItemROIFromValues,
+  calculatePalletProfit,
 } from '@/src/lib/profit-utils';
 import {
   PLATFORM_OPTIONS,
@@ -36,15 +39,29 @@ import {
   calculateNetProfit,
 } from '@/src/features/sales/schemas/sale-form-schema';
 
+type SegmentType = 'pallets' | 'items';
 type FilterType = 'all' | 'listed' | 'sold' | 'unlisted';
 
-export default function ItemsScreen() {
+const SEGMENT_STORAGE_KEY = 'inventory_active_segment';
+
+export default function InventoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { items, isLoading, error, fetchItems, markAsSold, deleteItem } = useItemsStore();
-  const { pallets, getPalletById } = usePalletsStore();
 
-  // Search and filter state
+  // Stores
+  const { pallets, isLoading: palletsLoading, error: palletsError, fetchPallets } = usePalletsStore();
+  const { items, isLoading: itemsLoading, error: itemsError, fetchItems, markAsSold, deleteItem } = useItemsStore();
+  const { expenses, fetchExpenses, isLoading: expensesLoading } = useExpensesStore();
+  const { getPalletById } = usePalletsStore();
+
+  const isLoading = palletsLoading || itemsLoading || expensesLoading;
+  const error = palletsError || itemsError;
+
+  // Segment state
+  const [activeSegment, setActiveSegment] = useState<SegmentType>('pallets');
+  const [segmentLoaded, setSegmentLoaded] = useState(false);
+
+  // Items-specific state
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
@@ -55,33 +72,98 @@ export default function ItemsScreen() {
   const [isQuickSelling, setIsQuickSelling] = useState(false);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
 
-  // Fetch items on focus
+  // Load saved segment from AsyncStorage
+  useEffect(() => {
+    const loadSegment = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(SEGMENT_STORAGE_KEY);
+        if (saved === 'pallets' || saved === 'items') {
+          setActiveSegment(saved);
+        }
+      } catch (e) {
+        // Ignore errors, use default
+      }
+      setSegmentLoaded(true);
+    };
+    loadSegment();
+  }, []);
+
+  // Save segment when it changes
+  const handleSegmentChange = async (segment: SegmentType) => {
+    setActiveSegment(segment);
+    try {
+      await AsyncStorage.setItem(SEGMENT_STORAGE_KEY, segment);
+    } catch (e) {
+      // Ignore errors
+    }
+  };
+
+  // Fetch data on focus
   useFocusEffect(
     useCallback(() => {
+      fetchPallets();
       fetchItems();
+      fetchExpenses();
     }, [])
   );
 
-  const handleAddItem = () => {
-    router.push('/items/new');
-  };
+  // Calculate pallet metrics
+  const palletMetrics = useMemo(() => {
+    const metrics: Record<string, { itemCount: number; profit: number }> = {};
+    pallets.forEach(pallet => {
+      const palletItems = items.filter(item => item.pallet_id === pallet.id);
+      const palletExpenses = expenses.filter(expense => expense.pallet_id === pallet.id);
+      const profitResult = calculatePalletProfit(pallet, palletItems, palletExpenses);
+      metrics[pallet.id] = {
+        itemCount: palletItems.length,
+        profit: profitResult.netProfit,
+      };
+    });
+    return metrics;
+  }, [pallets, items, expenses]);
 
+  // Filter and search items
+  const filteredItems = useMemo(() => {
+    let result = items;
+    if (activeFilter !== 'all') {
+      if (activeFilter === 'unlisted') {
+        result = result.filter(i => i.status !== 'listed' && i.status !== 'sold');
+      } else {
+        result = result.filter(i => i.status === activeFilter);
+      }
+    }
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(item => {
+        const nameMatch = item.name.toLowerCase().includes(query);
+        const descriptionMatch = item.description?.toLowerCase().includes(query);
+        const barcodeMatch = item.barcode?.toLowerCase().includes(query);
+        const notesMatch = item.notes?.toLowerCase().includes(query);
+        const locationMatch = item.storage_location?.toLowerCase().includes(query);
+        const pallet = item.pallet_id ? getPalletById(item.pallet_id) : null;
+        const palletMatch = pallet?.name.toLowerCase().includes(query);
+        return nameMatch || descriptionMatch || barcodeMatch || notesMatch || locationMatch || palletMatch;
+      });
+    }
+    return result;
+  }, [items, activeFilter, searchQuery, getPalletById]);
+
+  // Navigation handlers
+  const handleAddPallet = () => router.push('/pallets/new');
+  const handleAddItem = () => router.push('/items/new');
+  const handlePalletPress = (pallet: Pallet) => router.push(`/pallets/${pallet.id}`);
   const handleItemPress = (item: Item) => {
-    // Close any open swipeable first
     swipeableRefs.current.forEach((ref) => ref?.close());
     router.push(`/items/${item.id}`);
   };
 
-  const handleRefresh = () => {
-    fetchItems();
-  };
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([fetchPallets(), fetchItems(), fetchExpenses()]);
+  }, []);
 
   // Quick sell handlers
   const handleQuickSell = (item: Item) => {
-    // Close the swipeable
     swipeableRefs.current.get(item.id)?.close();
-
-    // Pre-fill with listing price and reset platform
     setQuickSellPrice(item.listing_price?.toString() || '');
     setQuickSellPlatform(null);
     setQuickSellItem(item);
@@ -89,18 +171,14 @@ export default function ItemsScreen() {
 
   const handleConfirmQuickSell = async () => {
     if (!quickSellItem) return;
-
     const price = parseFloat(quickSellPrice);
     if (isNaN(price) || price < 0) {
       Alert.alert('Invalid Price', 'Please enter a valid sale price');
       return;
     }
-
-    // Calculate platform fee if platform selected
     const platformFee = quickSellPlatform
       ? calculatePlatformFee(price, quickSellPlatform, false)
       : undefined;
-
     setIsQuickSelling(true);
     try {
       const result = await markAsSold(quickSellItem.id, {
@@ -112,7 +190,6 @@ export default function ItemsScreen() {
         setQuickSellItem(null);
         setQuickSellPrice('');
         setQuickSellPlatform(null);
-        // Refresh the items list
         fetchItems();
       } else {
         Alert.alert('Error', result.error || 'Failed to mark item as sold');
@@ -120,6 +197,28 @@ export default function ItemsScreen() {
     } finally {
       setIsQuickSelling(false);
     }
+  };
+
+  // Delete handler
+  const handleDelete = (item: Item) => {
+    swipeableRefs.current.get(item.id)?.close();
+    Alert.alert(
+      'Delete Item',
+      `Are you sure you want to permanently delete "${item.name}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await deleteItem(item.id);
+            if (!result.success) {
+              Alert.alert('Error', result.error || 'Failed to delete item');
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Get item cost for profit calculation
@@ -136,21 +235,16 @@ export default function ItemsScreen() {
     return item.purchase_cost ?? 0;
   }, [items, pallets, getPalletById]);
 
-  // Render right swipe action (Sell)
+  // Render swipe actions for items
   const renderRightActions = (item: Item, progress: Animated.AnimatedInterpolation<number>) => {
     if (item.status === 'sold') return null;
-
     const translateX = progress.interpolate({
       inputRange: [0, 1],
       outputRange: [100, 0],
     });
-
     return (
       <Animated.View style={[styles.swipeAction, { transform: [{ translateX }] }]}>
-        <Pressable
-          style={styles.sellButton}
-          onPress={() => handleQuickSell(item)}
-        >
+        <Pressable style={styles.sellButton} onPress={() => handleQuickSell(item)}>
           <FontAwesome name="dollar" size={20} color={colors.background} />
           <Text style={styles.sellButtonText}>SELL</Text>
         </Pressable>
@@ -158,19 +252,14 @@ export default function ItemsScreen() {
     );
   };
 
-  // Render left swipe action (Delete)
   const renderLeftActions = (item: Item, progress: Animated.AnimatedInterpolation<number>) => {
     const translateX = progress.interpolate({
       inputRange: [0, 1],
       outputRange: [-100, 0],
     });
-
     return (
       <Animated.View style={[styles.swipeActionLeft, { transform: [{ translateX }] }]}>
-        <Pressable
-          style={styles.deleteButton}
-          onPress={() => handleDelete(item)}
-        >
+        <Pressable style={styles.deleteButton} onPress={() => handleDelete(item)}>
           <FontAwesome name="trash" size={20} color={colors.background} />
           <Text style={styles.deleteButtonText}>DELETE</Text>
         </Pressable>
@@ -178,15 +267,24 @@ export default function ItemsScreen() {
     );
   };
 
-  const renderItemCard = ({ item }: { item: Item }) => {
-    // Get pallet name if item belongs to a pallet
-    const pallet = item.pallet_id ? getPalletById(item.pallet_id) : null;
+  // Render functions
+  const renderPalletCard = ({ item }: { item: Pallet }) => {
+    const metrics = palletMetrics[item.id] || { itemCount: 0, profit: 0 };
+    return (
+      <PalletCard
+        pallet={item}
+        itemCount={metrics.itemCount}
+        totalProfit={metrics.profit}
+        onPress={() => handlePalletPress(item)}
+      />
+    );
+  };
 
+  const renderItemCard = ({ item }: { item: Item }) => {
+    const pallet = item.pallet_id ? getPalletById(item.pallet_id) : null;
     return (
       <Swipeable
-        ref={(ref) => {
-          if (ref) swipeableRefs.current.set(item.id, ref);
-        }}
+        ref={(ref) => { if (ref) swipeableRefs.current.set(item.id, ref); }}
         renderRightActions={(progress) => renderRightActions(item, progress)}
         renderLeftActions={(progress) => renderLeftActions(item, progress)}
         rightThreshold={40}
@@ -204,7 +302,17 @@ export default function ItemsScreen() {
     );
   };
 
-  const renderEmptyState = () => (
+  const renderEmptyPallets = () => (
+    <View style={styles.placeholder}>
+      <FontAwesome name="archive" size={48} color={colors.neutral} />
+      <Text style={styles.placeholderTitle}>No pallets yet</Text>
+      <Text style={styles.placeholderText}>
+        Tap the + button to add your first pallet and start tracking your inventory.
+      </Text>
+    </View>
+  );
+
+  const renderEmptyItems = () => (
     <View style={styles.placeholder}>
       <FontAwesome name="cube" size={48} color={colors.neutral} />
       <Text style={styles.placeholderTitle}>No items yet</Text>
@@ -225,67 +333,12 @@ export default function ItemsScreen() {
     </View>
   );
 
-  // Filter and search items
-  const filteredItems = useMemo(() => {
-    let result = items;
-
-    // Apply status filter
-    if (activeFilter !== 'all') {
-      if (activeFilter === 'unlisted') {
-        result = result.filter(i => i.status !== 'listed' && i.status !== 'sold');
-      } else {
-        result = result.filter(i => i.status === activeFilter);
-      }
-    }
-
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      result = result.filter(item => {
-        const nameMatch = item.name.toLowerCase().includes(query);
-        const descriptionMatch = item.description?.toLowerCase().includes(query);
-        const barcodeMatch = item.barcode?.toLowerCase().includes(query);
-        const notesMatch = item.notes?.toLowerCase().includes(query);
-        const locationMatch = item.storage_location?.toLowerCase().includes(query);
-        // Also search by pallet name
-        const pallet = item.pallet_id ? getPalletById(item.pallet_id) : null;
-        const palletMatch = pallet?.name.toLowerCase().includes(query);
-        return nameMatch || descriptionMatch || barcodeMatch || notesMatch || locationMatch || palletMatch;
-      });
-    }
-
-    return result;
-  }, [items, activeFilter, searchQuery, getPalletById]);
-
-  // Calculate summary stats
+  // Calculate stats
+  const totalPalletItems = items.filter(i => pallets.some(p => p.id === i.pallet_id)).length;
   const soldCount = items.filter(i => i.status === 'sold').length;
   const listedCount = items.filter(i => i.status === 'listed').length;
-  const unsoldCount = items.filter(i => i.status !== 'sold').length;
 
-  // Delete handler with confirmation
-  const handleDelete = (item: Item) => {
-    swipeableRefs.current.get(item.id)?.close();
-
-    Alert.alert(
-      'Delete Item',
-      `Are you sure you want to permanently delete "${item.name}"? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const result = await deleteItem(item.id);
-            if (!result.success) {
-              Alert.alert('Error', result.error || 'Failed to delete item');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  // Quick sell profit preview (now includes platform fees)
+  // Quick sell profit preview
   const quickSellPriceNum = parseFloat(quickSellPrice) || 0;
   const quickSellPlatformFee = quickSellPlatform
     ? calculatePlatformFee(quickSellPriceNum, quickSellPlatform, false)
@@ -296,90 +349,171 @@ export default function ItemsScreen() {
   })() : 0;
   const quickSellROI = quickSellItem ? (() => {
     const cost = getItemCost(quickSellItem);
-    // ROI = profit / cost
     return cost > 0 ? (quickSellProfit / cost) * 100 : quickSellProfit > 0 ? 100 : 0;
   })() : 0;
+
+  // Don't render until segment is loaded from storage
+  if (!segmentLoaded) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <GestureHandlerRootView style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>Items</Text>
-          <Text style={styles.swipeHint}>
-            {items.length > 0 ? '← Delete | Sell →' : ''}
-          </Text>
+          <Text style={styles.title}>Inventory</Text>
+          {activeSegment === 'items' && items.length > 0 && (
+            <Text style={styles.swipeHint}>{'<- Delete | Sell ->'}</Text>
+          )}
         </View>
         <Text style={styles.subtitle}>
-          {items.length > 0
-            ? `${items.length} item${items.length === 1 ? '' : 's'} • ${listedCount} listed • ${soldCount} sold`
-            : 'All your inventory items'}
+          {activeSegment === 'pallets'
+            ? pallets.length > 0
+              ? `${pallets.length} pallet${pallets.length === 1 ? '' : 's'} - ${totalPalletItems} items`
+              : 'Manage your pallet inventory'
+            : items.length > 0
+              ? `${items.length} item${items.length === 1 ? '' : 's'} - ${listedCount} listed - ${soldCount} sold`
+              : 'All your inventory items'}
         </Text>
 
-        {/* Search Bar */}
-        {items.length > 0 && (
-          <View style={styles.searchContainer}>
-            <FontAwesome name="search" size={16} color={colors.textSecondary} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search by name, barcode, notes..."
-              placeholderTextColor={colors.textSecondary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {searchQuery.length > 0 && (
-              <Pressable onPress={() => setSearchQuery('')}>
-                <FontAwesome name="times-circle" size={18} color={colors.textSecondary} />
-              </Pressable>
-            )}
-          </View>
-        )}
-
-        {/* Filter Chips */}
-        {items.length > 0 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.filterContainer}
-            contentContainerStyle={styles.filterContent}
+        {/* Segmented Control */}
+        <View style={styles.segmentedControl}>
+          <Pressable
+            style={[
+              styles.segmentButton,
+              activeSegment === 'pallets' && styles.segmentButtonActive,
+            ]}
+            onPress={() => handleSegmentChange('pallets')}
           >
-            {(['all', 'listed', 'sold', 'unlisted'] as FilterType[]).map((filter) => (
-              <Pressable
-                key={filter}
-                style={[
-                  styles.filterChip,
-                  activeFilter === filter && styles.filterChipActive,
-                ]}
-                onPress={() => setActiveFilter(filter)}
-              >
-                <Text
+            <FontAwesome
+              name="archive"
+              size={16}
+              color={activeSegment === 'pallets' ? colors.background : colors.textSecondary}
+              style={styles.segmentIcon}
+            />
+            <Text
+              style={[
+                styles.segmentText,
+                activeSegment === 'pallets' && styles.segmentTextActive,
+              ]}
+            >
+              Pallets ({pallets.length})
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.segmentButton,
+              activeSegment === 'items' && styles.segmentButtonActive,
+            ]}
+            onPress={() => handleSegmentChange('items')}
+          >
+            <FontAwesome
+              name="cube"
+              size={16}
+              color={activeSegment === 'items' ? colors.background : colors.textSecondary}
+              style={styles.segmentIcon}
+            />
+            <Text
+              style={[
+                styles.segmentText,
+                activeSegment === 'items' && styles.segmentTextActive,
+              ]}
+            >
+              Items ({items.length})
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Search and Filter (Items only) */}
+        {activeSegment === 'items' && items.length > 0 && (
+          <>
+            <View style={styles.searchContainer}>
+              <FontAwesome name="search" size={16} color={colors.textSecondary} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search by name, barcode, notes..."
+                placeholderTextColor={colors.textSecondary}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {searchQuery.length > 0 && (
+                <Pressable onPress={() => setSearchQuery('')}>
+                  <FontAwesome name="times-circle" size={18} color={colors.textSecondary} />
+                </Pressable>
+              )}
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.filterContainer}
+              contentContainerStyle={styles.filterContent}
+            >
+              {(['all', 'listed', 'sold', 'unlisted'] as FilterType[]).map((filter) => (
+                <Pressable
+                  key={filter}
                   style={[
-                    styles.filterChipText,
-                    activeFilter === filter && styles.filterChipTextActive,
+                    styles.filterChip,
+                    activeFilter === filter && styles.filterChipActive,
                   ]}
+                  onPress={() => setActiveFilter(filter)}
                 >
-                  {filter === 'all' ? 'All' : filter === 'unlisted' ? 'Unlisted' : filter.charAt(0).toUpperCase() + filter.slice(1)}
-                  {filter === 'all' && ` (${items.length})`}
-                  {filter === 'listed' && ` (${listedCount})`}
-                  {filter === 'sold' && ` (${soldCount})`}
-                  {filter === 'unlisted' && ` (${items.length - listedCount - soldCount})`}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      activeFilter === filter && styles.filterChipTextActive,
+                    ]}
+                  >
+                    {filter === 'all' ? 'All' : filter === 'unlisted' ? 'Unlisted' : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    {filter === 'all' && ` (${items.length})`}
+                    {filter === 'listed' && ` (${listedCount})`}
+                    {filter === 'sold' && ` (${soldCount})`}
+                    {filter === 'unlisted' && ` (${items.length - listedCount - soldCount})`}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </>
         )}
       </View>
 
-      {isLoading && items.length === 0 ? (
+      {/* Content */}
+      {isLoading && (activeSegment === 'pallets' ? pallets.length === 0 : items.length === 0) ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading items...</Text>
+          <Text style={styles.loadingText}>
+            Loading {activeSegment === 'pallets' ? 'pallets' : 'items'}...
+          </Text>
         </View>
-      ) : error && items.length === 0 ? (
+      ) : error && (activeSegment === 'pallets' ? pallets.length === 0 : items.length === 0) ? (
         renderErrorState()
+      ) : activeSegment === 'pallets' ? (
+        pallets.length === 0 ? (
+          renderEmptyPallets()
+        ) : (
+          <FlatList
+            data={pallets}
+            renderItem={renderPalletCard}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isLoading}
+                onRefresh={handleRefresh}
+                colors={[colors.primary]}
+                tintColor={colors.primary}
+              />
+            }
+          />
+        )
       ) : items.length === 0 ? (
-        renderEmptyState()
+        renderEmptyItems()
       ) : filteredItems.length === 0 ? (
         <View style={styles.noResults}>
           <FontAwesome name="search" size={32} color={colors.neutral} />
@@ -415,9 +549,10 @@ export default function ItemsScreen() {
         />
       )}
 
+      {/* Context-aware FAB */}
       <Pressable
         style={[styles.fab, { bottom: Math.max(insets.bottom, spacing.lg) }]}
-        onPress={handleAddItem}
+        onPress={activeSegment === 'pallets' ? handleAddPallet : handleAddItem}
       >
         <FontAwesome name="plus" size={24} color={colors.background} />
       </Pressable>
@@ -461,7 +596,6 @@ export default function ItemsScreen() {
                   />
                 </View>
 
-                {/* Platform Quick Select */}
                 <Text style={styles.quickSellLabel}>Platform (optional)</Text>
                 <ScrollView
                   horizontal
@@ -567,8 +701,40 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: fontSize.lg,
     color: colors.textSecondary,
+    marginBottom: spacing.md,
   },
-  // Search styles
+  // Segmented Control
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.xs,
+    gap: spacing.xs,
+  },
+  segmentButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.sm,
+    gap: spacing.xs,
+  },
+  segmentButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  segmentIcon: {
+    marginRight: 2,
+  },
+  segmentText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  segmentTextActive: {
+    color: colors.background,
+  },
+  // Search
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -584,7 +750,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
-  // Filter styles
+  // Filter
   filterContainer: {
     marginTop: spacing.sm,
     marginHorizontal: -spacing.lg,
@@ -613,37 +779,7 @@ const styles = StyleSheet.create({
   filterChipTextActive: {
     color: colors.background,
   },
-  // No results styles
-  noResults: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.xl,
-  },
-  noResultsTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  noResultsText: {
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  clearFilterButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-  },
-  clearFilterText: {
-    fontSize: fontSize.md,
-    color: colors.primary,
-    fontWeight: '500',
-  },
+  // List
   listContent: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xxl,
@@ -658,6 +794,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textSecondary,
   },
+  // Empty/Error states
   placeholder: {
     flex: 1,
     backgroundColor: colors.surface,
@@ -691,6 +828,37 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '600',
   },
+  noResults: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  noResultsTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  noResultsText: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  clearFilterButton: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+  },
+  clearFilterText: {
+    fontSize: fontSize.md,
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  // FAB
   fab: {
     position: 'absolute',
     right: spacing.lg,
@@ -706,7 +874,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
-  // Swipe styles
+  // Swipe actions
   swipeAction: {
     width: 80,
     justifyContent: 'center',
@@ -749,7 +917,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 4,
   },
-  // Modal styles
+  // Quick Sell Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -839,7 +1007,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '600',
   },
-  // Quick sell platform picker styles
   quickSellPlatformScroll: {
     marginBottom: spacing.md,
   },

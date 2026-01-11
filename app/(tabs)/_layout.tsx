@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router';
 
 import { colors } from '@/src/constants/colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
@@ -15,6 +16,8 @@ function TabBarIcon(props: {
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { isExpenseTrackingEnabled } = useUserSettingsStore();
+  const expensesEnabled = isExpenseTrackingEnabled();
 
   return (
     <Tabs
@@ -35,17 +38,18 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="pallets"
+        name="inventory"
         options={{
-          title: 'Pallets',
+          title: 'Inventory',
           tabBarIcon: ({ color }) => <TabBarIcon name="archive" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="items"
+        name="expenses"
         options={{
-          title: 'Items',
-          tabBarIcon: ({ color }) => <TabBarIcon name="cube" color={color} />,
+          title: 'Expenses',
+          tabBarIcon: ({ color }) => <TabBarIcon name="dollar" color={color} />,
+          href: expensesEnabled ? undefined : null, // Hide tab when expenses disabled
         }}
       />
       <Tabs.Screen

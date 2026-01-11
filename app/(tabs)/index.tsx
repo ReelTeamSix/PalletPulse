@@ -101,7 +101,7 @@ export default function DashboardScreen() {
       <View style={styles.statsRow}>
         <Pressable
           style={styles.statCard}
-          onPress={() => router.push('/(tabs)/pallets')}
+          onPress={() => router.push('/(tabs)/inventory')}
         >
           <FontAwesome name="archive" size={24} color={colors.primary} />
           <Text style={styles.statValue}>{metrics.palletsCount}</Text>
@@ -109,7 +109,7 @@ export default function DashboardScreen() {
         </Pressable>
         <Pressable
           style={styles.statCard}
-          onPress={() => router.push('/(tabs)/items')}
+          onPress={() => router.push('/(tabs)/inventory')}
         >
           <FontAwesome name="cube" size={24} color={colors.primary} />
           <Text style={styles.statValue}>{metrics.itemsCount}</Text>
@@ -148,13 +148,13 @@ export default function DashboardScreen() {
 
         <Pressable
           style={styles.actionCard}
-          onPress={() => router.push('/(tabs)/pallets')}
+          onPress={() => router.push('/(tabs)/inventory')}
         >
           <View style={[styles.actionIcon, { backgroundColor: colors.warning + '15' }]}>
             <FontAwesome name="list" size={20} color={colors.warning} />
           </View>
-          <Text style={styles.actionTitle}>View Pallets</Text>
-          <Text style={styles.actionSubtitle}>Manage your inventory</Text>
+          <Text style={styles.actionTitle}>Inventory</Text>
+          <Text style={styles.actionSubtitle}>View pallets & items</Text>
         </Pressable>
 
         <Pressable
