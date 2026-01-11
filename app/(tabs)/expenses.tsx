@@ -63,8 +63,8 @@ export default function ExpensesScreen() {
       if (activeCategory !== 'all' && e.category !== activeCategory) {
         return false;
       }
-      // Date range filter
-      if (!isWithinDateRange(e.date, dateRange)) {
+      // Date range filter - use expense_date field
+      if (e.expense_date && !isWithinDateRange(e.expense_date, dateRange)) {
         return false;
       }
       return true;
