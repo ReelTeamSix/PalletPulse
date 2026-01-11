@@ -1,5 +1,5 @@
 // ItemForm Component - Form for creating and editing items
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Pressable,
   Platform,
   KeyboardAvoidingView,
+  LayoutChangeEvent,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -87,6 +88,11 @@ export function ItemForm({
   );
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [showPlatformPicker, setShowPlatformPicker] = useState(false);
+  const [saleDetailsSectionY, setSaleDetailsSectionY] = useState<number | null>(null);
+
+  // Refs for auto-scrolling to Sale Details section
+  const scrollViewRef = useRef<ScrollView>(null);
+  const hasScrolledToSaleDetails = useRef(false);
 
   const { items } = useItemsStore();
   const { pallets, getPalletById } = usePalletsStore();
@@ -165,6 +171,32 @@ export function ItemForm({
     onPhotosChange?.(newPhotos);
   };
 
+  // Auto-scroll to Sale Details section when editing a sold item
+  useEffect(() => {
+    if (
+      item?.status === 'sold' &&
+      saleDetailsSectionY !== null &&
+      !hasScrolledToSaleDetails.current &&
+      scrollViewRef.current
+    ) {
+      // Small delay to ensure layout is complete
+      const timer = setTimeout(() => {
+        scrollViewRef.current?.scrollTo({
+          y: saleDetailsSectionY - 100, // Offset to show some context above
+          animated: true,
+        });
+        hasScrolledToSaleDetails.current = true;
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [item?.status, saleDetailsSectionY]);
+
+  // Handle Sale Details section layout to get its position
+  const handleSaleDetailsLayout = (event: LayoutChangeEvent) => {
+    const { y } = event.nativeEvent.layout;
+    setSaleDetailsSectionY(y);
+  };
+
   // Sync all text states to form values before submit
   // This ensures values are captured even if user didn't blur the field
   const syncTextStatesToForm = () => {
@@ -194,6 +226,7 @@ export function ItemForm({
       keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
     >
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
@@ -619,7 +652,7 @@ export function ItemForm({
 
         {/* Sale Details (editable when editing a sold item) - placed near save button */}
         {item?.status === 'sold' && (
-          <View style={styles.saleDetailsSection}>
+          <View style={styles.saleDetailsSection} onLayout={handleSaleDetailsLayout}>
             <Text style={styles.saleDetailsTitle}>Sale Details</Text>
 
             {/* Status Selector - allows changing from sold back to listed */}
