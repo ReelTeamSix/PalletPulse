@@ -26,19 +26,20 @@
 ### All Tasks Completed
 - [x] Create feature branch (`feature/item-management`)
 - [x] Create item form validation schema (Zod)
-  - Name, description, quantity validation
+  - Name, description, quantity validation (max 100 chars)
   - Condition enum (new, open_box, used_good, used_fair, damaged, for_parts, unsellable)
   - Status enum (unprocessed, listed, sold)
   - Pricing fields (retail, listing, purchase cost)
   - Storage location, barcode, source name
   - Pallet ID validation (UUID)
 - [x] Build ItemForm component
-  - Condition chips (horizontally scrollable)
+  - Condition chips (horizontally scrollable) with visual selection feedback
   - Autocomplete for storage location and source name
   - PhotoPicker integration with compression
   - Pallet link banner when adding to pallet
   - Purchase cost hidden for pallet items (uses allocated cost)
   - KeyboardAvoidingView for proper scrolling
+  - Decimal input support for price fields
 - [x] Build ItemCard component for list display
   - Status and condition badges with colors
   - Price display (listed, sold, profit)
@@ -56,11 +57,14 @@
   - Pallet link (navigates to pallet)
   - Sale info for sold items
   - Delete confirmation dialog
+  - Photo gallery with pagination indicator
+  - Cost allocation display for pallet items
 - [x] Create edit item screen
   - Pre-filled form with existing data
   - Update functionality via store
+  - Photo load/add/remove support
 - [x] Create photo utilities
-  - Image compression (70% quality, max 1200px)
+  - Image compression (50% quality, max 800px for storage savings)
   - Camera and gallery picker
   - Supabase Storage upload
   - Permission handling
@@ -73,11 +77,27 @@
   - Photos prop for existing photos
   - onPhotosChange callback
   - Tier-based maxPhotos limit
+- [x] Implement photo persistence
+  - Upload photos to Supabase Storage on item save
+  - Save photo references to item_photos table
+  - Load and display existing photos on edit/view
+  - Delete photos from storage when removed
+- [x] Add cost allocation display
+  - Calculate estimated cost from pallet (total cost / items)
+  - Show "Est. Cost" label for calculated allocations
+  - Info banner explaining cost source
+
+### Bug Fixes After Review
+- Fixed decimal input in price fields (MSRP, listing price, purchase cost)
+- Fixed condition chip selection not showing visual feedback
+- Reduced item name max length from 200 to 100 characters
+- Implemented photo persistence (photos now save and display)
+- Added cost allocation calculation for pallet items
 
 ### Test Results
 ```
 Test Suites: 7 passed, 7 total
-Tests:       209 passed, 209 total
+Tests:       217 passed, 217 total
 ```
 
 **New Tests Added:**
