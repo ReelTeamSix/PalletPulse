@@ -113,6 +113,10 @@
   - Recalculates ALL items in pallet when new item is added (cost redistributed)
   - Recalculates remaining items when item is deleted from pallet
   - Fixed pallet assignment from dropdown - now correctly saves pallet_id from form data
+- [x] Pallet reassignment in edit screen
+  - Can assign individual item to a pallet (calculates allocated_cost)
+  - Can move item between pallets (recalculates both old and new pallet items)
+  - Can remove item from pallet (clears allocated_cost, recalculates old pallet)
 
 ### Test Results
 ```
@@ -211,6 +215,9 @@ Tests:       376 passed, 376 total
 - [x] **Pallet Assignment:** Item assigned to pallet shows in pallet detail
 - [x] **Allocated Cost:** Item added to pallet gets allocated_cost calculated automatically
 - [x] **Allocated Cost:** Existing items in pallet are recalculated when new item added
+- [ ] **Edit Reassignment:** Edit individual item -> can assign to pallet via dropdown
+- [ ] **Edit Reassignment:** After saving, item appears in pallet detail with allocated_cost
+- [ ] **Edit Reassignment:** Edit pallet item -> can move to different pallet or make individual
 
 ---
 
