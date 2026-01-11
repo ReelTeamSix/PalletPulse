@@ -54,6 +54,17 @@ export function ItemForm({
   const [showSourceSuggestions, setShowSourceSuggestions] = useState(false);
   const [localPhotos, setLocalPhotos] = useState<PhotoItem[]>(photos);
 
+  // Text state for price fields to allow decimal input
+  const [retailPriceText, setRetailPriceText] = useState(
+    item?.retail_price?.toString() ?? initialValues?.retail_price?.toString() ?? ''
+  );
+  const [listingPriceText, setListingPriceText] = useState(
+    item?.listing_price?.toString() ?? initialValues?.listing_price?.toString() ?? ''
+  );
+  const [purchaseCostText, setPurchaseCostText] = useState(
+    item?.purchase_cost?.toString() ?? initialValues?.purchase_cost?.toString() ?? ''
+  );
+
   const { items } = useItemsStore();
   const { pallets, getPalletById } = usePalletsStore();
 
@@ -237,33 +248,25 @@ export function ItemForm({
           style={styles.conditionScroll}
           contentContainerStyle={styles.conditionScrollContent}
         >
-          <Controller
-            control={control}
-            name="condition"
-            render={({ field: { onChange, value } }) => (
-              <>
-                {ITEM_CONDITION_OPTIONS.map((option) => (
-                  <Pressable
-                    key={option.value}
-                    style={[
-                      styles.conditionChip,
-                      value === option.value && styles.conditionChipSelected,
-                    ]}
-                    onPress={() => onChange(option.value)}
-                  >
-                    <Text
-                      style={[
-                        styles.conditionChipText,
-                        value === option.value && styles.conditionChipTextSelected,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </>
-            )}
-          />
+          {ITEM_CONDITION_OPTIONS.map((option) => (
+            <Pressable
+              key={option.value}
+              style={[
+                styles.conditionChip,
+                watchCondition === option.value && styles.conditionChipSelected,
+              ]}
+              onPress={() => setValue('condition', option.value)}
+            >
+              <Text
+                style={[
+                  styles.conditionChipText,
+                  watchCondition === option.value && styles.conditionChipTextSelected,
+                ]}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          ))}
         </ScrollView>
 
         {/* Pricing Section */}
@@ -274,16 +277,25 @@ export function ItemForm({
             <Controller
               control={control}
               name="retail_price"
-              render={({ field: { onChange, onBlur, value } }) => (
+              render={({ field: { onChange, onBlur } }) => (
                 <Input
                   label="Retail Price"
                   placeholder="MSRP"
-                  value={value !== null && value !== undefined ? value.toString() : ''}
+                  value={retailPriceText}
                   onChangeText={(text) => {
-                    const num = parseFloat(text) || null;
-                    onChange(num);
+                    // Allow digits and one decimal point
+                    const cleaned = text.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                    setRetailPriceText(cleaned);
                   }}
-                  onBlur={onBlur}
+                  onBlur={() => {
+                    const num = parseFloat(retailPriceText) || null;
+                    onChange(num);
+                    // Format to 2 decimal places if has value
+                    if (num !== null) {
+                      setRetailPriceText(num.toString());
+                    }
+                    onBlur();
+                  }}
                   error={errors.retail_price?.message}
                   keyboardType="decimal-pad"
                   leftIcon="dollar"
@@ -296,16 +308,23 @@ export function ItemForm({
             <Controller
               control={control}
               name="listing_price"
-              render={({ field: { onChange, onBlur, value } }) => (
+              render={({ field: { onChange, onBlur } }) => (
                 <Input
                   label="Listing Price"
                   placeholder="Your price"
-                  value={value !== null && value !== undefined ? value.toString() : ''}
+                  value={listingPriceText}
                   onChangeText={(text) => {
-                    const num = parseFloat(text) || null;
-                    onChange(num);
+                    const cleaned = text.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                    setListingPriceText(cleaned);
                   }}
-                  onBlur={onBlur}
+                  onBlur={() => {
+                    const num = parseFloat(listingPriceText) || null;
+                    onChange(num);
+                    if (num !== null) {
+                      setListingPriceText(num.toString());
+                    }
+                    onBlur();
+                  }}
                   error={errors.listing_price?.message}
                   keyboardType="decimal-pad"
                   leftIcon="dollar"
@@ -321,16 +340,23 @@ export function ItemForm({
           <Controller
             control={control}
             name="purchase_cost"
-            render={({ field: { onChange, onBlur, value } }) => (
+            render={({ field: { onChange, onBlur } }) => (
               <Input
                 label="Purchase Cost"
                 placeholder="What you paid"
-                value={value !== null && value !== undefined ? value.toString() : ''}
+                value={purchaseCostText}
                 onChangeText={(text) => {
-                  const num = parseFloat(text) || null;
-                  onChange(num);
+                  const cleaned = text.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                  setPurchaseCostText(cleaned);
                 }}
-                onBlur={onBlur}
+                onBlur={() => {
+                  const num = parseFloat(purchaseCostText) || null;
+                  onChange(num);
+                  if (num !== null) {
+                    setPurchaseCostText(num.toString());
+                  }
+                  onBlur();
+                }}
                 error={errors.purchase_cost?.message}
                 keyboardType="decimal-pad"
                 leftIcon="dollar"
