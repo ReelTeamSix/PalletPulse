@@ -1,29 +1,181 @@
-import { StyleSheet, View, Text, ScrollView, Image } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useEffect, useMemo } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { useItemsStore } from '@/src/stores/items-store';
+import { usePalletsStore } from '@/src/stores/pallets-store';
 import { Button } from '@/src/components/ui';
+import {
+  formatCondition,
+  formatStatus,
+  getConditionColor,
+  getStatusColor,
+  calculateItemProfit,
+} from '@/src/features/items/schemas/item-form-schema';
 
 export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { items, getItemById, deleteItem, isLoading, fetchItems } = useItemsStore();
+  const { getPalletById } = usePalletsStore();
+
+  // Fetch items if not loaded
+  useEffect(() => {
+    if (items.length === 0) {
+      fetchItems();
+    }
+  }, []);
+
+  const item = useMemo(() => {
+    if (!id) return null;
+    return getItemById(id);
+  }, [id, items]);
+
+  const pallet = useMemo(() => {
+    if (!item?.pallet_id) return null;
+    return getPalletById(item.pallet_id);
+  }, [item, items]);
 
   const handleMarkAsSold = () => {
-    // Mark as sold will be implemented in Phase 7
+    // Mark as sold will be fully implemented in Phase 7
+    router.push({ pathname: '/items/sell', params: { id } });
   };
 
   const handleEdit = () => {
-    // Edit functionality will be implemented in Phase 6
+    router.push({ pathname: '/items/edit', params: { id } });
   };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Item',
+      `Are you sure you want to delete "${item?.name}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            if (!id) return;
+            const result = await deleteItem(id);
+            if (result.success) {
+              router.back();
+            } else {
+              Alert.alert('Error', result.error || 'Failed to delete item');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handlePalletPress = () => {
+    if (pallet) {
+      router.push(`/pallets/${pallet.id}`);
+    }
+  };
+
+  const formatCurrency = (amount: number | null) => {
+    if (amount === null) return '-';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Not set';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const formatSourceType = (sourceType: string | null) => {
+    if (!sourceType) return 'Other';
+    const map: Record<string, string> = {
+      pallet: 'Pallet',
+      thrift: 'Thrift Store',
+      garage_sale: 'Garage Sale',
+      estate_sale: 'Estate Sale',
+      auction: 'Auction',
+      retail_clearance: 'Retail Clearance',
+      online: 'Online Purchase',
+      wholesale: 'Wholesale',
+      other: 'Other',
+    };
+    return map[sourceType] || sourceType;
+  };
+
+  if (isLoading && !item) {
+    return (
+      <>
+        <Stack.Screen options={{ title: 'Loading...' }} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </>
+    );
+  }
+
+  if (!item) {
+    return (
+      <>
+        <Stack.Screen options={{ title: 'Not Found' }} />
+        <View style={styles.container}>
+          <View style={styles.errorContainer}>
+            <FontAwesome name="exclamation-circle" size={48} color={colors.loss} />
+            <Text style={styles.errorTitle}>Item Not Found</Text>
+            <Text style={styles.errorText}>
+              This item may have been deleted or doesn't exist.
+            </Text>
+            <Pressable style={styles.backButton} onPress={() => router.back()}>
+              <Text style={styles.backButtonText}>Go Back</Text>
+            </Pressable>
+          </View>
+        </View>
+      </>
+    );
+  }
+
+  const statusColor = getStatusColor(item.status);
+  const conditionColor = getConditionColor(item.condition);
+  const profit = calculateItemProfit(item.sale_price, item.allocated_cost, item.purchase_cost);
+  const estimatedProfit = item.listing_price
+    ? calculateItemProfit(item.listing_price, item.allocated_cost, item.purchase_cost)
+    : null;
+  const isProfitable = profit >= 0;
+  const hasSold = item.status === 'sold';
+  const effectiveCost = item.allocated_cost ?? item.purchase_cost ?? 0;
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: 'Item Details',
+          title: item.name,
           headerBackTitle: 'Back',
+          headerRight: () => (
+            <View style={styles.headerButtons}>
+              <Pressable style={styles.headerButton} onPress={handleEdit}>
+                <FontAwesome name="pencil" size={18} color={colors.primary} />
+              </Pressable>
+              <Pressable style={styles.headerButton} onPress={handleDelete}>
+                <FontAwesome name="trash" size={18} color={colors.loss} />
+              </Pressable>
+            </View>
+          ),
         }}
       />
       <View style={styles.container}>
@@ -37,82 +189,159 @@ export default function ItemDetailScreen() {
 
           <View style={styles.header}>
             <View style={styles.titleRow}>
-              <Text style={styles.title}>Item #{id?.slice(0, 8)}</Text>
-              <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>Listed</Text>
+              <Text style={styles.title} numberOfLines={2}>{item.name}</Text>
+              <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+                <Text style={styles.statusText}>{formatStatus(item.status)}</Text>
               </View>
             </View>
-            <Text style={styles.subtitle}>Item details and pricing</Text>
+            <View style={styles.metaRow}>
+              <View style={[styles.conditionBadge, { backgroundColor: conditionColor }]}>
+                <Text style={styles.conditionText}>{formatCondition(item.condition)}</Text>
+              </View>
+              {item.quantity > 1 && (
+                <Text style={styles.quantity}>Qty: {item.quantity}</Text>
+              )}
+            </View>
           </View>
 
           <View style={styles.priceRow}>
-            <View style={styles.priceCard}>
-              <Text style={styles.priceLabel}>Listing Price</Text>
-              <Text style={styles.priceValue}>$0.00</Text>
-            </View>
-            <View style={styles.priceCard}>
-              <Text style={styles.priceLabel}>Allocated Cost</Text>
-              <Text style={styles.priceValue}>$0.00</Text>
-            </View>
-            <View style={[styles.priceCard, styles.profitCard]}>
-              <Text style={styles.priceLabel}>Est. Profit</Text>
-              <Text style={[styles.priceValue, styles.profitText]}>$0.00</Text>
-            </View>
+            {hasSold ? (
+              <>
+                <View style={styles.priceCard}>
+                  <Text style={styles.priceLabel}>Sold For</Text>
+                  <Text style={[styles.priceValue, { color: colors.profit }]}>
+                    {formatCurrency(item.sale_price)}
+                  </Text>
+                </View>
+                <View style={styles.priceCard}>
+                  <Text style={styles.priceLabel}>Cost</Text>
+                  <Text style={styles.priceValue}>{formatCurrency(effectiveCost)}</Text>
+                </View>
+                <View style={[styles.priceCard, { backgroundColor: isProfitable ? colors.profit + '15' : colors.loss + '15' }]}>
+                  <Text style={styles.priceLabel}>Profit</Text>
+                  <Text style={[styles.priceValue, { color: isProfitable ? colors.profit : colors.loss }]}>
+                    {formatCurrency(profit)}
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.priceCard}>
+                  <Text style={styles.priceLabel}>List Price</Text>
+                  <Text style={styles.priceValue}>{formatCurrency(item.listing_price)}</Text>
+                </View>
+                <View style={styles.priceCard}>
+                  <Text style={styles.priceLabel}>Cost</Text>
+                  <Text style={styles.priceValue}>{formatCurrency(effectiveCost)}</Text>
+                </View>
+                <View style={[styles.priceCard, styles.profitCard]}>
+                  <Text style={styles.priceLabel}>Est. Profit</Text>
+                  <Text style={[styles.priceValue, styles.profitText]}>
+                    {estimatedProfit !== null ? formatCurrency(estimatedProfit) : '-'}
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
+
+          {pallet && (
+            <Pressable style={styles.palletLink} onPress={handlePalletPress}>
+              <FontAwesome name="archive" size={16} color={colors.primary} />
+              <Text style={styles.palletLinkText}>From pallet: {pallet.name}</Text>
+              <FontAwesome name="chevron-right" size={14} color={colors.textSecondary} />
+            </Pressable>
+          )}
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Details</Text>
             <View style={styles.detailsCard}>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Condition</Text>
-                <Text style={styles.detailValue}>New</Text>
+                <Text style={styles.detailValue}>{formatCondition(item.condition)}</Text>
               </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Retail Price</Text>
-                <Text style={styles.detailValue}>$0.00</Text>
-              </View>
+              {item.retail_price !== null && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Retail Price</Text>
+                  <Text style={styles.detailValue}>{formatCurrency(item.retail_price)}</Text>
+                </View>
+              )}
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Quantity</Text>
-                <Text style={styles.detailValue}>1</Text>
+                <Text style={styles.detailValue}>{item.quantity}</Text>
               </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Storage Location</Text>
-                <Text style={styles.detailValue}>Not set</Text>
-              </View>
+              {item.storage_location && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Storage Location</Text>
+                  <Text style={styles.detailValue}>{item.storage_location}</Text>
+                </View>
+              )}
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Source</Text>
-                <Text style={styles.detailValue}>Pallet</Text>
+                <Text style={styles.detailValue}>
+                  {formatSourceType(item.source_type)}
+                  {item.source_name ? ` - ${item.source_name}` : ''}
+                </Text>
               </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Listed Date</Text>
-                <Text style={styles.detailValue}>Not set</Text>
-              </View>
+              {item.barcode && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Barcode</Text>
+                  <Text style={styles.detailValue}>{item.barcode}</Text>
+                </View>
+              )}
+              {item.listing_date && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Listed Date</Text>
+                  <Text style={styles.detailValue}>{formatDate(item.listing_date)}</Text>
+                </View>
+              )}
+              {hasSold && item.sale_date && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Sale Date</Text>
+                  <Text style={styles.detailValue}>{formatDate(item.sale_date)}</Text>
+                </View>
+              )}
+              {hasSold && item.sales_channel && (
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Sales Channel</Text>
+                  <Text style={styles.detailValue}>{item.sales_channel}</Text>
+                </View>
+              )}
             </View>
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <View style={styles.descriptionCard}>
-              <Text style={styles.descriptionText}>
-                No description added yet.
+          {(item.description || item.notes) && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                {item.description && item.notes ? 'Description & Notes' : item.description ? 'Description' : 'Notes'}
               </Text>
+              <View style={styles.descriptionCard}>
+                {item.description && (
+                  <Text style={styles.descriptionText}>{item.description}</Text>
+                )}
+                {item.description && item.notes && <View style={styles.separator} />}
+                {item.notes && (
+                  <Text style={styles.notesText}>{item.notes}</Text>
+                )}
+              </View>
             </View>
-          </View>
+          )}
         </ScrollView>
 
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
-          <Button
-            title="Edit Item"
-            onPress={handleEdit}
-            variant="outline"
-            style={styles.editButton}
-          />
-          <Button
-            title="Mark as Sold"
-            onPress={handleMarkAsSold}
-            style={styles.soldButton}
-          />
-        </View>
+        {!hasSold && (
+          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
+            <Button
+              title="Edit Item"
+              onPress={handleEdit}
+              variant="outline"
+              style={styles.editButton}
+            />
+            <Button
+              title="Mark as Sold"
+              onPress={handleMarkAsSold}
+              style={styles.soldButton}
+            />
+          </View>
+        )}
       </View>
     </>
   );
@@ -123,11 +352,54 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  errorTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  errorText: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  backButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+  },
+  backButtonText: {
+    color: colors.background,
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  headerButton: {
+    padding: spacing.xs,
+  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   photoSection: {
     height: 250,
@@ -150,8 +422,9 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
+    alignItems: 'flex-start',
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
   title: {
     fontSize: fontSize.xxl,
@@ -160,7 +433,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statusBadge: {
-    backgroundColor: colors.statusListed,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
@@ -170,9 +442,25 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontWeight: '600',
   },
-  subtitle: {
-    fontSize: fontSize.md,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  conditionBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  conditionText: {
+    fontSize: fontSize.xs,
+    color: colors.background,
+    fontWeight: '500',
+  },
+  quantity: {
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
+    fontWeight: '500',
   },
   priceRow: {
     flexDirection: 'row',
@@ -202,6 +490,22 @@ const styles = StyleSheet.create({
   },
   profitText: {
     color: colors.profit,
+  },
+  palletLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
+    gap: spacing.sm,
+  },
+  palletLinkText: {
+    flex: 1,
+    fontSize: fontSize.md,
+    color: colors.primary,
+    fontWeight: '500',
   },
   section: {
     paddingHorizontal: spacing.lg,
@@ -234,6 +538,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textPrimary,
     fontWeight: '500',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: spacing.md,
   },
   descriptionCard: {
     backgroundColor: colors.surface,
@@ -242,7 +549,18 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     fontSize: fontSize.md,
+    color: colors.textPrimary,
+    lineHeight: 22,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.md,
+  },
+  notesText: {
+    fontSize: fontSize.md,
     color: colors.textSecondary,
+    fontStyle: 'italic',
     lineHeight: 22,
   },
   footer: {
