@@ -1,7 +1,7 @@
 # PalletPulse Development Progress
 
 ## Current Phase: Phase 8 - Expense System Redesign
-**Status:** Phase 8B Complete - Enhanced Sale Form Implemented
+**Status:** Phase 8C Complete - Mileage Tracking System Implemented
 **Branch:** feature/sales-profit
 
 ---
@@ -233,17 +233,39 @@ Add Trip
 - Other
 
 **Tasks:**
-- [ ] Create mileage trip form schema (Zod)
-- [ ] Create mileage-trips store (Zustand)
-- [ ] Build MileageForm component with multi-pallet selector
-- [ ] Build MileageTripCard component
-- [ ] Create Add Trip screen (`app/mileage/new.tsx`)
-- [ ] Create Trip Detail screen (`app/mileage/[id].tsx`)
-- [ ] Create Edit Trip screen (`app/mileage/edit.tsx`)
-- [ ] Create Mileage Log screen with list and export
-- [ ] Add IRS rate fetch from app_settings
-- [ ] Write tests for mileage calculations
-- [ ] Write tests for mileage store
+- [x] Create mileage trip form schema (Zod) ✅
+- [x] Create mileage-trips store (Zustand) ✅
+- [x] Build MileageForm component with multi-pallet selector ✅
+- [x] Build MileageTripCard component ✅
+- [x] Create Add Trip screen (`app/mileage/new.tsx`) ✅
+- [x] Create Trip Detail screen (`app/mileage/[id].tsx`) ✅
+- [x] Create Edit Trip screen (`app/mileage/edit.tsx`) ✅
+- [x] Create Mileage Log screen with list ✅
+- [x] Add IRS rate fetch from app_settings ✅
+- [x] Write tests for mileage calculations (62 tests) ✅
+- [x] Write tests for mileage store (26 tests) ✅
+
+**Completed Files:**
+- `src/features/mileage/schemas/mileage-form-schema.ts` - Zod schema with validation, helper functions
+- `src/features/mileage/schemas/mileage-form-schema.test.ts` - 62 tests for schema and helpers
+- `src/features/mileage/components/MileageForm.tsx` - Form with multi-pallet selector, deduction preview
+- `src/features/mileage/components/MileageTripCard.tsx` - Trip card for list display
+- `src/features/mileage/index.ts` - Feature exports
+- `src/stores/mileage-store.ts` - Zustand store with multi-pallet support, IRS rate fetch
+- `src/stores/__tests__/mileage-store.test.ts` - 26 tests for store
+- `app/mileage/_layout.tsx` - Stack navigator layout
+- `app/mileage/index.tsx` - Mileage Log screen with YTD summary
+- `app/mileage/new.tsx` - Add Trip screen
+- `app/mileage/[id].tsx` - Trip Detail screen
+- `app/mileage/edit.tsx` - Edit Trip screen
+
+**Features Implemented:**
+- Multi-pallet trip linking via junction table
+- IRS rate fetched from app_settings (defaults to $0.725/mi for 2026)
+- Auto-calculated deduction (miles × rate)
+- YTD summary showing total trips, miles, and deduction
+- Trip purpose options: Pallet Pickup, Thrift Run, Garage Sale Circuit, Post Office, Auction, Sourcing, Other
+- Tax disclaimer on Mileage Log screen
 
 ---
 

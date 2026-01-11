@@ -494,6 +494,11 @@ npm test -- --coverage
 npm test -- calculate-profit.test.ts
 ```
 
+**Note for AI Assistants:** In this Windows development environment, npm is not in PATH by default. Add nodejs to PATH before running npm commands:
+```bash
+export PATH="/c/Program Files/nodejs:$PATH" && npm test
+```
+
 ### Pre-Commit Test Requirements
 
 **Before committing ANY code:**
