@@ -22,6 +22,12 @@ export const PLATFORM_PRESETS: Record<SalesPlatform, PlatformFeeConfig> = {
     description: '10% selling fee',
     hasShippedRate: false,
   },
+  whatnot: {
+    name: 'Whatnot',
+    rate: 0.089, // 8.9% seller fee
+    description: '8.9% seller fee',
+    hasShippedRate: false,
+  },
   facebook: {
     name: 'Facebook Marketplace',
     rate: 0, // 0% local
@@ -66,10 +72,11 @@ export const PLATFORM_OPTIONS: { value: SalesPlatform; label: string; descriptio
   { value: 'ebay', label: 'eBay', description: '13.25% fee' },
   { value: 'poshmark', label: 'Poshmark', description: '20% fee' },
   { value: 'mercari', label: 'Mercari', description: '10% fee' },
-  { value: 'facebook', label: 'Facebook Marketplace', description: '0% local / 5% shipped' },
-  { value: 'offerup', label: 'OfferUp', description: '0% local / 12.9% shipped' },
+  { value: 'whatnot', label: 'Whatnot', description: '8.9% fee' },
+  { value: 'facebook', label: 'Facebook', description: '0%/5% shipped' },
+  { value: 'offerup', label: 'OfferUp', description: '0%/12.9% shipped' },
   { value: 'craigslist', label: 'Craigslist', description: 'Free' },
-  { value: 'other', label: 'Other/Custom', description: 'Enter manually' },
+  { value: 'other', label: 'Other', description: 'Manual' },
 ];
 
 // Common sales channels for suggestions (legacy, kept for backward compatibility)
@@ -90,7 +97,7 @@ export const SALES_CHANNEL_SUGGESTIONS = [
 ] as const;
 
 // Valid platform values
-const VALID_PLATFORMS = ['ebay', 'poshmark', 'mercari', 'facebook', 'offerup', 'craigslist', 'other'] as const;
+const VALID_PLATFORMS = ['ebay', 'poshmark', 'mercari', 'whatnot', 'facebook', 'offerup', 'craigslist', 'other'] as const;
 
 // Sale form schema
 export const saleFormSchema = z.object({

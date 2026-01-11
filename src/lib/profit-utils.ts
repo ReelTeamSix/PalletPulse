@@ -9,10 +9,12 @@ import type { Item, Pallet, Expense, ItemCondition } from '@/src/types/database'
 
 export interface PalletProfitResult {
   totalRevenue: number;      // Sum of all sold item sale prices
-  totalCost: number;         // Pallet cost + sales tax + expenses
+  totalCost: number;         // Pallet cost + sales tax + expenses + fees
   palletCost: number;        // Purchase cost of pallet
   salesTax: number;          // Sales tax on pallet
   expenses: number;          // Total pallet-linked expenses
+  platformFees: number;      // Total platform/marketplace fees from sold items
+  shippingCosts: number;     // Total shipping costs from sold items
   netProfit: number;         // Total revenue - total cost
   roi: number;               // ROI percentage ((profit / cost) * 100)
   soldItemsCount: number;    // Number of sold items
@@ -36,50 +38,68 @@ export interface CostAllocationOptions {
 /**
  * Calculate profit for a single item.
  * Uses allocated_cost for pallet items, purchase_cost for individual items.
+ * Includes platform_fee and shipping_cost if present.
  */
 export function calculateItemProfit(item: Item): number {
   if (item.sale_price === null) return 0;
   const cost = item.allocated_cost ?? item.purchase_cost ?? 0;
-  return item.sale_price - cost;
+  const platformFee = item.platform_fee ?? 0;
+  const shippingCost = item.shipping_cost ?? 0;
+  return item.sale_price - cost - platformFee - shippingCost;
 }
 
 /**
  * Calculate profit for an item given explicit values.
  * Useful when calculating before item is saved.
+ * Includes platformFee and shippingCost if provided.
  */
 export function calculateItemProfitFromValues(
   salePrice: number | null,
   allocatedCost: number | null,
-  purchaseCost: number | null
+  purchaseCost: number | null,
+  platformFee: number | null = null,
+  shippingCost: number | null = null
 ): number {
   if (salePrice === null) return 0;
   const cost = allocatedCost ?? purchaseCost ?? 0;
-  return salePrice - cost;
+  const fees = platformFee ?? 0;
+  const shipping = shippingCost ?? 0;
+  return salePrice - cost - fees - shipping;
 }
 
 /**
  * Calculate ROI (Return on Investment) for a single item.
  * Returns percentage value (e.g., 50 for 50% ROI).
+ * Includes platform_fee and shipping_cost in profit calculation.
  */
 export function calculateItemROI(item: Item): number {
   if (item.sale_price === null) return 0;
   const cost = item.allocated_cost ?? item.purchase_cost ?? 0;
-  if (cost === 0) return item.sale_price > 0 ? 100 : 0;
-  return ((item.sale_price - cost) / cost) * 100;
+  const platformFee = item.platform_fee ?? 0;
+  const shippingCost = item.shipping_cost ?? 0;
+  const profit = item.sale_price - cost - platformFee - shippingCost;
+  if (cost === 0) return profit > 0 ? 100 : (profit < 0 ? -100 : 0);
+  return (profit / cost) * 100;
 }
 
 /**
  * Calculate ROI from explicit values.
+ * Includes platformFee and shippingCost if provided.
  */
 export function calculateItemROIFromValues(
   salePrice: number | null,
   allocatedCost: number | null,
-  purchaseCost: number | null
+  purchaseCost: number | null,
+  platformFee: number | null = null,
+  shippingCost: number | null = null
 ): number {
   if (salePrice === null) return 0;
   const cost = allocatedCost ?? purchaseCost ?? 0;
-  if (cost === 0) return salePrice > 0 ? 100 : 0;
-  return ((salePrice - cost) / cost) * 100;
+  const fees = platformFee ?? 0;
+  const shipping = shippingCost ?? 0;
+  const profit = salePrice - cost - fees - shipping;
+  if (cost === 0) return profit > 0 ? 100 : (profit < 0 ? -100 : 0);
+  return (profit / cost) * 100;
 }
 
 // ============================================================================
@@ -157,7 +177,7 @@ export function estimateAllocatedCost(
 
 /**
  * Calculate comprehensive profit metrics for a pallet.
- * Includes all items and pallet-linked expenses.
+ * Includes all items, pallet-linked expenses, and per-item fees.
  */
 export function calculatePalletProfit(
   pallet: Pallet | null,
@@ -172,6 +192,8 @@ export function calculatePalletProfit(
       palletCost: 0,
       salesTax: 0,
       expenses: 0,
+      platformFees: 0,
+      shippingCosts: 0,
       netProfit: 0,
       roi: 0,
       soldItemsCount: 0,
@@ -185,11 +207,15 @@ export function calculatePalletProfit(
   const soldItems = items.filter(item => item.status === 'sold' && item.sale_price !== null);
   const totalRevenue = soldItems.reduce((sum, item) => sum + (item.sale_price ?? 0), 0);
 
-  // Calculate costs
+  // Calculate per-item fees from sold items
+  const platformFees = soldItems.reduce((sum, item) => sum + (item.platform_fee ?? 0), 0);
+  const shippingCosts = soldItems.reduce((sum, item) => sum + (item.shipping_cost ?? 0), 0);
+
+  // Calculate costs (includes pallet cost, tax, expenses, and per-item fees)
   const palletCost = pallet.purchase_cost;
   const salesTax = pallet.sales_tax ?? 0;
   const expenseTotal = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const totalCost = palletCost + salesTax + expenseTotal;
+  const totalCost = palletCost + salesTax + expenseTotal + platformFees + shippingCosts;
 
   // Calculate profit
   const netProfit = totalRevenue - totalCost;
@@ -211,6 +237,8 @@ export function calculatePalletProfit(
     palletCost,
     salesTax,
     expenses: expenseTotal,
+    platformFees,
+    shippingCosts,
     netProfit,
     roi,
     soldItemsCount: soldItems.length,

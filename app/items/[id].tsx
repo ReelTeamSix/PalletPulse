@@ -192,7 +192,14 @@ export default function ItemDetailScreen() {
   const effectiveCost = item.allocated_cost ?? calculatedAllocatedCost ?? item.purchase_cost ?? 0;
   const isEstimatedCost = !item.allocated_cost && calculatedAllocatedCost !== null;
 
-  const profit = calculateItemProfit(item.sale_price, effectiveCost, null);
+  // Calculate profit including platform fees and shipping costs
+  const profit = calculateItemProfit(
+    item.sale_price,
+    effectiveCost,
+    null,
+    item.platform_fee,
+    item.shipping_cost
+  );
   const estimatedProfit = item.listing_price
     ? calculateItemProfit(item.listing_price, effectiveCost, null)
     : null;

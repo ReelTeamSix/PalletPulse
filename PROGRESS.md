@@ -177,17 +177,36 @@ Mark as Sold
 - [x] Update profit preview to include: Sale - Allocated Cost - Platform Fee - Shipping ✅
 - [x] Update items store markAsSold action to save new fields ✅
 - [x] Update quick sell modals (items.tsx, pallets/[id].tsx) with platform picker ✅
-- [ ] Update profit-utils to include platform_fee and shipping_cost in calculations
+- [x] Update profit-utils to include platform_fee and shipping_cost in calculations ✅
 - [x] Write tests for new sale form validation ✅
 - [x] Write tests for platform fee calculations ✅
 
+**Bug Fixes (Jan 11, 2026):**
+- [x] Added Whatnot platform (8.9% seller fee) to PLATFORM_PRESETS and PLATFORM_OPTIONS ✅
+- [x] Fixed Manual/Other platform fee being overwritten to 0.00 - now skips auto-calculate for isManual platforms ✅
+- [x] Removed redundant Sales Channel field from sell screen - auto-filled from platform selection ✅
+- [x] Updated calculateItemProfit in profit-utils.ts to include platform_fee and shipping_cost ✅
+- [x] Updated calculatePalletProfit to include per-item platformFees and shippingCosts ✅
+- [x] Updated PalletProfitResult interface with platformFees and shippingCosts fields ✅
+- [x] Updated calculateItemProfit in item-form-schema.ts with optional fee parameters ✅
+- [x] Updated item detail screen to pass fees to profit calculation ✅
+
 **Completed Files:**
-- `src/features/sales/schemas/sale-form-schema.ts` - Added PLATFORM_PRESETS, PLATFORM_OPTIONS, platform/shipping fields, helper functions
+- `src/features/sales/schemas/sale-form-schema.ts` - Added PLATFORM_PRESETS, PLATFORM_OPTIONS, platform/shipping fields, helper functions, Whatnot platform
 - `src/stores/items-store.ts` - Updated markAsSold to accept SaleData object with platform/fee fields
-- `app/items/sell.tsx` - Added platform grid, shipped toggle, platform fee (auto/manual), shipping cost, updated profit preview
+- `app/items/sell.tsx` - Added platform grid, shipped toggle, platform fee (auto/manual), shipping cost, updated profit preview, fixed manual fee override
 - `app/(tabs)/items.tsx` - Added platform picker to quick sell modal with auto-fee calculation
 - `app/pallets/[id].tsx` - Added platform picker to quick sell modal with auto-fee calculation
-- `src/features/sales/schemas/sale-form-schema.test.ts` - Added 30+ new tests for platform fee functions
+- `src/features/sales/schemas/sale-form-schema.test.ts` - Added 30+ new tests for platform fee functions, added Whatnot test
+- `src/lib/profit-utils.ts` - Updated all profit/ROI calculations to include platform_fee and shipping_cost
+- `src/features/items/schemas/item-form-schema.ts` - Updated calculateItemProfit and calculateItemROI with fee parameters
+- `app/items/[id].tsx` - Updated to pass platform_fee and shipping_cost to profit calculation
+
+**Pending Database Migration:**
+```sql
+-- Add 'whatnot' to sales_platform enum
+ALTER TYPE sales_platform ADD VALUE 'whatnot' AFTER 'mercari';
+```
 
 ---
 

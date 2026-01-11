@@ -157,27 +157,36 @@ export const defaultItemFormValues: Partial<ItemFormData> = {
   pallet_id: null,
 };
 
-// Helper to calculate profit for an item
+// Helper to calculate profit for an item (includes fees if provided)
 export function calculateItemProfit(
   salePrice: number | null,
   allocatedCost: number | null,
-  purchaseCost: number | null
+  purchaseCost: number | null,
+  platformFee: number | null = null,
+  shippingCost: number | null = null
 ): number {
   if (salePrice === null) return 0;
   const cost = allocatedCost ?? purchaseCost ?? 0;
-  return salePrice - cost;
+  const fees = platformFee ?? 0;
+  const shipping = shippingCost ?? 0;
+  return salePrice - cost - fees - shipping;
 }
 
-// Helper to calculate ROI for an item
+// Helper to calculate ROI for an item (includes fees if provided)
 export function calculateItemROI(
   salePrice: number | null,
   allocatedCost: number | null,
-  purchaseCost: number | null
+  purchaseCost: number | null,
+  platformFee: number | null = null,
+  shippingCost: number | null = null
 ): number {
   if (salePrice === null) return 0;
   const cost = allocatedCost ?? purchaseCost ?? 0;
-  if (cost === 0) return salePrice > 0 ? 100 : 0;
-  return ((salePrice - cost) / cost) * 100;
+  const fees = platformFee ?? 0;
+  const shipping = shippingCost ?? 0;
+  const profit = salePrice - cost - fees - shipping;
+  if (cost === 0) return profit > 0 ? 100 : (profit < 0 ? -100 : 0);
+  return (profit / cost) * 100;
 }
 
 // Get condition display color

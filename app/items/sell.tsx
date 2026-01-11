@@ -32,10 +32,8 @@ import {
   saleFormSchema,
   SaleFormData,
   getDefaultSaleFormValues,
-  getUniqueSalesChannels,
   getPriceWarning,
   calculateDiscount,
-  formatSaleDate,
   PLATFORM_OPTIONS,
   PLATFORM_PRESETS,
   calculatePlatformFee,
@@ -58,7 +56,6 @@ export default function SellItemScreen() {
   const { items, getItemById, markAsSold, isLoading, fetchItems } = useItemsStore();
   const { getPalletById, pallets } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showChannelSuggestions, setShowChannelSuggestions] = useState(false);
   const [isShipped, setIsShipped] = useState(false); // For platforms with shipped rates
   const [manualFeeOverride, setManualFeeOverride] = useState(false); // Allow manual fee entry
   const scrollViewRef = useRef<ScrollView>(null);
@@ -105,7 +102,6 @@ export default function SellItemScreen() {
 
   // Watch form values for live calculations
   const salePrice = watch('sale_price');
-  const salesChannel = watch('sales_channel');
   const platform = watch('platform');
   const platformFee = watch('platform_fee');
   const shippingCost = watch('shipping_cost');
@@ -113,17 +109,17 @@ export default function SellItemScreen() {
   // Get platform config for display
   const platformConfig = platform ? PLATFORM_PRESETS[platform] : null;
 
-  // Auto-calculate platform fee when platform or sale price changes
+  // Auto-calculate platform fee when platform or sale price changes (skip for manual platforms)
   useEffect(() => {
-    if (platform && !manualFeeOverride) {
+    if (platform && !manualFeeOverride && !platformConfig?.isManual) {
       const autoFee = calculatePlatformFee(salePrice || 0, platform, isShipped);
       setValue('platform_fee', autoFee);
     }
-  }, [platform, salePrice, isShipped, manualFeeOverride, setValue]);
+  }, [platform, salePrice, isShipped, manualFeeOverride, platformConfig?.isManual, setValue]);
 
-  // Auto-fill sales channel from platform
+  // Auto-fill sales channel from platform (skip for "other")
   useEffect(() => {
-    if (platform && !salesChannel) {
+    if (platform && platform !== 'other') {
       const channelName = getSalesChannelFromPlatform(platform);
       if (channelName) {
         setValue('sales_channel', channelName);
@@ -149,16 +145,6 @@ export default function SellItemScreen() {
   // Price warning if very different from listing
   const priceWarning = item?.listing_price ? getPriceWarning(salePrice || 0, item.listing_price) : null;
   const discount = item?.listing_price ? calculateDiscount(salePrice || 0, item.listing_price) : null;
-
-  // Get all sales channels (from past sales + defaults)
-  const allChannels = useMemo(() => getUniqueSalesChannels(items), [items]);
-
-  // Filter channel suggestions based on input
-  const filteredChannels = allChannels.filter(
-    (channel) =>
-      !salesChannel ||
-      channel.toLowerCase().includes(salesChannel.toLowerCase())
-  );
 
   const onSubmit = async (data: SaleFormData) => {
     if (!id) return;
@@ -482,59 +468,6 @@ export default function SellItemScreen() {
                   <Text style={styles.helperText}>
                     Only enter shipping costs you paid (not buyer-paid shipping)
                   </Text>
-                </View>
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="sales_channel"
-              render={({ field: { onChange, value } }) => (
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Sales Channel</Text>
-                  <Input
-                    value={value || ''}
-                    onChangeText={(text) => {
-                      onChange(text);
-                      setShowChannelSuggestions(true);
-                    }}
-                    onFocus={() => setShowChannelSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowChannelSuggestions(false), 200)}
-                    placeholder="Where did you sell it?"
-                    error={errors.sales_channel?.message}
-                  />
-                  {showChannelSuggestions && filteredChannels.length > 0 && (
-                    <View style={styles.suggestionsContainer}>
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        keyboardShouldPersistTaps="handled"
-                      >
-                        {filteredChannels.map((channel) => (
-                          <Pressable
-                            key={channel}
-                            style={[
-                              styles.suggestionChip,
-                              value === channel && styles.suggestionChipSelected,
-                            ]}
-                            onPress={() => {
-                              onChange(channel);
-                              setShowChannelSuggestions(false);
-                            }}
-                          >
-                            <Text
-                              style={[
-                                styles.suggestionChipText,
-                                value === channel && styles.suggestionChipTextSelected,
-                              ]}
-                            >
-                              {channel}
-                            </Text>
-                          </Pressable>
-                        ))}
-                      </ScrollView>
-                    </View>
-                  )}
                 </View>
               )}
             />

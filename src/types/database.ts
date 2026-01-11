@@ -16,7 +16,7 @@ export type PayoutStatus = 'pending' | 'processing' | 'completed' | 'failed'
 export type PayoutMethod = 'stripe' | 'paypal'
 
 // New enum types for Phase 8
-export type SalesPlatform = 'ebay' | 'poshmark' | 'mercari' | 'facebook' | 'offerup' | 'craigslist' | 'other'
+export type SalesPlatform = 'ebay' | 'poshmark' | 'mercari' | 'whatnot' | 'facebook' | 'offerup' | 'craigslist' | 'other'
 export type TripPurpose = 'pallet_pickup' | 'thrift_run' | 'garage_sale' | 'post_office' | 'auction' | 'sourcing' | 'other'
 export type UserType = 'hobby' | 'side_hustle' | 'business'
 
@@ -264,6 +264,6 @@ export type TablesInsert<T extends keyof Database['public']['Tables']> = Databas
 export type TablesUpdate<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update']
 
 // Constants for enum values (useful for UI dropdowns)
-export const SALES_PLATFORMS: SalesPlatform[] = ['ebay', 'poshmark', 'mercari', 'facebook', 'offerup', 'craigslist', 'other']
+export const SALES_PLATFORMS: SalesPlatform[] = ['ebay', 'poshmark', 'mercari', 'whatnot', 'facebook', 'offerup', 'craigslist', 'other']
 export const TRIP_PURPOSES: TripPurpose[] = ['pallet_pickup', 'thrift_run', 'garage_sale', 'post_office', 'auction', 'sourcing', 'other']
 export const USER_TYPES: UserType[] = ['hobby', 'side_hustle', 'business']

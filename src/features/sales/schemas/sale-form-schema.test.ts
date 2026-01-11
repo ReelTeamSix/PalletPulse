@@ -472,9 +472,9 @@ describe('PLATFORM_PRESETS', () => {
 
 describe('PLATFORM_OPTIONS', () => {
   it('should have options for all platforms', () => {
-    expect(PLATFORM_OPTIONS.length).toBe(7);
+    expect(PLATFORM_OPTIONS.length).toBe(8);
     expect(PLATFORM_OPTIONS.map(o => o.value)).toEqual([
-      'ebay', 'poshmark', 'mercari', 'facebook', 'offerup', 'craigslist', 'other'
+      'ebay', 'poshmark', 'mercari', 'whatnot', 'facebook', 'offerup', 'craigslist', 'other'
     ]);
   });
 
@@ -511,6 +511,11 @@ describe('calculatePlatformFee', () => {
 
   it('should calculate Mercari fee correctly (10%)', () => {
     expect(calculatePlatformFee(100, 'mercari')).toBe(10);
+  });
+
+  it('should calculate Whatnot fee correctly (8.9%)', () => {
+    expect(calculatePlatformFee(100, 'whatnot')).toBe(8.9);
+    expect(calculatePlatformFee(50, 'whatnot')).toBe(4.45);
   });
 
   it('should return 0 for Craigslist (free)', () => {
