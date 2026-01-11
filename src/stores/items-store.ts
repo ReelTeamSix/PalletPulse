@@ -43,6 +43,7 @@ export interface ItemUpdate {
   source_type?: SourceType;
   source_name?: string | null;
   notes?: string | null;
+  pallet_id?: string | null;
 }
 
 export interface ItemsState {
@@ -180,9 +181,102 @@ export const useItemsStore = create<ItemsState>()(
         try {
           const currentItem = get().items.find(i => i.id === id);
           if (!currentItem) throw new Error('Item not found');
+
+          // Check if pallet assignment is changing
+          const palletChanging = 'pallet_id' in updates && updates.pallet_id !== currentItem.pallet_id;
+          const oldPalletId = currentItem.pallet_id;
+          const newPalletId = updates.pallet_id;
+
+          let finalUpdates = { ...updates };
+
+          if (palletChanging) {
+            // Handle pallet reassignment
+            if (newPalletId) {
+              // Moving to a new pallet - calculate new allocated cost
+              const { data: newPallet } = await supabase
+                .from('pallets')
+                .select('purchase_cost, sales_tax')
+                .eq('id', newPalletId)
+                .single();
+
+              if (newPallet) {
+                // Count items currently in target pallet
+                const { count: currentCount } = await supabase
+                  .from('items')
+                  .select('*', { count: 'exact', head: true })
+                  .eq('pallet_id', newPalletId);
+
+                const totalPalletCost = newPallet.purchase_cost + (newPallet.sales_tax || 0);
+                // New count includes this item being moved
+                const newAllocatedCost = totalPalletCost / ((currentCount || 0) + 1);
+
+                finalUpdates.allocated_cost = newAllocatedCost;
+                finalUpdates.source_type = 'pallet';
+
+                // Update existing items in the NEW pallet with recalculated cost
+                if ((currentCount || 0) > 0) {
+                  await supabase
+                    .from('items')
+                    .update({ allocated_cost: newAllocatedCost })
+                    .eq('pallet_id', newPalletId);
+
+                  // Update local state for new pallet items
+                  set(state => ({
+                    items: state.items.map(i =>
+                      i.pallet_id === newPalletId && i.id !== id
+                        ? { ...i, allocated_cost: newAllocatedCost }
+                        : i
+                    ),
+                  }));
+                }
+              }
+            } else {
+              // Moving to individual (no pallet) - clear allocated cost
+              finalUpdates.allocated_cost = null;
+            }
+
+            // Recalculate OLD pallet if item was in one
+            if (oldPalletId) {
+              const { data: oldPallet } = await supabase
+                .from('pallets')
+                .select('purchase_cost, sales_tax')
+                .eq('id', oldPalletId)
+                .single();
+
+              if (oldPallet) {
+                // Count remaining items (excluding this one being moved)
+                const { count: remainingCount } = await supabase
+                  .from('items')
+                  .select('*', { count: 'exact', head: true })
+                  .eq('pallet_id', oldPalletId)
+                  .neq('id', id);
+
+                if ((remainingCount || 0) > 0) {
+                  const oldPalletCost = oldPallet.purchase_cost + (oldPallet.sales_tax || 0);
+                  const oldAllocatedCost = oldPalletCost / remainingCount!;
+
+                  await supabase
+                    .from('items')
+                    .update({ allocated_cost: oldAllocatedCost })
+                    .eq('pallet_id', oldPalletId)
+                    .neq('id', id);
+
+                  // Update local state for old pallet items
+                  set(state => ({
+                    items: state.items.map(i =>
+                      i.pallet_id === oldPalletId && i.id !== id
+                        ? { ...i, allocated_cost: oldAllocatedCost }
+                        : i
+                    ),
+                  }));
+                }
+              }
+            }
+          }
+
           const { data, error } = await supabase
             .from('items')
-            .update({ ...updates, version: currentItem.version + 1 } as any)
+            .update({ ...finalUpdates, version: currentItem.version + 1 } as any)
             .eq('id', id)
             .eq('version', currentItem.version)
             .select()

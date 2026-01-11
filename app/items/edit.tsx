@@ -71,11 +71,6 @@ export default function EditItemScreen() {
 
     setIsSubmitting(true);
     try {
-      // Check if pallet assignment changed
-      const oldPalletId = item.pallet_id;
-      const newPalletId = data.pallet_id || null;
-      const palletChanged = oldPalletId !== newPalletId;
-
       const result = await updateItem(id, {
         name: data.name,
         description: data.description,
@@ -89,9 +84,7 @@ export default function EditItemScreen() {
         barcode: data.barcode,
         source_name: data.source_name,
         notes: data.notes,
-        // Note: pallet_id changes require special handling for allocated_cost
-        // For now, we don't support changing pallet assignment via edit
-        // TODO: Implement pallet reassignment with allocated_cost recalculation
+        pallet_id: data.pallet_id || null,
       });
 
       if (result.success) {
