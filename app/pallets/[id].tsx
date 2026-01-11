@@ -47,7 +47,7 @@ export default function PalletDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { pallets, getPalletById, deletePallet, updatePallet, isLoading, fetchPallets } = usePalletsStore();
-  const { items, fetchItems, fetchItemsByPallet, markAsSold } = useItemsStore();
+  const { items, fetchItems, fetchItemsByPallet, markAsSold, deleteItem } = useItemsStore();
   const { fetchExpensesByPallet } = useExpensesStore();
   const [palletItems, setPalletItems] = useState<Item[]>([]);
   const [palletExpenses, setPalletExpenses] = useState<Expense[]>([]);
@@ -172,6 +172,31 @@ export default function PalletDetailScreen() {
     }
   };
 
+  // Item delete handler with confirmation
+  const handleItemDelete = (item: Item) => {
+    swipeableRefs.current.get(item.id)?.close();
+
+    Alert.alert(
+      'Delete Item',
+      `Are you sure you want to permanently delete "${item.name}"? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await deleteItem(item.id);
+            if (result.success) {
+              loadData(); // Refresh the items list
+            } else {
+              Alert.alert('Error', result.error || 'Failed to delete item');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -195,7 +220,7 @@ export default function PalletDetailScreen() {
     return palletItems.length > 0 ? palletCost / palletItems.length : 0;
   }, [pallet, palletItems]);
 
-  // Render swipe action
+  // Render right swipe action (Sell)
   const renderRightActions = (item: Item, progress: Animated.AnimatedInterpolation<number>) => {
     if (item.status === 'sold') return null;
 
@@ -212,6 +237,26 @@ export default function PalletDetailScreen() {
         >
           <FontAwesome name="dollar" size={20} color={colors.background} />
           <Text style={styles.sellButtonText}>SELL</Text>
+        </Pressable>
+      </Animated.View>
+    );
+  };
+
+  // Render left swipe action (Delete)
+  const renderLeftActions = (item: Item, progress: Animated.AnimatedInterpolation<number>) => {
+    const translateX = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [-100, 0],
+    });
+
+    return (
+      <Animated.View style={[styles.swipeActionLeft, { transform: [{ translateX }] }]}>
+        <Pressable
+          style={styles.deleteButton}
+          onPress={() => handleItemDelete(item)}
+        >
+          <FontAwesome name="trash" size={20} color={colors.background} />
+          <Text style={styles.deleteButtonText}>DELETE</Text>
         </Pressable>
       </Animated.View>
     );
@@ -338,7 +383,7 @@ export default function PalletDetailScreen() {
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Items ({palletItems.length})</Text>
               {palletItems.some(i => i.status !== 'sold') && (
-                <Text style={styles.swipeHint}>Swipe right to quick sell</Text>
+                <Text style={styles.swipeHint}>← Delete | Sell →</Text>
               )}
             </View>
             {loadingItems ? (
@@ -362,9 +407,11 @@ export default function PalletDetailScreen() {
                       if (ref) swipeableRefs.current.set(item.id, ref);
                     }}
                     renderRightActions={(progress) => renderRightActions(item, progress)}
+                    renderLeftActions={(progress) => renderLeftActions(item, progress)}
                     rightThreshold={40}
+                    leftThreshold={40}
                     overshootRight={false}
-                    enabled={item.status !== 'sold'}
+                    overshootLeft={false}
                   >
                     <Pressable
                       style={styles.itemCard}
@@ -802,6 +849,26 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   sellButtonText: {
+    color: colors.background,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  swipeActionLeft: {
+    width: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteButton: {
+    backgroundColor: colors.loss,
+    width: 70,
+    height: '100%',
+    borderRadius: borderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.sm,
+  },
+  deleteButtonText: {
     color: colors.background,
     fontSize: fontSize.xs,
     fontWeight: '700',
