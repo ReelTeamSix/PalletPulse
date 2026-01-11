@@ -207,218 +207,6 @@ export function ItemForm({
           </View>
         )}
 
-        {/* Sale Details (editable when editing a sold item) */}
-        {item?.status === 'sold' && (
-          <View style={styles.saleDetailsSection}>
-            <Text style={styles.saleDetailsTitle}>Sale Details</Text>
-
-            {/* Status Selector - allows changing from sold back to listed */}
-            <View style={styles.statusSelector}>
-              <Text style={styles.label}>Status</Text>
-              <Controller
-                control={control}
-                name="status"
-                render={({ field: { onChange, value } }) => (
-                  <>
-                    <Pressable
-                      style={styles.statusPickerButton}
-                      onPress={() => setShowStatusPicker(!showStatusPicker)}
-                    >
-                      <Text style={styles.statusPickerText}>
-                        {ITEM_STATUS_OPTIONS.find(o => o.value === value)?.label || value}
-                      </Text>
-                      <Text style={styles.statusPickerArrow}>
-                        {showStatusPicker ? '▲' : '▼'}
-                      </Text>
-                    </Pressable>
-                    {showStatusPicker && (
-                      <View style={styles.statusPickerDropdown}>
-                        {ITEM_STATUS_OPTIONS.map((option) => (
-                          <Pressable
-                            key={option.value}
-                            style={[
-                              styles.statusOption,
-                              value === option.value && styles.statusOptionSelected
-                            ]}
-                            onPress={() => {
-                              onChange(option.value);
-                              setShowStatusPicker(false);
-                            }}
-                          >
-                            <Text style={styles.statusOptionText}>{option.label}</Text>
-                            {value === option.value && <Text style={styles.statusOptionCheck}>✓</Text>}
-                          </Pressable>
-                        ))}
-                      </View>
-                    )}
-                  </>
-                )}
-              />
-              <Text style={styles.statusHint}>
-                Change to "Listed" to undo the sale
-              </Text>
-            </View>
-
-            {/* Only show sale fields if status is still 'sold' */}
-            {watchStatus === 'sold' && (
-              <>
-                {/* Sale Price */}
-                <Controller
-                  control={control}
-                  name="sale_price"
-                  render={({ field: { onChange, onBlur } }) => (
-                    <Input
-                      label="Sale Price"
-                      placeholder="Final sale price"
-                      value={salePriceText}
-                      onChangeText={(text) => {
-                        const cleaned = text.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-                        setSalePriceText(cleaned);
-                      }}
-                      onBlur={() => {
-                        const num = parseFloat(salePriceText) || null;
-                        onChange(num);
-                        if (num !== null) {
-                          setSalePriceText(num.toString());
-                        }
-                        onBlur();
-                      }}
-                      error={errors.sale_price?.message}
-                      keyboardType="decimal-pad"
-                      leftIcon="dollar"
-                    />
-                  )}
-                />
-
-                {/* Platform Selector */}
-                <View style={styles.platformSelector}>
-                  <Text style={styles.label}>Sales Platform</Text>
-                  <Controller
-                    control={control}
-                    name="platform"
-                    render={({ field: { onChange, value } }) => (
-                      <>
-                        <Pressable
-                          style={styles.platformPickerButton}
-                          onPress={() => setShowPlatformPicker(!showPlatformPicker)}
-                        >
-                          <Text style={[
-                            styles.platformPickerText,
-                            !value && styles.platformPickerPlaceholder
-                          ]}>
-                            {value ? PLATFORM_PRESETS[value]?.name || value : 'Select platform'}
-                          </Text>
-                          <Text style={styles.platformPickerArrow}>
-                            {showPlatformPicker ? '▲' : '▼'}
-                          </Text>
-                        </Pressable>
-                        {showPlatformPicker && (
-                          <View style={styles.platformPickerDropdown}>
-                            {Object.entries(PLATFORM_PRESETS).map(([key, preset]) => (
-                              <Pressable
-                                key={key}
-                                style={[
-                                  styles.platformOption,
-                                  value === key && styles.platformOptionSelected
-                                ]}
-                                onPress={() => {
-                                  onChange(key as SalesPlatform);
-                                  setShowPlatformPicker(false);
-                                }}
-                              >
-                                <View style={styles.platformOptionContent}>
-                                  <Text style={styles.platformOptionText}>{preset.name}</Text>
-                                  <Text style={styles.platformOptionDesc}>{preset.description}</Text>
-                                </View>
-                                {value === key && <Text style={styles.platformOptionCheck}>✓</Text>}
-                              </Pressable>
-                            ))}
-                          </View>
-                        )}
-                      </>
-                    )}
-                  />
-                </View>
-
-                {/* Platform Fee and Shipping Row */}
-                <View style={styles.row}>
-                  <View style={styles.halfField}>
-                    <Controller
-                      control={control}
-                      name="platform_fee"
-                      render={({ field: { onChange, onBlur } }) => (
-                        <Input
-                          label="Platform Fee"
-                          placeholder="0.00"
-                          value={platformFeeText}
-                          onChangeText={(text) => {
-                            const cleaned = text.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-                            setPlatformFeeText(cleaned);
-                          }}
-                          onBlur={() => {
-                            const num = parseFloat(platformFeeText) || null;
-                            onChange(num);
-                            if (num !== null) {
-                              setPlatformFeeText(num.toString());
-                            }
-                            onBlur();
-                          }}
-                          error={errors.platform_fee?.message}
-                          keyboardType="decimal-pad"
-                          leftIcon="dollar"
-                        />
-                      )}
-                    />
-                  </View>
-                  <View style={styles.halfField}>
-                    <Controller
-                      control={control}
-                      name="shipping_cost"
-                      render={({ field: { onChange, onBlur } }) => (
-                        <Input
-                          label="Shipping Cost"
-                          placeholder="0.00"
-                          value={shippingCostText}
-                          onChangeText={(text) => {
-                            const cleaned = text.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-                            setShippingCostText(cleaned);
-                          }}
-                          onBlur={() => {
-                            const num = parseFloat(shippingCostText) || null;
-                            onChange(num);
-                            if (num !== null) {
-                              setShippingCostText(num.toString());
-                            }
-                            onBlur();
-                          }}
-                          error={errors.shipping_cost?.message}
-                          keyboardType="decimal-pad"
-                          leftIcon="dollar"
-                        />
-                      )}
-                    />
-                  </View>
-                </View>
-
-                {/* Sale Date */}
-                <Controller
-                  control={control}
-                  name="sale_date"
-                  render={({ field: { onChange, value } }) => (
-                    <Input
-                      label="Sale Date"
-                      placeholder="YYYY-MM-DD"
-                      value={value || ''}
-                      onChangeText={onChange}
-                      hint="Date format: YYYY-MM-DD"
-                    />
-                  )}
-                />
-              </>
-            )}
-          </View>
-        )}
-
         {/* Pallet Selector (when NOT pre-selected and pallets exist) */}
         {!isPalletPreSelected && pallets.length > 0 && (
           <View style={styles.palletSelector}>
@@ -828,6 +616,218 @@ export function ItemForm({
             />
           )}
         />
+
+        {/* Sale Details (editable when editing a sold item) - placed near save button */}
+        {item?.status === 'sold' && (
+          <View style={styles.saleDetailsSection}>
+            <Text style={styles.saleDetailsTitle}>Sale Details</Text>
+
+            {/* Status Selector - allows changing from sold back to listed */}
+            <View style={styles.statusSelector}>
+              <Text style={styles.label}>Status</Text>
+              <Controller
+                control={control}
+                name="status"
+                render={({ field: { onChange, value } }) => (
+                  <>
+                    <Pressable
+                      style={styles.statusPickerButton}
+                      onPress={() => setShowStatusPicker(!showStatusPicker)}
+                    >
+                      <Text style={styles.statusPickerText}>
+                        {ITEM_STATUS_OPTIONS.find(o => o.value === value)?.label || value}
+                      </Text>
+                      <Text style={styles.statusPickerArrow}>
+                        {showStatusPicker ? '▲' : '▼'}
+                      </Text>
+                    </Pressable>
+                    {showStatusPicker && (
+                      <View style={styles.statusPickerDropdown}>
+                        {ITEM_STATUS_OPTIONS.map((option) => (
+                          <Pressable
+                            key={option.value}
+                            style={[
+                              styles.statusOption,
+                              value === option.value && styles.statusOptionSelected
+                            ]}
+                            onPress={() => {
+                              onChange(option.value);
+                              setShowStatusPicker(false);
+                            }}
+                          >
+                            <Text style={styles.statusOptionText}>{option.label}</Text>
+                            {value === option.value && <Text style={styles.statusOptionCheck}>✓</Text>}
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                  </>
+                )}
+              />
+              <Text style={styles.statusHint}>
+                Change to "Listed" to undo the sale
+              </Text>
+            </View>
+
+            {/* Only show sale fields if status is still 'sold' */}
+            {watchStatus === 'sold' && (
+              <>
+                {/* Sale Price */}
+                <Controller
+                  control={control}
+                  name="sale_price"
+                  render={({ field: { onChange, onBlur } }) => (
+                    <Input
+                      label="Sale Price"
+                      placeholder="Final sale price"
+                      value={salePriceText}
+                      onChangeText={(text) => {
+                        const cleaned = text.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                        setSalePriceText(cleaned);
+                      }}
+                      onBlur={() => {
+                        const num = parseFloat(salePriceText) || null;
+                        onChange(num);
+                        if (num !== null) {
+                          setSalePriceText(num.toString());
+                        }
+                        onBlur();
+                      }}
+                      error={errors.sale_price?.message}
+                      keyboardType="decimal-pad"
+                      leftIcon="dollar"
+                    />
+                  )}
+                />
+
+                {/* Platform Selector */}
+                <View style={styles.platformSelector}>
+                  <Text style={styles.label}>Sales Platform</Text>
+                  <Controller
+                    control={control}
+                    name="platform"
+                    render={({ field: { onChange, value } }) => (
+                      <>
+                        <Pressable
+                          style={styles.platformPickerButton}
+                          onPress={() => setShowPlatformPicker(!showPlatformPicker)}
+                        >
+                          <Text style={[
+                            styles.platformPickerText,
+                            !value && styles.platformPickerPlaceholder
+                          ]}>
+                            {value ? PLATFORM_PRESETS[value]?.name || value : 'Select platform'}
+                          </Text>
+                          <Text style={styles.platformPickerArrow}>
+                            {showPlatformPicker ? '▲' : '▼'}
+                          </Text>
+                        </Pressable>
+                        {showPlatformPicker && (
+                          <ScrollView style={styles.platformPickerDropdown} nestedScrollEnabled>
+                            {Object.entries(PLATFORM_PRESETS).map(([key, preset]) => (
+                              <Pressable
+                                key={key}
+                                style={[
+                                  styles.platformOption,
+                                  value === key && styles.platformOptionSelected
+                                ]}
+                                onPress={() => {
+                                  onChange(key as SalesPlatform);
+                                  setShowPlatformPicker(false);
+                                }}
+                              >
+                                <View style={styles.platformOptionContent}>
+                                  <Text style={styles.platformOptionText}>{preset.name}</Text>
+                                  <Text style={styles.platformOptionDesc}>{preset.description}</Text>
+                                </View>
+                                {value === key && <Text style={styles.platformOptionCheck}>✓</Text>}
+                              </Pressable>
+                            ))}
+                          </ScrollView>
+                        )}
+                      </>
+                    )}
+                  />
+                </View>
+
+                {/* Platform Fee and Shipping Row */}
+                <View style={styles.row}>
+                  <View style={styles.halfField}>
+                    <Controller
+                      control={control}
+                      name="platform_fee"
+                      render={({ field: { onChange, onBlur } }) => (
+                        <Input
+                          label="Platform Fee"
+                          placeholder="0.00"
+                          value={platformFeeText}
+                          onChangeText={(text) => {
+                            const cleaned = text.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                            setPlatformFeeText(cleaned);
+                          }}
+                          onBlur={() => {
+                            const num = parseFloat(platformFeeText) || null;
+                            onChange(num);
+                            if (num !== null) {
+                              setPlatformFeeText(num.toString());
+                            }
+                            onBlur();
+                          }}
+                          error={errors.platform_fee?.message}
+                          keyboardType="decimal-pad"
+                          leftIcon="dollar"
+                        />
+                      )}
+                    />
+                  </View>
+                  <View style={styles.halfField}>
+                    <Controller
+                      control={control}
+                      name="shipping_cost"
+                      render={({ field: { onChange, onBlur } }) => (
+                        <Input
+                          label="Shipping Cost"
+                          placeholder="0.00"
+                          value={shippingCostText}
+                          onChangeText={(text) => {
+                            const cleaned = text.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+                            setShippingCostText(cleaned);
+                          }}
+                          onBlur={() => {
+                            const num = parseFloat(shippingCostText) || null;
+                            onChange(num);
+                            if (num !== null) {
+                              setShippingCostText(num.toString());
+                            }
+                            onBlur();
+                          }}
+                          error={errors.shipping_cost?.message}
+                          keyboardType="decimal-pad"
+                          leftIcon="dollar"
+                        />
+                      )}
+                    />
+                  </View>
+                </View>
+
+                {/* Sale Date */}
+                <Controller
+                  control={control}
+                  name="sale_date"
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      label="Sale Date"
+                      placeholder="YYYY-MM-DD"
+                      value={value || ''}
+                      onChangeText={onChange}
+                      hint="Date format: YYYY-MM-DD"
+                    />
+                  )}
+                />
+              </>
+            )}
+          </View>
+        )}
 
         {/* Buttons */}
         <View style={styles.buttonRow}>
