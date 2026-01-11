@@ -31,7 +31,7 @@ describe('expenseFormSchema', () => {
     category: 'supplies',
     description: 'Packing tape and boxes',
     expense_date: '2024-01-15',
-    pallet_id: null,
+    pallet_ids: [],
     receipt_photo_path: null,
   };
 

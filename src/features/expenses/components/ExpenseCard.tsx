@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingHorizontal: spacing.xs,
     paddingVertical: 2,
-    borderRadius: borderRadius.xs,
+    borderRadius: borderRadius.sm,
   },
   sharedText: {
     fontSize: 9,

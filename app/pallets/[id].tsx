@@ -21,8 +21,9 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
-import { useExpensesStore } from '@/src/stores/expenses-store';
-import { PalletStatus, Item, Expense, SalesPlatform } from '@/src/types/database';
+import { useExpensesStore, ExpenseWithPallets } from '@/src/stores/expenses-store';
+import { useUserSettingsStore } from '@/src/stores/user-settings-store';
+import { PalletStatus, Item, SalesPlatform } from '@/src/types/database';
 import { formatCondition, getConditionColor, getStatusColor } from '@/src/features/items/schemas/item-form-schema';
 import { PALLET_STATUS_OPTIONS } from '@/src/features/pallets/schemas/pallet-form-schema';
 import {
@@ -60,8 +61,10 @@ export default function PalletDetailScreen() {
   const { pallets, getPalletById, deletePallet, updatePallet, isLoading, fetchPallets } = usePalletsStore();
   const { items, fetchItems, fetchItemsByPallet, markAsSold, deleteItem } = useItemsStore();
   const { fetchExpensesByPallet } = useExpensesStore();
+  const { isExpenseTrackingEnabled } = useUserSettingsStore();
+  const expenseTrackingEnabled = isExpenseTrackingEnabled();
   const [palletItems, setPalletItems] = useState<Item[]>([]);
-  const [palletExpenses, setPalletExpenses] = useState<Expense[]>([]);
+  const [palletExpenses, setPalletExpenses] = useState<ExpenseWithPallets[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [quickSellItem, setQuickSellItem] = useState<Item | null>(null);
@@ -81,15 +84,22 @@ export default function PalletDetailScreen() {
   const loadData = useCallback(async () => {
     if (id) {
       setLoadingItems(true);
-      const [itemsList, expensesList] = await Promise.all([
-        fetchItemsByPallet(id),
-        fetchExpensesByPallet(id),
-      ]);
-      setPalletItems(itemsList);
-      setPalletExpenses(expensesList);
+      // Only fetch expenses if expense tracking is enabled
+      if (expenseTrackingEnabled) {
+        const [itemsList, expensesList] = await Promise.all([
+          fetchItemsByPallet(id),
+          fetchExpensesByPallet(id),
+        ]);
+        setPalletItems(itemsList);
+        setPalletExpenses(expensesList);
+      } else {
+        const itemsList = await fetchItemsByPallet(id);
+        setPalletItems(itemsList);
+        setPalletExpenses([]);
+      }
       setLoadingItems(false);
     }
-  }, [id, fetchItemsByPallet, fetchExpensesByPallet]);
+  }, [id, fetchItemsByPallet, fetchExpensesByPallet, expenseTrackingEnabled]);
 
   // Fetch items and expenses on focus (refreshes when coming back from other screens)
   useFocusEffect(
@@ -537,40 +547,42 @@ export default function PalletDetailScreen() {
             </View>
           </View>
 
-          {/* Expenses Section */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>
-                Expenses ({palletExpenses.length})
-                {palletExpenses.length > 0 && (
-                  <Text style={styles.expensesTotalInline}>
-                    {' '} - {formatExpenseAmount(palletExpenses.reduce((sum, e) => sum + e.amount, 0))}
-                  </Text>
-                )}
-              </Text>
-              <Pressable style={styles.addExpenseButton} onPress={handleAddExpense}>
-                <FontAwesome name="plus" size={12} color={colors.primary} />
-                <Text style={styles.addExpenseText}>Add</Text>
-              </Pressable>
-            </View>
-            {palletExpenses.length === 0 ? (
-              <View style={styles.expensesPlaceholder}>
-                <Text style={styles.expensesPlaceholderText}>
-                  No expenses recorded for this pallet
+          {/* Expenses Section - only shown when expense tracking is enabled */}
+          {expenseTrackingEnabled && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>
+                  Expenses ({palletExpenses.length})
+                  {palletExpenses.length > 0 && (
+                    <Text style={styles.expensesTotalInline}>
+                      {' '} - {formatExpenseAmount(palletExpenses.reduce((sum, e) => sum + e.amount, 0))}
+                    </Text>
+                  )}
                 </Text>
+                <Pressable style={styles.addExpenseButton} onPress={handleAddExpense}>
+                  <FontAwesome name="plus" size={12} color={colors.primary} />
+                  <Text style={styles.addExpenseText}>Add</Text>
+                </Pressable>
               </View>
-            ) : (
-              <View style={styles.expensesList}>
-                {palletExpenses.map((expense) => (
-                  <ExpenseCardCompact
-                    key={expense.id}
-                    expense={expense}
-                    onPress={() => handleExpensePress(expense.id)}
-                  />
-                ))}
-              </View>
-            )}
-          </View>
+              {palletExpenses.length === 0 ? (
+                <View style={styles.expensesPlaceholder}>
+                  <Text style={styles.expensesPlaceholderText}>
+                    No expenses recorded for this pallet
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.expensesList}>
+                  {palletExpenses.map((expense) => (
+                    <ExpenseCardCompact
+                      key={expense.id}
+                      expense={expense}
+                      onPress={() => handleExpensePress(expense.id)}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
         </ScrollView>
 
         <Pressable

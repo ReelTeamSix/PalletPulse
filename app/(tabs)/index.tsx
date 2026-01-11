@@ -9,6 +9,7 @@ import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
 import { useExpensesStore } from '@/src/stores/expenses-store';
+import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { formatCurrency, calculateItemProfit } from '@/src/lib/profit-utils';
 
 export default function DashboardScreen() {
@@ -17,17 +18,22 @@ export default function DashboardScreen() {
   const { pallets, fetchPallets, isLoading: palletsLoading } = usePalletsStore();
   const { items, fetchItems, isLoading: itemsLoading } = useItemsStore();
   const { expenses, fetchExpenses, isLoading: expensesLoading } = useExpensesStore();
+  const { isExpenseTrackingEnabled } = useUserSettingsStore();
+  const expenseTrackingEnabled = isExpenseTrackingEnabled();
 
   // Fetch data on mount and when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       fetchPallets();
       fetchItems();
-      fetchExpenses();
-    }, [])
+      // Only fetch expenses if expense tracking is enabled
+      if (expenseTrackingEnabled) {
+        fetchExpenses();
+      }
+    }, [expenseTrackingEnabled])
   );
 
-  const isLoading = palletsLoading || itemsLoading || expensesLoading;
+  const isLoading = palletsLoading || itemsLoading || (expenseTrackingEnabled && expensesLoading);
 
   // Calculate dashboard metrics
   const metrics = useMemo(() => {
@@ -49,10 +55,12 @@ export default function DashboardScreen() {
       .filter(item => !item.pallet_id && item.purchase_cost)
       .reduce((sum, item) => sum + (item.purchase_cost ?? 0), 0);
 
-    // 3. All expenses
-    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    // 3. Expenses - only include if expense tracking is enabled
+    const totalExpenses = expenseTrackingEnabled
+      ? expenses.reduce((sum, e) => sum + e.amount, 0)
+      : 0;
 
-    // Total profit = Revenue - All Costs - All Expenses
+    // Total profit = Revenue - All Costs - All Expenses (if enabled)
     const totalProfit = totalRevenue - totalPalletCosts - individualItemsCost - totalExpenses;
 
     return {
@@ -62,15 +70,15 @@ export default function DashboardScreen() {
       soldCount: soldItems.length,
       isProfitable: totalProfit >= 0,
     };
-  }, [pallets, items, expenses]);
+  }, [pallets, items, expenses, expenseTrackingEnabled]);
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([
-      fetchPallets(),
-      fetchItems(),
-      fetchExpenses(),
-    ]);
-  }, []);
+    const promises = [fetchPallets(), fetchItems()];
+    if (expenseTrackingEnabled) {
+      promises.push(fetchExpenses());
+    }
+    await Promise.all(promises);
+  }, [expenseTrackingEnabled]);
 
   return (
     <ScrollView

@@ -87,7 +87,7 @@ export default function NewExpenseScreen() {
       />
       <View style={[styles.container, { paddingBottom: insets.bottom }]}>
         <ExpenseForm
-          palletId={palletId}
+          palletIds={palletId ? [palletId] : undefined}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           isLoading={isSubmitting || isLoading}
