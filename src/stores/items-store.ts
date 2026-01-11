@@ -112,9 +112,56 @@ export const useItemsStore = create<ItemsState>()(
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) throw new Error('User not authenticated');
+
+          let allocatedCost: number | null = null;
+
+          // If linking to a pallet, calculate allocated cost
+          if (itemData.pallet_id) {
+            // Fetch the pallet to get its cost
+            const { data: pallet, error: palletError } = await supabase
+              .from('pallets')
+              .select('purchase_cost, sales_tax')
+              .eq('id', itemData.pallet_id)
+              .single();
+
+            if (!palletError && pallet) {
+              // Count existing items in this pallet
+              const { count, error: countError } = await supabase
+                .from('items')
+                .select('*', { count: 'exact', head: true })
+                .eq('pallet_id', itemData.pallet_id);
+
+              const existingItemCount = count || 0;
+              const totalPalletCost = pallet.purchase_cost + (pallet.sales_tax || 0);
+              // New item will make it existingItemCount + 1 items
+              allocatedCost = totalPalletCost / (existingItemCount + 1);
+
+              // Update all existing items in the pallet with new allocated cost
+              if (existingItemCount > 0) {
+                await supabase
+                  .from('items')
+                  .update({ allocated_cost: allocatedCost })
+                  .eq('pallet_id', itemData.pallet_id);
+
+                // Update local state for existing items
+                set(state => ({
+                  items: state.items.map(i =>
+                    i.pallet_id === itemData.pallet_id
+                      ? { ...i, allocated_cost: allocatedCost }
+                      : i
+                  ),
+                }));
+              }
+            }
+          }
+
           const { data, error } = await supabase
             .from('items')
-            .insert({ ...itemData, user_id: user.id } as any)
+            .insert({
+              ...itemData,
+              user_id: user.id,
+              allocated_cost: allocatedCost,
+            } as any)
             .select()
             .single();
           if (error) throw error;
@@ -153,8 +200,58 @@ export const useItemsStore = create<ItemsState>()(
       deleteItem: async (id: string) => {
         set({ isLoading: true, error: null });
         try {
+          // Get the item first to check if it belongs to a pallet
+          const itemToDelete = get().items.find(i => i.id === id);
+          const palletId = itemToDelete?.pallet_id;
+
           const { error } = await supabase.from('items').delete().eq('id', id);
           if (error) throw error;
+
+          // If item was in a pallet, recalculate allocated costs for remaining items
+          if (palletId) {
+            // Fetch the pallet to get its cost
+            const { data: pallet } = await supabase
+              .from('pallets')
+              .select('purchase_cost, sales_tax')
+              .eq('id', palletId)
+              .single();
+
+            if (pallet) {
+              // Count remaining items in this pallet (after delete)
+              const { count } = await supabase
+                .from('items')
+                .select('*', { count: 'exact', head: true })
+                .eq('pallet_id', palletId);
+
+              const remainingItemCount = count || 0;
+
+              if (remainingItemCount > 0) {
+                const totalPalletCost = pallet.purchase_cost + (pallet.sales_tax || 0);
+                const newAllocatedCost = totalPalletCost / remainingItemCount;
+
+                // Update remaining items with new allocated cost
+                await supabase
+                  .from('items')
+                  .update({ allocated_cost: newAllocatedCost })
+                  .eq('pallet_id', palletId);
+
+                // Update local state for remaining items
+                set(state => ({
+                  items: state.items
+                    .filter(i => i.id !== id)
+                    .map(i =>
+                      i.pallet_id === palletId
+                        ? { ...i, allocated_cost: newAllocatedCost }
+                        : i
+                    ),
+                  selectedItemId: state.selectedItemId === id ? null : state.selectedItemId,
+                  isLoading: false,
+                }));
+                return { success: true };
+              }
+            }
+          }
+
           set(state => ({
             items: state.items.filter(i => i.id !== id),
             selectedItemId: state.selectedItemId === id ? null : state.selectedItemId,

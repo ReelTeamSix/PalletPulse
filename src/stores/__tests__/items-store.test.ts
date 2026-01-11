@@ -133,17 +133,39 @@ describe('ItemsStore', () => {
   });
 
   describe('addItem', () => {
-    it('should add item successfully', async () => {
+    it('should add item successfully with pallet', async () => {
       (supabase.auth.getUser as jest.Mock).mockResolvedValue({
         data: { user: { id: 'user-123' } },
       });
 
-      const mockInsert = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({ data: mockItem, error: null }),
-        }),
+      // Mock different responses for different tables
+      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+        if (table === 'pallets') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { purchase_cost: 100, sales_tax: 10 },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'items') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({ count: 0, error: null }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: mockItem, error: null }),
+              }),
+            }),
+          };
+        }
+        return {};
       });
-      (supabase.from as jest.Mock).mockReturnValue({ insert: mockInsert });
 
       const result = await useItemsStore.getState().addItem({
         name: 'Test Item',
@@ -153,6 +175,27 @@ describe('ItemsStore', () => {
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockItem);
       expect(useItemsStore.getState().items).toHaveLength(1);
+    });
+
+    it('should add item successfully without pallet', async () => {
+      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+        data: { user: { id: 'user-123' } },
+      });
+
+      const itemWithoutPallet = { ...mockItem, pallet_id: null, allocated_cost: null };
+      const mockInsert = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({ data: itemWithoutPallet, error: null }),
+        }),
+      });
+      (supabase.from as jest.Mock).mockReturnValue({ insert: mockInsert });
+
+      const result = await useItemsStore.getState().addItem({
+        name: 'Test Item',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(itemWithoutPallet);
     });
 
     it('should fail when not authenticated', async () => {
@@ -212,6 +255,44 @@ describe('ItemsStore', () => {
     });
 
     it('should delete item successfully', async () => {
+      // Mock different responses for different tables and operations
+      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+        if (table === 'pallets') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { purchase_cost: 100, sales_tax: 10 },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'items') {
+          return {
+            delete: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({ error: null }),
+            }),
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({ count: 0, error: null }),
+            }),
+          };
+        }
+        return {};
+      });
+
+      const result = await useItemsStore.getState().deleteItem('item-1');
+
+      expect(result.success).toBe(true);
+      expect(useItemsStore.getState().items).toHaveLength(0);
+      expect(useItemsStore.getState().selectedItemId).toBe(null);
+    });
+
+    it('should delete item without pallet successfully', async () => {
+      const itemWithoutPallet = { ...mockItem, pallet_id: null };
+      useItemsStore.setState({ items: [itemWithoutPallet], selectedItemId: 'item-1' });
+
       const mockDelete = jest.fn().mockReturnValue({
         eq: jest.fn().mockResolvedValue({ error: null }),
       });
@@ -221,7 +302,6 @@ describe('ItemsStore', () => {
 
       expect(result.success).toBe(true);
       expect(useItemsStore.getState().items).toHaveLength(0);
-      expect(useItemsStore.getState().selectedItemId).toBe(null);
     });
   });
 
