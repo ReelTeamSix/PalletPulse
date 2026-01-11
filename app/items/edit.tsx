@@ -1,15 +1,16 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { StyleSheet, View, Alert, ActivityIndicator, Text } from 'react-native';
+import { StyleSheet, View, Alert, ActivityIndicator, Text, Pressable } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize } from '@/src/constants/spacing';
+import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { useItemsStore } from '@/src/stores/items-store';
 import { ItemForm, ItemFormData } from '@/src/features/items';
 import { PhotoItem } from '@/src/components/ui/PhotoPicker';
 import { getPhotoUrl } from '@/src/lib/photo-utils';
 import { ItemPhoto } from '@/src/types/database';
+import { Button } from '@/src/components/ui';
 
 export default function EditItemScreen() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function EditItemScreen() {
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [originalPhotos, setOriginalPhotos] = useState<ItemPhoto[]>([]);
   const [photosLoaded, setPhotosLoaded] = useState(false);
+  const [hasConfirmedSoldEdit, setHasConfirmedSoldEdit] = useState(false);
 
   // Fetch items if not loaded
   useEffect(() => {
@@ -141,6 +143,51 @@ export default function EditItemScreen() {
     );
   }
 
+  // Show confirmation screen for sold items
+  const isSoldItem = item.status === 'sold';
+  if (isSoldItem && !hasConfirmedSoldEdit) {
+    return (
+      <>
+        <Stack.Screen
+          options={{
+            title: 'Edit Sold Item',
+            headerBackTitle: 'Cancel',
+          }}
+        />
+        <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+          <View style={styles.confirmContainer}>
+            <View style={styles.warningIconContainer}>
+              <FontAwesome name="exclamation-triangle" size={48} color={colors.warning} />
+            </View>
+            <Text style={styles.confirmTitle}>Edit Sold Item?</Text>
+            <Text style={styles.confirmText}>
+              This item has already been marked as sold. Editing item details may affect profit calculations for this item and its associated pallet.
+            </Text>
+            <View style={styles.warningBox}>
+              <FontAwesome name="info-circle" size={16} color={colors.textSecondary} />
+              <Text style={styles.warningText}>
+                If you need to update sale details (price, fees, platform), you should mark the item as unsold first, then re-sell it with the correct information.
+              </Text>
+            </View>
+            <View style={styles.confirmButtons}>
+              <Button
+                title="Cancel"
+                variant="outline"
+                onPress={() => router.back()}
+                style={styles.confirmButton}
+              />
+              <Button
+                title="Continue Editing"
+                onPress={() => setHasConfirmedSoldEdit(true)}
+                style={styles.confirmButton}
+              />
+            </View>
+          </View>
+        </View>
+      </>
+    );
+  }
+
   return (
     <>
       <Stack.Screen
@@ -192,5 +239,56 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  confirmContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
+  },
+  warningIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.warning + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  confirmTitle: {
+    fontSize: fontSize.xxl,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  confirmText: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+    lineHeight: 22,
+  },
+  warningBox: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.xl,
+    gap: spacing.sm,
+  },
+  warningText: {
+    flex: 1,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    width: '100%',
+  },
+  confirmButton: {
+    flex: 1,
   },
 });

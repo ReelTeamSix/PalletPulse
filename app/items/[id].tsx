@@ -27,7 +27,8 @@ import {
   getStatusColor,
   calculateItemProfit,
 } from '@/src/features/items/schemas/item-form-schema';
-import { ItemPhoto } from '@/src/types/database';
+import { PLATFORM_PRESETS } from '@/src/features/sales/schemas/sale-form-schema';
+import { ItemPhoto, SalesPlatform } from '@/src/types/database';
 import { getPhotoUrl } from '@/src/lib/photo-utils';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -145,6 +146,11 @@ export default function ItemDetailScreen() {
       other: 'Other',
     };
     return map[sourceType] || sourceType;
+  };
+
+  const formatPlatform = (platform: SalesPlatform | null) => {
+    if (!platform) return 'Unknown';
+    return PLATFORM_PRESETS[platform]?.name || platform;
   };
 
   if (isLoading && !item) {
@@ -345,6 +351,59 @@ export default function ItemDetailScreen() {
               <Text style={styles.costAllocationText}>
                 Cost allocated from pallet: {formatCurrency(pallet.purchase_cost + (pallet.sales_tax || 0))} ÷ {palletItemCount} items
               </Text>
+            </View>
+          )}
+
+          {/* Sale Info Breakdown for Sold Items */}
+          {hasSold && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Sale Breakdown</Text>
+              <View style={styles.saleInfoCard}>
+                <View style={styles.saleInfoRow}>
+                  <Text style={styles.saleInfoLabel}>Sale Price</Text>
+                  <Text style={[styles.saleInfoValue, styles.saleInfoPositive]}>
+                    {formatCurrency(item.sale_price)}
+                  </Text>
+                </View>
+                {item.platform && (
+                  <View style={styles.saleInfoRow}>
+                    <Text style={styles.saleInfoLabel}>Platform</Text>
+                    <Text style={styles.saleInfoValue}>{formatPlatform(item.platform)}</Text>
+                  </View>
+                )}
+                {(item.platform_fee !== null && item.platform_fee > 0) && (
+                  <View style={styles.saleInfoRow}>
+                    <Text style={styles.saleInfoLabel}>Platform Fee</Text>
+                    <Text style={[styles.saleInfoValue, styles.saleInfoNegative]}>
+                      -{formatCurrency(item.platform_fee)}
+                    </Text>
+                  </View>
+                )}
+                {(item.shipping_cost !== null && item.shipping_cost > 0) && (
+                  <View style={styles.saleInfoRow}>
+                    <Text style={styles.saleInfoLabel}>Shipping Cost</Text>
+                    <Text style={[styles.saleInfoValue, styles.saleInfoNegative]}>
+                      -{formatCurrency(item.shipping_cost)}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.saleInfoRow}>
+                  <Text style={styles.saleInfoLabel}>Item Cost</Text>
+                  <Text style={[styles.saleInfoValue, styles.saleInfoNegative]}>
+                    -{formatCurrency(effectiveCost)}
+                  </Text>
+                </View>
+                <View style={styles.saleInfoDivider} />
+                <View style={styles.saleInfoRow}>
+                  <Text style={styles.saleInfoLabelBold}>Net Profit</Text>
+                  <Text style={[
+                    styles.saleInfoValueBold,
+                    isProfitable ? styles.saleInfoPositive : styles.saleInfoNegative
+                  ]}>
+                    {formatCurrency(profit)}
+                  </Text>
+                </View>
+              </View>
             </View>
           )}
 
@@ -810,5 +869,45 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.md,
     fontWeight: '600',
+  },
+  saleInfoCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+  },
+  saleInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  saleInfoLabel: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+  },
+  saleInfoLabelBold: {
+    fontSize: fontSize.md,
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  saleInfoValue: {
+    fontSize: fontSize.md,
+    color: colors.textPrimary,
+    fontWeight: '500',
+  },
+  saleInfoValueBold: {
+    fontSize: fontSize.lg,
+    fontWeight: 'bold',
+  },
+  saleInfoPositive: {
+    color: colors.profit,
+  },
+  saleInfoNegative: {
+    color: colors.loss,
+  },
+  saleInfoDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.xs,
   },
 });
