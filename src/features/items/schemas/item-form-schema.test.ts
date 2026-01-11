@@ -114,17 +114,17 @@ describe('itemFormSchema', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject name exceeding 200 characters', () => {
-      const data = { name: 'a'.repeat(201) };
+    it('should reject name exceeding 100 characters', () => {
+      const data = { name: 'a'.repeat(101) };
       const result = itemFormSchema.safeParse(data);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Name must be 200 characters or less');
+        expect(result.error.issues[0].message).toBe('Name must be 100 characters or less');
       }
     });
 
-    it('should accept name at exactly 200 characters', () => {
-      const data = { name: 'a'.repeat(200) };
+    it('should accept name at exactly 100 characters', () => {
+      const data = { name: 'a'.repeat(100) };
       const result = itemFormSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
