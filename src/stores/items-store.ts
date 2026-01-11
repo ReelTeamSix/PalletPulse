@@ -3,7 +3,9 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/src/lib/supabase';
-import { Item, ItemCondition, ItemStatus, SourceType } from '@/src/types/database';
+import { Item, ItemCondition, ItemStatus, SourceType, ItemPhoto } from '@/src/types/database';
+import { uploadItemPhoto, deletePhoto, getPhotoUrl } from '@/src/lib/photo-utils';
+import { PhotoItem } from '@/src/components/ui/PhotoPicker';
 
 export interface ItemInsert {
   pallet_id?: string | null;
@@ -59,6 +61,10 @@ export interface ItemsState {
   setSelectedItem: (id: string | null) => void;
   clearError: () => void;
   clearItems: () => void;
+  // Photo management
+  uploadItemPhotos: (itemId: string, photos: PhotoItem[]) => Promise<{ success: boolean; photos?: ItemPhoto[]; error?: string }>;
+  fetchItemPhotos: (itemId: string) => Promise<ItemPhoto[]>;
+  deleteItemPhoto: (photoId: string, storagePath: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const useItemsStore = create<ItemsState>()(
@@ -174,6 +180,85 @@ export const useItemsStore = create<ItemsState>()(
       setSelectedItem: (id: string | null) => set({ selectedItemId: id }),
       clearError: () => set({ error: null }),
       clearItems: () => set({ items: [], selectedItemId: null, error: null }),
+
+      // Photo management
+      uploadItemPhotos: async (itemId: string, photos: PhotoItem[]) => {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error('User not authenticated');
+
+          const uploadedPhotos: ItemPhoto[] = [];
+
+          // Only upload new photos (ones without storagePath)
+          const newPhotos = photos.filter(p => p.isNew && !p.storagePath);
+
+          for (let i = 0; i < newPhotos.length; i++) {
+            const photo = newPhotos[i];
+            const result = await uploadItemPhoto(
+              { uri: photo.uri, width: 0, height: 0, type: 'image/jpeg', fileName: `photo_${i}.jpg` },
+              user.id,
+              itemId
+            );
+
+            if (result.success && result.path) {
+              // Save to item_photos table
+              const { data, error } = await supabase
+                .from('item_photos')
+                .insert({
+                  item_id: itemId,
+                  user_id: user.id,
+                  storage_path: result.path,
+                  display_order: photos.indexOf(photo),
+                })
+                .select()
+                .single();
+
+              if (!error && data) {
+                uploadedPhotos.push(data as ItemPhoto);
+              }
+            }
+          }
+
+          return { success: true, photos: uploadedPhotos };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to upload photos';
+          return { success: false, error: message };
+        }
+      },
+
+      fetchItemPhotos: async (itemId: string) => {
+        try {
+          const { data, error } = await supabase
+            .from('item_photos')
+            .select('*')
+            .eq('item_id', itemId)
+            .order('display_order', { ascending: true });
+
+          if (error) throw error;
+          return (data as ItemPhoto[]) || [];
+        } catch (error) {
+          return [];
+        }
+      },
+
+      deleteItemPhoto: async (photoId: string, storagePath: string) => {
+        try {
+          // Delete from storage
+          await deletePhoto(storagePath);
+
+          // Delete from database
+          const { error } = await supabase
+            .from('item_photos')
+            .delete()
+            .eq('id', photoId);
+
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to delete photo';
+          return { success: false, error: message };
+        }
+      },
     }),
     {
       name: 'items-storage',

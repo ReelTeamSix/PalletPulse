@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, View, Alert, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,13 +7,28 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize } from '@/src/constants/spacing';
 import { useItemsStore } from '@/src/stores/items-store';
 import { ItemForm, ItemFormData } from '@/src/features/items';
+import { PhotoItem } from '@/src/components/ui/PhotoPicker';
+import { getPhotoUrl } from '@/src/lib/photo-utils';
+import { ItemPhoto } from '@/src/types/database';
 
 export default function EditItemScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
-  const { items, getItemById, updateItem, isLoading, fetchItems } = useItemsStore();
+  const {
+    items,
+    getItemById,
+    updateItem,
+    isLoading,
+    fetchItems,
+    fetchItemPhotos,
+    uploadItemPhotos,
+    deleteItemPhoto,
+  } = useItemsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [originalPhotos, setOriginalPhotos] = useState<ItemPhoto[]>([]);
+  const [photosLoaded, setPhotosLoaded] = useState(false);
 
   // Fetch items if not loaded
   useEffect(() => {
@@ -21,6 +36,26 @@ export default function EditItemScreen() {
       fetchItems();
     }
   }, []);
+
+  // Load existing photos
+  useEffect(() => {
+    async function loadPhotos() {
+      if (id && !photosLoaded) {
+        const itemPhotos = await fetchItemPhotos(id);
+        setOriginalPhotos(itemPhotos);
+        // Convert to PhotoItem format
+        const photoItems: PhotoItem[] = itemPhotos.map((p) => ({
+          id: p.id,
+          uri: getPhotoUrl(p.storage_path),
+          storagePath: p.storage_path,
+          isNew: false,
+        }));
+        setPhotos(photoItems);
+        setPhotosLoaded(true);
+      }
+    }
+    loadPhotos();
+  }, [id, photosLoaded]);
 
   const item = useMemo(() => {
     if (!id) return null;
@@ -52,6 +87,20 @@ export default function EditItemScreen() {
       });
 
       if (result.success) {
+        // Handle photo changes
+        // 1. Delete removed photos
+        const currentPhotoIds = photos.filter(p => !p.isNew).map(p => p.id);
+        const photosToDelete = originalPhotos.filter(p => !currentPhotoIds.includes(p.id));
+        for (const photo of photosToDelete) {
+          await deleteItemPhoto(photo.id, photo.storage_path);
+        }
+
+        // 2. Upload new photos
+        const newPhotos = photos.filter(p => p.isNew);
+        if (newPhotos.length > 0) {
+          await uploadItemPhotos(id, newPhotos);
+        }
+
         router.back();
       } else {
         Alert.alert('Error', result.error || 'Failed to update item');
@@ -106,6 +155,8 @@ export default function EditItemScreen() {
           onCancel={handleCancel}
           isLoading={isSubmitting || isLoading}
           submitLabel="Save Changes"
+          photos={photos}
+          onPhotosChange={setPhotos}
         />
       </View>
     </>

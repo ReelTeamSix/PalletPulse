@@ -6,14 +6,16 @@ import { colors } from '@/src/constants/colors';
 import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { ItemForm, ItemFormData } from '@/src/features/items';
+import { PhotoItem } from '@/src/components/ui/PhotoPicker';
 
 export default function NewItemScreen() {
   const { palletId } = useLocalSearchParams<{ palletId?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { addItem, isLoading } = useItemsStore();
+  const { addItem, uploadItemPhotos, isLoading } = useItemsStore();
   const { getPalletById } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
 
   // Get pallet name for display
   const pallet = palletId ? getPalletById(palletId) : null;
@@ -42,14 +44,17 @@ export default function NewItemScreen() {
         notes: data.notes,
       });
 
-      if (result.success) {
-        router.dismiss();
-        // Navigate to the new item detail if we have the ID
-        if (result.data?.id) {
-          setTimeout(() => {
-            router.push(`/items/${result.data!.id}`);
-          }, 100);
+      if (result.success && result.data?.id) {
+        // Upload photos if any
+        if (photos.length > 0) {
+          await uploadItemPhotos(result.data.id, photos);
         }
+
+        router.dismiss();
+        // Navigate to the new item detail
+        setTimeout(() => {
+          router.push(`/items/${result.data!.id}`);
+        }, 100);
       } else {
         Alert.alert('Error', result.error || 'Failed to create item');
       }
@@ -75,6 +80,8 @@ export default function NewItemScreen() {
           onCancel={handleCancel}
           isLoading={isSubmitting || isLoading}
           submitLabel="Create Item"
+          photos={photos}
+          onPhotosChange={setPhotos}
         />
       </View>
     </>

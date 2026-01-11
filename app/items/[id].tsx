@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,6 +7,8 @@ import {
   Pressable,
   Alert,
   ActivityIndicator,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,13 +25,19 @@ import {
   getStatusColor,
   calculateItemProfit,
 } from '@/src/features/items/schemas/item-form-schema';
+import { ItemPhoto } from '@/src/types/database';
+import { getPhotoUrl } from '@/src/lib/photo-utils';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function ItemDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { items, getItemById, deleteItem, isLoading, fetchItems } = useItemsStore();
+  const { items, getItemById, deleteItem, isLoading, fetchItems, fetchItemPhotos } = useItemsStore();
   const { getPalletById } = usePalletsStore();
+  const [photos, setPhotos] = useState<ItemPhoto[]>([]);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   // Fetch items if not loaded
   useEffect(() => {
@@ -37,6 +45,17 @@ export default function ItemDetailScreen() {
       fetchItems();
     }
   }, []);
+
+  // Load photos
+  useEffect(() => {
+    async function loadPhotos() {
+      if (id) {
+        const itemPhotos = await fetchItemPhotos(id);
+        setPhotos(itemPhotos);
+      }
+    }
+    loadPhotos();
+  }, [id]);
 
   const item = useMemo(() => {
     if (!id) return null;
@@ -181,10 +200,47 @@ export default function ItemDetailScreen() {
       <View style={styles.container}>
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           <View style={styles.photoSection}>
-            <View style={styles.photoPlaceholder}>
-              <FontAwesome name="camera" size={48} color={colors.neutral} />
-              <Text style={styles.photoPlaceholderText}>No photos</Text>
-            </View>
+            {photos.length > 0 ? (
+              <View>
+                <ScrollView
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  onScroll={(e) => {
+                    const index = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
+                    setCurrentPhotoIndex(index);
+                  }}
+                  scrollEventThrottle={16}
+                >
+                  {photos.map((photo) => (
+                    <Image
+                      key={photo.id}
+                      source={{ uri: getPhotoUrl(photo.storage_path) }}
+                      style={styles.photo}
+                      resizeMode="cover"
+                    />
+                  ))}
+                </ScrollView>
+                {photos.length > 1 && (
+                  <View style={styles.photoIndicator}>
+                    {photos.map((_, index) => (
+                      <View
+                        key={index}
+                        style={[
+                          styles.indicatorDot,
+                          index === currentPhotoIndex && styles.indicatorDotActive,
+                        ]}
+                      />
+                    ))}
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View style={styles.photoPlaceholder}>
+                <FontAwesome name="camera" size={48} color={colors.neutral} />
+                <Text style={styles.photoPlaceholderText}>No photos</Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.header}>
@@ -404,6 +460,28 @@ const styles = StyleSheet.create({
   photoSection: {
     height: 250,
     backgroundColor: colors.surface,
+  },
+  photo: {
+    width: screenWidth,
+    height: 250,
+  },
+  photoIndicator: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    position: 'absolute',
+    bottom: spacing.md,
+    left: 0,
+    right: 0,
+    gap: spacing.xs,
+  },
+  indicatorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  indicatorDotActive: {
+    backgroundColor: colors.background,
   },
   photoPlaceholder: {
     flex: 1,
