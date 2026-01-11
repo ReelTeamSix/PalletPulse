@@ -344,6 +344,9 @@ Phase 7 will include:
 
 ## Phase 11 Backlog (Polish)
 
+### Must Have
+- [ ] Logging & diagnostics system - Structured logger, Sentry integration, log buffer, "Report Problem" UI for users to share logs
+
 ### Maybe Add
 - [ ] Optional photo cropping - Add a "Crop" button to photo previews after capture, letting users optionally crop/adjust photos instead of forcing crop on capture
 
