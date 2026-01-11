@@ -7,6 +7,7 @@ export const SALES_CHANNEL_SUGGESTIONS = [
   'eBay',
   'Mercari',
   'Poshmark',
+  'WhatNot',
   'Amazon',
   'Etsy',
   'Craigslist',

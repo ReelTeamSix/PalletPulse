@@ -32,7 +32,7 @@ import {
   saleFormSchema,
   SaleFormData,
   getDefaultSaleFormValues,
-  SALES_CHANNEL_SUGGESTIONS,
+  getUniqueSalesChannels,
   getPriceWarning,
   calculateDiscount,
   formatSaleDate,
@@ -109,8 +109,11 @@ export default function SellItemScreen() {
   const priceWarning = item?.listing_price ? getPriceWarning(salePrice || 0, item.listing_price) : null;
   const discount = item?.listing_price ? calculateDiscount(salePrice || 0, item.listing_price) : null;
 
-  // Filter channel suggestions
-  const filteredChannels = SALES_CHANNEL_SUGGESTIONS.filter(
+  // Get all sales channels (from past sales + defaults)
+  const allChannels = useMemo(() => getUniqueSalesChannels(items), [items]);
+
+  // Filter channel suggestions based on input
+  const filteredChannels = allChannels.filter(
     (channel) =>
       !salesChannel ||
       channel.toLowerCase().includes(salesChannel.toLowerCase())
