@@ -7,8 +7,9 @@ import {
   Modal,
   StyleSheet,
   ScrollView,
+  Platform,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
@@ -151,12 +152,16 @@ export function DateRangeFilter({
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customStart, setCustomStart] = useState<Date>(value.start || new Date());
   const [customEnd, setCustomEnd] = useState<Date>(value.end || new Date());
-  const [editingDate, setEditingDate] = useState<'start' | 'end'>('start');
+  const [editingDate, setEditingDate] = useState<'start' | 'end' | null>(null);
+  // On Android, we need to track if the picker is showing separately
+  const [showPicker, setShowPicker] = useState(false);
 
   const handlePresetSelect = (preset: DateRangePreset) => {
     if (preset === 'custom') {
       setCustomStart(value.start || new Date());
       setCustomEnd(value.end || new Date());
+      setEditingDate(null);
+      setShowPicker(false);
       setShowCustomModal(true);
     } else {
       const { start, end } = getDateRangeFromPreset(preset);
@@ -171,6 +176,39 @@ export function DateRangeFilter({
       preset: 'custom',
     });
     setShowCustomModal(false);
+    setShowPicker(false);
+    setEditingDate(null);
+  };
+
+  const handleDateButtonPress = (which: 'start' | 'end') => {
+    setEditingDate(which);
+    setShowPicker(true);
+  };
+
+  const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
+    // On Android, the picker closes automatically after selection or cancel
+    if (Platform.OS === 'android') {
+      setShowPicker(false);
+    }
+
+    if (event.type === 'dismissed') {
+      // User cancelled
+      return;
+    }
+
+    if (date) {
+      if (editingDate === 'start') {
+        setCustomStart(date);
+      } else if (editingDate === 'end') {
+        setCustomEnd(date);
+      }
+    }
+  };
+
+  const handleModalClose = () => {
+    setShowCustomModal(false);
+    setShowPicker(false);
+    setEditingDate(null);
   };
 
   const displayLabel = formatDateRange(value);
@@ -219,11 +257,11 @@ export function DateRangeFilter({
         visible={showCustomModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowCustomModal(false)}
+        onRequestClose={handleModalClose}
       >
         <Pressable
           style={styles.modalOverlay}
-          onPress={() => setShowCustomModal(false)}
+          onPress={handleModalClose}
         >
           <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>
             <Text style={styles.modalTitle}>Custom Date Range</Text>
@@ -232,7 +270,7 @@ export function DateRangeFilter({
               <Text style={styles.dateLabel}>Start Date</Text>
               <Pressable
                 style={[styles.dateButton, editingDate === 'start' && styles.dateButtonActive]}
-                onPress={() => setEditingDate('start')}
+                onPress={() => handleDateButtonPress('start')}
               >
                 <FontAwesome name="calendar-o" size={16} color={colors.textSecondary} />
                 <Text style={styles.dateButtonText}>
@@ -249,7 +287,7 @@ export function DateRangeFilter({
               <Text style={styles.dateLabel}>End Date</Text>
               <Pressable
                 style={[styles.dateButton, editingDate === 'end' && styles.dateButtonActive]}
-                onPress={() => setEditingDate('end')}
+                onPress={() => handleDateButtonPress('end')}
               >
                 <FontAwesome name="calendar-o" size={16} color={colors.textSecondary} />
                 <Text style={styles.dateButtonText}>
@@ -262,30 +300,23 @@ export function DateRangeFilter({
               </Pressable>
             </View>
 
-            <View style={styles.pickerContainer}>
-              <DateTimePicker
-                value={editingDate === 'start' ? customStart : customEnd}
-                mode="date"
-                display="spinner"
-                onChange={(_, date) => {
-                  if (date) {
-                    if (editingDate === 'start') {
-                      setCustomStart(date);
-                      // Auto-switch to end date after selecting start
-                      setEditingDate('end');
-                    } else {
-                      setCustomEnd(date);
-                    }
-                  }
-                }}
-                maximumDate={new Date()}
-              />
-            </View>
+            {/* iOS: Show inline spinner picker */}
+            {Platform.OS === 'ios' && editingDate && (
+              <View style={styles.pickerContainer}>
+                <DateTimePicker
+                  value={editingDate === 'start' ? customStart : customEnd}
+                  mode="date"
+                  display="spinner"
+                  onChange={handleDateChange}
+                  maximumDate={new Date()}
+                />
+              </View>
+            )}
 
             <View style={styles.modalActions}>
               <Pressable
                 style={styles.cancelButton}
-                onPress={() => setShowCustomModal(false)}
+                onPress={handleModalClose}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </Pressable>
@@ -299,6 +330,17 @@ export function DateRangeFilter({
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Android: DateTimePicker opens as native dialog OUTSIDE the modal */}
+      {Platform.OS === 'android' && showPicker && editingDate && (
+        <DateTimePicker
+          value={editingDate === 'start' ? customStart : customEnd}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+          maximumDate={new Date()}
+        />
+      )}
     </View>
   );
 }
