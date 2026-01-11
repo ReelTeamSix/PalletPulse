@@ -9,6 +9,7 @@ export interface PalletInsert {
   name: string;
   supplier?: string | null;
   source_type?: SourceType;
+  source_name?: string | null;
   purchase_cost: number;
   sales_tax?: number | null;
   purchase_date?: string;
@@ -20,6 +21,7 @@ export interface PalletUpdate {
   name?: string;
   supplier?: string | null;
   source_type?: SourceType;
+  source_name?: string | null;
   purchase_cost?: number;
   sales_tax?: number | null;
   purchase_date?: string;

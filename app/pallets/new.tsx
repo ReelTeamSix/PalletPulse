@@ -27,7 +27,8 @@ export default function NewPalletScreen() {
       const result = await addPallet({
         name: data.name,
         supplier: data.supplier,
-        source_type: data.source_type,
+        source_type: 'other', // Default to 'other' for freeform source names
+        source_name: data.source_name,
         purchase_cost: data.purchase_cost,
         sales_tax: data.sales_tax,
         purchase_date: data.purchase_date,

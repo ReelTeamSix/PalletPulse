@@ -1,36 +1,15 @@
 // Pallet Form Validation Schema
 import { z } from 'zod';
-import { SourceType, PalletStatus } from '@/src/types/database';
+import { PalletStatus } from '@/src/types/database';
 
-// Source type options for dropdown
-export const SOURCE_TYPE_OPTIONS: { label: string; value: SourceType }[] = [
-  { label: 'Pallet', value: 'pallet' },
-  { label: 'Mystery Box', value: 'mystery_box' },
-  { label: 'Thrift Store', value: 'thrift' },
-  { label: 'Garage Sale', value: 'garage_sale' },
-  { label: 'Retail Arbitrage', value: 'retail_arbitrage' },
-  { label: 'Other', value: 'other' },
-];
-
-// Pallet status options
+// Pallet status options (internal workflow)
 export const PALLET_STATUS_OPTIONS: { label: string; value: PalletStatus }[] = [
   { label: 'Unprocessed', value: 'unprocessed' },
   { label: 'Processing', value: 'processing' },
   { label: 'Completed', value: 'completed' },
 ];
 
-// Common supplier suggestions
-export const SUPPLIER_SUGGESTIONS = [
-  'GRPL',
-  'Liquidation Land',
-  'Amazon Returns',
-  'Target Liquidation',
-  'Walmart Liquidation',
-  'Home Depot Returns',
-  'Costco Returns',
-];
-
-// Pallet form schema
+// Pallet form schema - simplified for flexibility
 export const palletFormSchema = z.object({
   name: z
     .string()
@@ -38,6 +17,7 @@ export const palletFormSchema = z.object({
     .max(100, 'Name must be 100 characters or less')
     .trim(),
 
+  // Freeform supplier field - user builds their own list over time
   supplier: z
     .string()
     .max(100, 'Supplier must be 100 characters or less')
@@ -46,15 +26,21 @@ export const palletFormSchema = z.object({
     .nullable()
     .transform(val => val || null),
 
-  source_type: z
-    .enum(['pallet', 'thrift', 'garage_sale', 'retail_arbitrage', 'mystery_box', 'other'] as const)
-    .default('pallet'),
+  // Freeform source name - e.g., "Amazon Monster", "Walmart Medium", "Target Undeliverables"
+  source_name: z
+    .string()
+    .max(100, 'Source name must be 100 characters or less')
+    .trim()
+    .optional()
+    .nullable()
+    .transform(val => val || null),
 
   purchase_cost: z
     .number({ message: 'Purchase cost must be a number' })
     .min(0, 'Purchase cost cannot be negative')
     .max(999999.99, 'Purchase cost cannot exceed $999,999.99'),
 
+  // Sales tax as dollar amount (calculated from rate or entered manually)
   sales_tax: z
     .number({ message: 'Sales tax must be a number' })
     .min(0, 'Sales tax cannot be negative')
@@ -103,7 +89,7 @@ export type PalletFormData = z.infer<typeof palletFormSchema>;
 export const defaultPalletFormValues: Partial<PalletFormData> = {
   name: '',
   supplier: null,
-  source_type: 'pallet',
+  source_name: null,
   purchase_cost: 0,
   sales_tax: null,
   purchase_date: new Date().toISOString().split('T')[0],
@@ -129,8 +115,29 @@ export function calculateTotalCost(purchaseCost: number, salesTax: number | null
   return purchaseCost + (salesTax || 0);
 }
 
+// Helper to calculate sales tax from rate
+export function calculateSalesTaxFromRate(purchaseCost: number, taxRatePercent: number): number {
+  if (taxRatePercent <= 0) return 0;
+  return Math.round((purchaseCost * taxRatePercent / 100) * 100) / 100;
+}
+
 // Helper to split cost evenly across multiple pallets
 export function splitCostEvenly(totalCost: number, numberOfPallets: number): number {
   if (numberOfPallets <= 0) return totalCost;
   return Math.round((totalCost / numberOfPallets) * 100) / 100;
+}
+
+// Get unique values from existing pallets for autocomplete
+export function getUniqueSuppliers(pallets: { supplier: string | null }[]): string[] {
+  const suppliers = pallets
+    .map(p => p.supplier)
+    .filter((s): s is string => s !== null && s.trim() !== '');
+  return [...new Set(suppliers)].sort();
+}
+
+export function getUniqueSourceNames(pallets: { source_name: string | null }[]): string[] {
+  const names = pallets
+    .map(p => p.source_name)
+    .filter((s): s is string => s !== null && s.trim() !== '');
+  return [...new Set(names)].sort();
 }

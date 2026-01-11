@@ -16,6 +16,7 @@ const mockPallet = {
   name: 'Test Pallet',
   supplier: 'Test Supplier',
   source_type: 'pallet' as const,
+  source_name: 'Amazon Monster',
   purchase_cost: 100,
   sales_tax: 6,
   purchase_date: '2024-01-15',

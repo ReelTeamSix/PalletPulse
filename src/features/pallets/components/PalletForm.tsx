@@ -1,5 +1,5 @@
 // PalletForm Component - Form for creating and editing pallets
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,9 @@ import {
   ScrollView,
   Pressable,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
-import { useForm, Controller, SubmitHandler } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Input, Button } from '@/src/components/ui';
@@ -17,11 +18,12 @@ import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import {
   palletFormSchema,
   PalletFormData,
-  defaultPalletFormValues,
-  SOURCE_TYPE_OPTIONS,
-  SUPPLIER_SUGGESTIONS,
+  getUniqueSuppliers,
+  getUniqueSourceNames,
+  calculateSalesTaxFromRate,
 } from '../schemas/pallet-form-schema';
 import { Pallet } from '@/src/types/database';
+import { usePalletsStore } from '@/src/stores/pallets-store';
 
 interface PalletFormProps {
   initialValues?: Partial<PalletFormData>;
@@ -30,6 +32,7 @@ interface PalletFormProps {
   isLoading?: boolean;
   submitLabel?: string;
   pallet?: Pallet; // For editing
+  defaultTaxRate?: number | null; // User's default tax rate
 }
 
 export function PalletForm({
@@ -39,9 +42,18 @@ export function PalletForm({
   isLoading = false,
   submitLabel = 'Save Pallet',
   pallet,
+  defaultTaxRate = null,
 }: PalletFormProps) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showSupplierSuggestions, setShowSupplierSuggestions] = useState(false);
+  const [showSourceSuggestions, setShowSourceSuggestions] = useState(false);
+  const [useAutoTax, setUseAutoTax] = useState(defaultTaxRate !== null && defaultTaxRate > 0);
+
+  const { pallets } = usePalletsStore();
+
+  // Get unique values from existing pallets for autocomplete
+  const uniqueSuppliers = useMemo(() => getUniqueSuppliers(pallets), [pallets]);
+  const uniqueSourceNames = useMemo(() => getUniqueSourceNames(pallets), [pallets]);
 
   const {
     control,
@@ -54,7 +66,7 @@ export function PalletForm({
     defaultValues: {
       name: pallet?.name ?? initialValues?.name ?? '',
       supplier: pallet?.supplier ?? initialValues?.supplier ?? null,
-      source_type: pallet?.source_type ?? initialValues?.source_type ?? 'pallet',
+      source_name: pallet?.source_name ?? initialValues?.source_name ?? null,
       purchase_cost: pallet?.purchase_cost ?? initialValues?.purchase_cost ?? 0,
       sales_tax: pallet?.sales_tax ?? initialValues?.sales_tax ?? null,
       purchase_date: pallet?.purchase_date ?? initialValues?.purchase_date ?? new Date().toISOString().split('T')[0],
@@ -64,7 +76,19 @@ export function PalletForm({
   });
 
   const watchSupplier = watch('supplier');
+  const watchSourceName = watch('source_name');
   const watchPurchaseDate = watch('purchase_date');
+  const watchPurchaseCost = watch('purchase_cost');
+  const watchSalesTax = watch('sales_tax');
+
+  // Auto-calculate tax when enabled and purchase cost changes
+  const handlePurchaseCostChange = (value: number) => {
+    setValue('purchase_cost', value);
+    if (useAutoTax && defaultTaxRate && defaultTaxRate > 0) {
+      const calculatedTax = calculateSalesTaxFromRate(value, defaultTaxRate);
+      setValue('sales_tax', calculatedTax);
+    }
+  };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(Platform.OS === 'ios');
@@ -83,16 +107,29 @@ export function PalletForm({
     });
   };
 
-  const filteredSupplierSuggestions = SUPPLIER_SUGGESTIONS.filter(
+  // Filter suggestions based on current input
+  const filteredSupplierSuggestions = uniqueSuppliers.filter(
     (s) => !watchSupplier || s.toLowerCase().includes(watchSupplier.toLowerCase())
   );
 
+  const filteredSourceSuggestions = uniqueSourceNames.filter(
+    (s) => !watchSourceName || s.toLowerCase().includes(watchSourceName.toLowerCase())
+  );
+
+  // Calculate total cost for display
+  const totalCost = watchPurchaseCost + (watchSalesTax || 0);
+
   return (
-    <ScrollView
+    <KeyboardAvoidingView
       style={styles.container}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
     >
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
       {/* Pallet Name */}
       <Controller
         control={control}
@@ -100,7 +137,7 @@ export function PalletForm({
         render={({ field: { onChange, onBlur, value } }) => (
           <Input
             label="Pallet Name *"
-            placeholder="e.g., Pallet #1, Amazon Monster"
+            placeholder="e.g., Pallet #1, Amazon Monster Pallet"
             value={value}
             onChangeText={onChange}
             onBlur={onBlur}
@@ -110,15 +147,15 @@ export function PalletForm({
         )}
       />
 
-      {/* Supplier with suggestions */}
-      <View style={styles.supplierContainer}>
+      {/* Supplier with autocomplete from history */}
+      <View style={[styles.autocompleteContainer, { zIndex: 20 }]}>
         <Controller
           control={control}
           name="supplier"
           render={({ field: { onChange, onBlur, value } }) => (
             <Input
               label="Supplier"
-              placeholder="e.g., GRPL, Liquidation Land"
+              placeholder="e.g., GRPL, Liquidation Land, B-Stock"
               value={value || ''}
               onChangeText={(text) => {
                 onChange(text);
@@ -152,38 +189,46 @@ export function PalletForm({
         )}
       </View>
 
-      {/* Source Type */}
-      <View style={styles.fieldContainer}>
-        <Text style={styles.label}>Source Type</Text>
+      {/* Source/Type with autocomplete from history */}
+      <View style={[styles.autocompleteContainer, { zIndex: 10 }]}>
         <Controller
           control={control}
-          name="source_type"
-          render={({ field: { onChange, value } }) => (
-            <View style={styles.optionsRow}>
-              {SOURCE_TYPE_OPTIONS.slice(0, 3).map((option) => (
-                <Pressable
-                  key={option.value}
-                  style={[
-                    styles.optionButton,
-                    value === option.value && styles.optionButtonSelected,
-                  ]}
-                  onPress={() => onChange(option.value)}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      value === option.value && styles.optionTextSelected,
-                    ]}
-                  >
-                    {option.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+          name="source_name"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              label="Source / Type"
+              placeholder="e.g., Amazon Monster, Walmart Medium, Target Returns"
+              value={value || ''}
+              onChangeText={(text) => {
+                onChange(text);
+                setShowSourceSuggestions(true);
+              }}
+              onBlur={() => {
+                onBlur();
+                setTimeout(() => setShowSourceSuggestions(false), 200);
+              }}
+              onFocus={() => setShowSourceSuggestions(true)}
+              error={errors.source_name?.message}
+              autoCapitalize="words"
+              hint="Describe the type of pallet (builds autocomplete over time)"
+            />
           )}
         />
-        {errors.source_type && (
-          <Text style={styles.error}>{errors.source_type.message}</Text>
+        {showSourceSuggestions && filteredSourceSuggestions.length > 0 && (
+          <View style={styles.suggestions}>
+            {filteredSourceSuggestions.slice(0, 4).map((suggestion) => (
+              <Pressable
+                key={suggestion}
+                style={styles.suggestionItem}
+                onPress={() => {
+                  setValue('source_name', suggestion);
+                  setShowSourceSuggestions(false);
+                }}
+              >
+                <Text style={styles.suggestionText}>{suggestion}</Text>
+              </Pressable>
+            ))}
+          </View>
         )}
       </View>
 
@@ -198,7 +243,7 @@ export function PalletForm({
             value={value > 0 ? value.toString() : ''}
             onChangeText={(text) => {
               const num = parseFloat(text) || 0;
-              onChange(num);
+              handlePurchaseCostChange(num);
             }}
             onBlur={onBlur}
             error={errors.purchase_cost?.message}
@@ -208,27 +253,66 @@ export function PalletForm({
         )}
       />
 
-      {/* Sales Tax */}
-      <Controller
-        control={control}
-        name="sales_tax"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <Input
-            label="Sales Tax"
-            placeholder="0.00"
-            value={value ? value.toString() : ''}
-            onChangeText={(text) => {
-              const num = parseFloat(text) || null;
-              onChange(num);
-            }}
-            onBlur={onBlur}
-            error={errors.sales_tax?.message}
-            keyboardType="decimal-pad"
-            leftIcon="dollar"
-            hint="Optional - for expense tracking"
-          />
+      {/* Sales Tax Section */}
+      <View style={styles.taxSection}>
+        {defaultTaxRate !== null && defaultTaxRate > 0 && (
+          <View style={styles.taxToggleRow}>
+            <Pressable
+              style={styles.taxToggle}
+              onPress={() => {
+                setUseAutoTax(!useAutoTax);
+                if (!useAutoTax && watchPurchaseCost > 0) {
+                  const calculatedTax = calculateSalesTaxFromRate(watchPurchaseCost, defaultTaxRate);
+                  setValue('sales_tax', calculatedTax);
+                }
+              }}
+            >
+              <View style={[styles.checkbox, useAutoTax && styles.checkboxChecked]}>
+                {useAutoTax && <Text style={styles.checkmark}>{"✓"}</Text>}
+              </View>
+              <Text style={styles.taxToggleText}>
+                Auto-calculate ({defaultTaxRate}% rate)
+              </Text>
+            </Pressable>
+          </View>
         )}
-      />
+
+        <Controller
+          control={control}
+          name="sales_tax"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              label="Sales Tax"
+              placeholder="0.00"
+              value={value !== null && value !== undefined ? value.toString() : ''}
+              onChangeText={(text) => {
+                const num = parseFloat(text) || null;
+                onChange(num);
+                // Disable auto-tax if user manually edits
+                if (useAutoTax) setUseAutoTax(false);
+              }}
+              onBlur={onBlur}
+              error={errors.sales_tax?.message}
+              keyboardType="decimal-pad"
+              leftIcon="dollar"
+              hint={defaultTaxRate === null || defaultTaxRate === 0
+                ? "Leave blank if tax exempt"
+                : useAutoTax
+                  ? "Auto-calculated from your default rate"
+                  : "Leave blank if tax exempt"
+              }
+            />
+          )}
+        />
+
+        {/* Total Cost Display */}
+        {(watchPurchaseCost > 0 || (watchSalesTax && watchSalesTax > 0)) && (
+          <View style={styles.totalRow}>
+            <Text style={styles.totalLabel}>Total Cost:</Text>
+            <Text style={styles.totalValue}>${totalCost.toFixed(2)}</Text>
+          </View>
+        )}
+      </View>
 
       {/* Purchase Date */}
       <View style={styles.fieldContainer}>
@@ -290,7 +374,8 @@ export function PalletForm({
           loading={isLoading}
         />
       </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -311,13 +396,13 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
-  supplierContainer: {
+  autocompleteContainer: {
     position: 'relative',
-    zIndex: 10,
+    marginBottom: spacing.md,
   },
   suggestions: {
     position: 'absolute',
-    top: 72,
+    top: 68,
     left: 0,
     right: 0,
     backgroundColor: colors.background,
@@ -325,11 +410,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    zIndex: 20,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 10,
+    zIndex: 100,
   },
   suggestionItem: {
     padding: spacing.md,
@@ -340,31 +425,57 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
-  optionsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+  taxSection: {
+    marginBottom: spacing.md,
   },
-  optionButton: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+  taxToggleRow: {
+    marginBottom: spacing.sm,
+  },
+  taxToggle: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  optionButtonSelected: {
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: borderRadius.sm,
+    borderWidth: 2,
+    borderColor: colors.border,
+    marginRight: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  optionText: {
-    fontSize: fontSize.sm,
-    color: colors.textPrimary,
-    fontWeight: '500',
-  },
-  optionTextSelected: {
+  checkmark: {
     color: colors.background,
+    fontSize: fontSize.sm,
+    fontWeight: 'bold',
+  },
+  taxToggleText: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.sm,
+  },
+  totalLabel: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
+  totalValue: {
+    fontSize: fontSize.lg,
+    fontWeight: 'bold',
+    color: colors.primary,
   },
   dateButton: {
     backgroundColor: colors.surface,

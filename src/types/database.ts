@@ -50,6 +50,7 @@ export interface Pallet {
   name: string
   supplier: string | null
   source_type: SourceType
+  source_name: string | null // Freeform source description (e.g., "Amazon Monster")
   purchase_cost: number
   sales_tax: number | null
   purchase_date: string
