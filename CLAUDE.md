@@ -965,6 +965,57 @@ Before every commit, verify:
 
 ---
 
+## 🔒 Security Audits
+
+**Run security checks periodically, especially after database changes.**
+
+### When to Run Security Audits
+
+| Trigger | Action |
+|---------|--------|
+| After any migration | Run Supabase security advisor |
+| After adding/modifying RLS policies | Verify policies work correctly |
+| After adding new tables | Confirm RLS is enabled with policies |
+| After modifying functions/triggers | Check for search_path warnings |
+| End of each phase | Full security review |
+
+### How to Run (via Supabase MCP)
+
+```
+# Check for security issues
+mcp__supabase__get_advisors(project_id, type: "security")
+
+# Verify RLS is enabled on all tables
+SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
+
+# Check for performance issues
+mcp__supabase__get_advisors(project_id, type: "performance")
+```
+
+### Common Issues to Watch For
+
+1. **RLS Enabled No Policy** — Table has RLS but no policies (data inaccessible)
+2. **Function Search Path Mutable** — Functions need `SET search_path = public`
+3. **Missing RLS** — New tables must have RLS enabled
+4. **Overly Permissive Policies** — Policies should scope to `auth.uid()`
+
+### Fix Template for Function Search Path
+
+```sql
+CREATE OR REPLACE FUNCTION public.function_name()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public  -- Add this line
+AS $$
+BEGIN
+  -- function body
+END;
+$$;
+```
+
+---
+
 ## 🆘 When Stuck
 
 1. **Read the error message carefully** — React Native errors are verbose but helpful
