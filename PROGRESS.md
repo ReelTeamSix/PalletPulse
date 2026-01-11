@@ -108,11 +108,16 @@
   - Added pallet dropdown to ItemForm - users can assign items to pallets from Items tab
   - Muted red (70% opacity) for dashboard hero negative profit - less harsh than dark red
   - Added `isRealized` parameter to formatProfit/getROIColor utilities for future use
+- [x] Auto-calculate allocated cost for pallet items
+  - When adding item to pallet, calculates allocated_cost = (pallet cost + tax) / item count
+  - Recalculates ALL items in pallet when new item is added (cost redistributed)
+  - Recalculates remaining items when item is deleted from pallet
+  - Fixed pallet assignment from dropdown - now correctly saves pallet_id from form data
 
 ### Test Results
 ```
 Test Suites: 10 passed, 10 total
-Tests:       374 passed, 374 total
+Tests:       376 passed, 376 total
 ```
 
 **New Tests Added:**
@@ -160,7 +165,10 @@ Tests:       374 passed, 374 total
 - `app/(tabs)/analytics.tsx` - Added safe area insets
 - `app/(tabs)/settings.tsx` - Added safe area insets
 - `app/(tabs)/_layout.tsx` - Hidden Stack headers on tab screens
-- `src/stores/items-store.ts` - Enhanced markAsSold with buyer notes
+- `app/items/new.tsx` - Fixed to use pallet_id from form dropdown (not just URL param)
+- `app/items/edit.tsx` - Prepared for future pallet reassignment support
+- `src/stores/items-store.ts` - Enhanced markAsSold, auto-calculate allocated_cost on add/delete
+- `src/stores/__tests__/items-store.test.ts` - Updated tests for allocated cost calculation
 - `src/lib/photo-utils.ts` - Fixed generateStoragePath extension handling
 - `src/lib/profit-utils.ts` - Added isRealized parameter to formatProfit/getROIColor
 - `src/features/items/components/ItemForm.tsx` - Added pallet dropdown for assigning items to pallets
@@ -199,8 +207,10 @@ Tests:       374 passed, 374 total
 - [ ] **Filter Chips:** Shows counts in each chip
 - [x] **UI Polish:** Tab screens no longer show redundant headers (e.g., "Pallets/Pallets")
 - [x] **UI Polish:** Dashboard hero uses muted red for negative profit (not harsh dark red)
-- [ ] **Pallet Assignment:** From Items tab, tap "Add Item" -> can select pallet from dropdown
-- [ ] **Pallet Assignment:** "Individual Item (No Pallet)" is default option
+- [x] **Pallet Assignment:** From Items tab, tap "Add Item" -> can select pallet from dropdown
+- [x] **Pallet Assignment:** Item assigned to pallet shows in pallet detail
+- [x] **Allocated Cost:** Item added to pallet gets allocated_cost calculated automatically
+- [x] **Allocated Cost:** Existing items in pallet are recalculated when new item added
 
 ---
 
