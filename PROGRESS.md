@@ -213,9 +213,14 @@ Begin Phase 3: Database & Data Layer, which includes:
 
 ### Test Results
 ```
-Test Suites: 2 passed, 2 total
-Tests:       32 passed, 32 total
+Test Suites: 5 passed, 5 total
+Tests:       79 passed, 79 total
 ```
+
+**New Tests Added:**
+- pallets-store.test.ts (13 tests) - CRUD operations, error handling, helper methods
+- items-store.test.ts (17 tests) - CRUD, markAsSold, pallet filtering, helper methods
+- expenses-store.test.ts (17 tests) - CRUD, expense totals, pallet filtering, helper methods
 
 ### Human Verification - PENDING
 - [ ] Verify tables in Supabase dashboard
