@@ -89,6 +89,19 @@
   - Refreshes on screen focus
   - Pull-to-refresh support
 - [x] Item detail already has Mark Sold button (from Phase 6)
+- [x] Fix pallet cards to show real metrics
+  - Connected Pallets tab to items and expenses stores
+  - Calculate item count and profit using calculatePalletProfit
+  - Cards now show accurate item counts and profit/ROI
+- [x] Add search/filter to Items tab
+  - Search bar filters by name, description, barcode, notes, location, pallet name
+  - Filter chips: All, Listed, Sold, Unlisted (with counts)
+  - "No results" state with clear filters option
+- [x] Add swipe-left-to-delete (Tinder-style)
+  - Swipe left on item card reveals "DELETE" button
+  - Confirmation dialog warns about permanent deletion
+  - Works on both Items tab and Pallet Detail screen
+  - Updated swipe hints to show "← Delete | Sell →"
 
 ### Test Results
 ```
@@ -134,9 +147,10 @@ Tests:       374 passed, 374 total
 - `src/features/sales/index.ts` - Feature exports
 
 ### Files Modified
-- `app/pallets/[id].tsx` - Added quick-sell swipe, status dropdown, useFocusEffect refresh
+- `app/pallets/[id].tsx` - Added quick-sell swipe, swipe-delete, status dropdown, useFocusEffect refresh
 - `app/(tabs)/index.tsx` - Connected to stores, shows real metrics, pull-to-refresh
-- `app/(tabs)/items.tsx` - Added quick-sell swipe, useFocusEffect refresh
+- `app/(tabs)/items.tsx` - Added search/filter, quick-sell swipe, swipe-delete, useFocusEffect refresh
+- `app/(tabs)/pallets.tsx` - Connected to items/expenses stores, shows real metrics on pallet cards
 - `src/stores/items-store.ts` - Enhanced markAsSold with buyer notes
 - `src/lib/photo-utils.ts` - Fixed generateStoragePath extension handling
 - `package.json` - Added react-native-gesture-handler
@@ -158,10 +172,20 @@ Tests:       374 passed, 374 total
 - [ ] **Quick Sell:** Sale price pre-fills, profit preview shows
 - [ ] **Quick Sell:** Confirm sale -> item marked sold, list refreshes
 - [ ] **Quick Sell:** Also works on Items tab
+- [ ] **Quick Delete:** Swipe left on item -> DELETE button appears
+- [ ] **Quick Delete:** Tap DELETE -> confirmation dialog appears
+- [ ] **Quick Delete:** Confirm -> item permanently deleted
+- [ ] **Quick Delete:** Works on both Items tab and Pallet Detail
 - [ ] **Status:** Tap pallet status -> dropdown appears
 - [ ] **Status:** Change status -> saves correctly
 - [ ] **Dashboard:** Shows real profit, pallets, items, sold counts
 - [ ] **Dashboard:** Updates after marking item sold
+- [ ] **Pallet Cards:** Shows real item count and profit/ROI
+- [ ] **Pallet Cards:** Updates after adding/selling items
+- [ ] **Search:** Type in search bar -> items filter by name, barcode, etc.
+- [ ] **Search:** Clear button appears when searching
+- [ ] **Filter Chips:** Tap "Listed" -> shows only listed items
+- [ ] **Filter Chips:** Shows counts in each chip
 
 ---
 
