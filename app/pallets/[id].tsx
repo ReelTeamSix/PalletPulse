@@ -33,6 +33,12 @@ import {
   getROIColor,
   calculateItemROIFromValues,
 } from '@/src/lib/profit-utils';
+import {
+  ExpenseCardCompact,
+  formatExpenseAmount,
+  getCategoryLabel,
+  getCategoryColor,
+} from '@/src/features/expenses';
 
 const STATUS_CONFIG: Record<PalletStatus, { label: string; color: string }> = {
   unprocessed: { label: 'Unprocessed', color: colors.statusUnprocessed },
@@ -93,6 +99,14 @@ export default function PalletDetailScreen() {
 
   const handleAddItem = () => {
     router.push({ pathname: '/items/new', params: { palletId: id } });
+  };
+
+  const handleAddExpense = () => {
+    router.push({ pathname: '/expenses/new', params: { palletId: id } });
+  };
+
+  const handleExpensePress = (expenseId: string) => {
+    router.push(`/expenses/${expenseId}`);
   };
 
   const handleItemPress = (itemId: string) => {
@@ -501,6 +515,41 @@ export default function PalletDetailScreen() {
                 </View>
               )}
             </View>
+          </View>
+
+          {/* Expenses Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                Expenses ({palletExpenses.length})
+                {palletExpenses.length > 0 && (
+                  <Text style={styles.expensesTotalInline}>
+                    {' '} - {formatExpenseAmount(palletExpenses.reduce((sum, e) => sum + e.amount, 0))}
+                  </Text>
+                )}
+              </Text>
+              <Pressable style={styles.addExpenseButton} onPress={handleAddExpense}>
+                <FontAwesome name="plus" size={12} color={colors.primary} />
+                <Text style={styles.addExpenseText}>Add</Text>
+              </Pressable>
+            </View>
+            {palletExpenses.length === 0 ? (
+              <View style={styles.expensesPlaceholder}>
+                <Text style={styles.expensesPlaceholderText}>
+                  No expenses recorded for this pallet
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.expensesList}>
+                {palletExpenses.map((expense) => (
+                  <ExpenseCardCompact
+                    key={expense.id}
+                    expense={expense}
+                    onPress={() => handleExpensePress(expense.id)}
+                  />
+                ))}
+              </View>
+            )}
           </View>
         </ScrollView>
 
@@ -1070,5 +1119,39 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.md,
     fontWeight: '600',
+  },
+  // Expenses Section
+  expensesTotalInline: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    fontWeight: '400',
+  },
+  addExpenseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    gap: spacing.xs,
+  },
+  addExpenseText: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  expensesPlaceholder: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    alignItems: 'center',
+  },
+  expensesPlaceholderText: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  expensesList: {
+    gap: spacing.sm,
   },
 });

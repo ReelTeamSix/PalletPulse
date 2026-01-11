@@ -1,8 +1,8 @@
 # PalletPulse Development Progress
 
-## Current Phase: Phase 7 - Sales & Profit
+## Current Phase: Phase 8 - Expenses
 **Status:** Awaiting Review
-**Branch:** feature/sales-profit
+**Branch:** feature/expenses
 
 ---
 
@@ -13,7 +13,7 @@
 - [x] Phase 4: Core Navigation (approved)
 - [x] Phase 5: Pallet Management (approved)
 - [x] Phase 6: Item Management (approved)
-- [ ] Phase 7: Sales & Profit
+- [x] Phase 7: Sales & Profit (approved)
 - [ ] Phase 8: Expenses
 - [ ] Phase 9: Analytics
 - [ ] Phase 10: Subscription
@@ -21,7 +21,132 @@
 
 ---
 
-## Phase 7: Sales & Profit - AWAITING REVIEW
+## Phase 8: Expenses - AWAITING REVIEW
+
+### All Tasks Completed
+- [x] Create feature branch (`feature/expenses`)
+- [x] Create expense form schema (Zod)
+  - Amount validation (required, positive, max $999,999.99)
+  - Category enum validation (supplies, gas, mileage, storage, fees, shipping, other)
+  - Description (optional, max 500 chars)
+  - Expense date (YYYY-MM-DD, no future dates)
+  - Pallet ID (optional UUID for linking to pallet)
+  - Receipt photo path (optional)
+- [x] Create expense form helper functions
+  - `getLocalDateString` - local timezone date formatting
+  - `getDefaultExpenseFormValues` - default form values
+  - `formatExpenseDate` - date display formatting
+  - `getCategoryLabel` - human-readable category names
+  - `getCategoryColor` - category color coding
+  - `formatExpenseAmount` - USD currency formatting
+  - `parseCurrencyInput` - parse currency strings
+  - `groupExpensesByCategory` - group expenses by category
+  - `calculateTotalByCategory` - totals per category
+  - `calculateTotalExpenses` - overall total
+  - `filterExpensesByDateRange` - date range filtering
+  - `filterExpensesByCategory` - category filtering
+  - `getUniquePalletIds` - unique linked pallets
+  - `isLinkedToPallet` - check pallet link
+  - `sortExpensesByDate` - date sorting
+  - `sortExpensesByAmount` - amount sorting
+- [x] Write tests for expense form schema (87 tests)
+- [x] Create ExpenseForm component
+  - Amount input with currency formatting
+  - Category selection (chips with color coding)
+  - Description text area
+  - Date picker
+  - Pallet dropdown (optional link)
+  - Receipt photo picker
+  - Summary preview
+  - Cancel/Submit buttons
+- [x] Create ExpenseCard component
+  - Full card with category color bar
+  - Amount and category badge display
+  - Description preview
+  - Date and pallet link indicators
+  - Compact version for pallet detail
+- [x] Build Add Expense screen (`app/expenses/new.tsx`)
+  - Form with pre-selected pallet (from URL param)
+  - Receipt photo selection via ImagePicker
+  - Create expense via store
+- [x] Build Expense Detail screen (`app/expenses/[id].tsx`)
+  - Amount header with category indicator
+  - Details section (date, description, pallet link)
+  - Receipt photo viewer (full-screen modal)
+  - Activity timestamps
+  - Delete button with confirmation
+- [x] Build Edit Expense screen (`app/expenses/edit.tsx`)
+  - Pre-populated form from existing expense
+  - Update receipt photo
+  - Save changes via store
+- [x] Add expenses section to Pallet Detail screen
+  - Expenses list with count and total
+  - Add Expense button (pre-links to pallet)
+  - Compact expense cards
+  - Navigate to expense detail on tap
+- [x] Update CLAUDE.md pre-phase checklist
+  - Added requirement to merge previous phase before starting new one
+
+### Test Results
+```
+Test Suites: 11 passed, 11 total
+Tests:       463 passed, 463 total
+```
+
+**New Tests Added:**
+- expense-form-schema.test.ts (87 tests)
+  - Schema validation (34 tests)
+  - getLocalDateString (3 tests)
+  - getDefaultExpenseFormValues (4 tests)
+  - formatExpenseDate (2 tests)
+  - getCategoryLabel (1 test)
+  - getCategoryColor (1 test)
+  - formatExpenseAmount (5 tests)
+  - parseCurrencyInput (8 tests)
+  - groupExpensesByCategory (3 tests)
+  - calculateTotalByCategory (3 tests)
+  - calculateTotalExpenses (3 tests)
+  - filterExpensesByDateRange (4 tests)
+  - filterExpensesByCategory (2 tests)
+  - getUniquePalletIds (3 tests)
+  - isLinkedToPallet (2 tests)
+  - sortExpensesByDate (3 tests)
+  - sortExpensesByAmount (3 tests)
+  - Constants tests (3 tests)
+
+### Files Created
+- `src/features/expenses/schemas/expense-form-schema.ts` - Form schema and helpers
+- `src/features/expenses/schemas/expense-form-schema.test.ts` - Schema tests
+- `src/features/expenses/components/ExpenseForm.tsx` - Form component
+- `src/features/expenses/components/ExpenseCard.tsx` - Card components
+- `src/features/expenses/index.ts` - Feature exports
+- `app/expenses/new.tsx` - Add expense screen
+- `app/expenses/[id].tsx` - Expense detail screen
+- `app/expenses/edit.tsx` - Edit expense screen
+
+### Files Modified
+- `app/pallets/[id].tsx` - Added expenses section with list and add button
+- `CLAUDE.md` - Updated pre-phase checklist with merge requirement
+
+### Human Verification Checklist
+- [ ] **Add expense:** Tap "Add" in pallet expenses section → form opens
+- [ ] **Form fields:** Amount, category chips, description, date picker work
+- [ ] **Pallet link:** Pallet pre-selected when coming from pallet detail
+- [ ] **Receipt photo:** Can add photo via camera/gallery
+- [ ] **Save expense:** Creates expense, returns to previous screen
+- [ ] **Expense in pallet:** New expense appears in pallet's expense list
+- [ ] **Total updates:** Expense total in pallet header updates
+- [ ] **Expense detail:** Tap expense card → detail screen opens
+- [ ] **Edit expense:** Tap edit → can modify all fields
+- [ ] **Delete expense:** Tap delete → confirmation → removes expense
+- [ ] **Profit impact:** Add $50 expense to pallet → pallet profit decreases by $50
+- [ ] **Categories:** All 7 categories available with correct colors
+- [ ] **Date validation:** Cannot select future date
+- [ ] **Pallet dropdown:** Can change or remove pallet link
+
+---
+
+## Phase 7: Sales & Profit - COMPLETED (approved)
 
 ### All Tasks Completed
 - [x] Create feature branch (`feature/sales-profit`)

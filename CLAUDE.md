@@ -1175,8 +1175,9 @@ git commit -m "fix(db): correct RLS policy syntax"
 Before starting any phase:
 
 - [ ] Previous phase is approved by human
+- [ ] Previous phase branch is merged to main (all changes committed first)
 - [ ] PROGRESS.md is updated
-- [ ] On correct branch (create new if needed)
+- [ ] New feature branch created from main (not from previous phase branch)
 - [ ] No uncommitted changes from previous work
 - [ ] Context document re-read for relevant sections
 
