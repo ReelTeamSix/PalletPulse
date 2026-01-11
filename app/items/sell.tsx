@@ -58,6 +58,8 @@ export default function SellItemScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isShipped, setIsShipped] = useState(false); // For platforms with shipped rates
   const [manualFeeOverride, setManualFeeOverride] = useState(false); // Allow manual fee entry
+  const [platformFeeText, setPlatformFeeText] = useState(''); // Local text state for fee input
+  const [isEditingFee, setIsEditingFee] = useState(false); // Track if user is actively editing fee
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Fetch items if not loaded
@@ -114,8 +116,17 @@ export default function SellItemScreen() {
     if (platform && !manualFeeOverride && !platformConfig?.isManual) {
       const autoFee = calculatePlatformFee(salePrice || 0, platform, isShipped);
       setValue('platform_fee', autoFee);
+      // Sync text state when auto-calculating
+      setPlatformFeeText(autoFee.toFixed(2));
     }
   }, [platform, salePrice, isShipped, manualFeeOverride, platformConfig?.isManual, setValue]);
+
+  // Sync platform fee text from form value when not actively editing
+  useEffect(() => {
+    if (!isEditingFee && platformFee !== null && platformFee !== undefined) {
+      setPlatformFeeText(platformFee.toFixed(2));
+    }
+  }, [platformFee, isEditingFee]);
 
   // Auto-fill sales channel from platform (skip for "other")
   useEffect(() => {
@@ -403,12 +414,21 @@ export default function SellItemScreen() {
               <Controller
                 control={control}
                 name="platform_fee"
-                render={({ field: { onChange, value } }) => (
+                render={({ field: { onChange } }) => (
                   <View style={styles.inputGroup}>
                     <View style={styles.feeHeaderRow}>
                       <Text style={styles.inputLabel}>Platform Fee</Text>
                       {!platformConfig?.isManual && (
-                        <Pressable onPress={() => setManualFeeOverride(!manualFeeOverride)}>
+                        <Pressable onPress={() => {
+                          const newOverride = !manualFeeOverride;
+                          setManualFeeOverride(newOverride);
+                          // If switching back to auto, recalculate
+                          if (!newOverride) {
+                            const autoFee = calculatePlatformFee(salePrice || 0, platform, isShipped);
+                            onChange(autoFee);
+                            setPlatformFeeText(autoFee.toFixed(2));
+                          }
+                        }}>
                           <Text style={styles.overrideLink}>
                             {manualFeeOverride ? 'Auto-calculate' : 'Override'}
                           </Text>
@@ -422,11 +442,25 @@ export default function SellItemScreen() {
                           styles.currencyInput,
                           !manualFeeOverride && !platformConfig?.isManual && styles.inputDisabled,
                         ]}
-                        value={value?.toFixed(2) || '0.00'}
+                        value={platformFeeText}
                         onChangeText={(text) => {
-                          const num = parseFloat(text.replace(/[^0-9.]/g, ''));
-                          onChange(isNaN(num) ? 0 : num);
+                          // Allow typing freely - only store the text
+                          const cleanText = text.replace(/[^0-9.]/g, '');
+                          setPlatformFeeText(cleanText);
                           setManualFeeOverride(true);
+                        }}
+                        onFocus={() => setIsEditingFee(true)}
+                        onBlur={() => {
+                          setIsEditingFee(false);
+                          // Parse and update form value on blur
+                          const num = parseFloat(platformFeeText);
+                          if (!isNaN(num)) {
+                            onChange(num);
+                            setPlatformFeeText(num.toFixed(2));
+                          } else {
+                            onChange(0);
+                            setPlatformFeeText('0.00');
+                          }
                         }}
                         keyboardType="decimal-pad"
                         editable={manualFeeOverride || platformConfig?.isManual}
