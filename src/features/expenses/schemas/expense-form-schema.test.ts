@@ -1,8 +1,9 @@
-// Expense Form Schema Tests
+// Expense Form Schema Tests - Updated for Phase 8D
 import {
   expenseFormSchema,
   ExpenseFormData,
   EXPENSE_CATEGORIES,
+  ALL_EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
   EXPENSE_CATEGORY_COLORS,
   getDefaultExpenseFormValues,
@@ -341,20 +342,31 @@ describe('getDefaultExpenseFormValues', () => {
     expect(result.receipt_photo_path).toBeNull();
   });
 
-  it('should set pallet_id when provided', () => {
-    const palletId = '123e4567-e89b-12d3-a456-426614174000';
-    const result = getDefaultExpenseFormValues(palletId);
-    expect(result.pallet_id).toBe(palletId);
+  // Phase 8D: pallet_ids array replaces single pallet_id
+  it('should set pallet_ids when provided', () => {
+    const palletIds = ['123e4567-e89b-12d3-a456-426614174000'];
+    const result = getDefaultExpenseFormValues(palletIds);
+    expect(result.pallet_ids).toEqual(palletIds);
   });
 
-  it('should handle null pallet_id', () => {
+  it('should handle null pallet_ids', () => {
     const result = getDefaultExpenseFormValues(null);
-    expect(result.pallet_id).toBeNull();
+    expect(result.pallet_ids).toEqual([]);
   });
 
-  it('should handle undefined pallet_id', () => {
+  it('should handle undefined pallet_ids', () => {
     const result = getDefaultExpenseFormValues(undefined);
-    expect(result.pallet_id).toBeNull();
+    expect(result.pallet_ids).toEqual([]);
+  });
+
+  it('should support multiple pallet_ids', () => {
+    const palletIds = [
+      '123e4567-e89b-12d3-a456-426614174000',
+      'a1b2c3d4-e5f6-47a8-b9c0-d1e2f3a4b5c6',
+    ];
+    const result = getDefaultExpenseFormValues(palletIds);
+    expect(result.pallet_ids).toEqual(palletIds);
+    expect(result.pallet_ids).toHaveLength(2);
   });
 });
 
@@ -374,14 +386,19 @@ describe('formatExpenseDate', () => {
 });
 
 describe('getCategoryLabel', () => {
-  it('should return label for each category', () => {
-    expect(getCategoryLabel('supplies')).toBe('Supplies');
-    expect(getCategoryLabel('gas')).toBe('Gas');
-    expect(getCategoryLabel('mileage')).toBe('Mileage');
+  it('should return label for current categories', () => {
     expect(getCategoryLabel('storage')).toBe('Storage');
-    expect(getCategoryLabel('fees')).toBe('Fees');
-    expect(getCategoryLabel('shipping')).toBe('Shipping');
+    expect(getCategoryLabel('supplies')).toBe('Supplies');
+    expect(getCategoryLabel('subscriptions')).toBe('Subscriptions');
+    expect(getCategoryLabel('equipment')).toBe('Equipment');
     expect(getCategoryLabel('other')).toBe('Other');
+  });
+
+  it('should return legacy labels with (Legacy) suffix', () => {
+    expect(getCategoryLabel('gas')).toBe('Gas (Legacy)');
+    expect(getCategoryLabel('mileage')).toBe('Mileage (Legacy)');
+    expect(getCategoryLabel('fees')).toBe('Fees (Legacy)');
+    expect(getCategoryLabel('shipping')).toBe('Shipping (Legacy)');
   });
 });
 
@@ -684,18 +701,44 @@ describe('sortExpensesByAmount', () => {
 });
 
 describe('EXPENSE_CATEGORIES constant', () => {
-  it('should contain all expected categories', () => {
-    expect(EXPENSE_CATEGORIES).toContain('supplies');
-    expect(EXPENSE_CATEGORIES).toContain('gas');
-    expect(EXPENSE_CATEGORIES).toContain('mileage');
+  // Phase 8D: Simplified to 5 overhead expense categories
+  it('should contain current overhead expense categories', () => {
     expect(EXPENSE_CATEGORIES).toContain('storage');
-    expect(EXPENSE_CATEGORIES).toContain('fees');
-    expect(EXPENSE_CATEGORIES).toContain('shipping');
+    expect(EXPENSE_CATEGORIES).toContain('supplies');
+    expect(EXPENSE_CATEGORIES).toContain('subscriptions');
+    expect(EXPENSE_CATEGORIES).toContain('equipment');
     expect(EXPENSE_CATEGORIES).toContain('other');
   });
 
-  it('should have 7 categories', () => {
-    expect(EXPENSE_CATEGORIES).toHaveLength(7);
+  it('should not contain legacy categories', () => {
+    expect(EXPENSE_CATEGORIES).not.toContain('gas');
+    expect(EXPENSE_CATEGORIES).not.toContain('mileage');
+    expect(EXPENSE_CATEGORIES).not.toContain('fees');
+    expect(EXPENSE_CATEGORIES).not.toContain('shipping');
+  });
+
+  it('should have 5 categories', () => {
+    expect(EXPENSE_CATEGORIES).toHaveLength(5);
+  });
+});
+
+describe('ALL_EXPENSE_CATEGORIES constant', () => {
+  it('should contain all categories including legacy', () => {
+    // Current categories
+    expect(ALL_EXPENSE_CATEGORIES).toContain('storage');
+    expect(ALL_EXPENSE_CATEGORIES).toContain('supplies');
+    expect(ALL_EXPENSE_CATEGORIES).toContain('subscriptions');
+    expect(ALL_EXPENSE_CATEGORIES).toContain('equipment');
+    expect(ALL_EXPENSE_CATEGORIES).toContain('other');
+    // Legacy categories
+    expect(ALL_EXPENSE_CATEGORIES).toContain('gas');
+    expect(ALL_EXPENSE_CATEGORIES).toContain('mileage');
+    expect(ALL_EXPENSE_CATEGORIES).toContain('fees');
+    expect(ALL_EXPENSE_CATEGORIES).toContain('shipping');
+  });
+
+  it('should have 9 total categories (5 current + 4 legacy)', () => {
+    expect(ALL_EXPENSE_CATEGORIES).toHaveLength(9);
   });
 });
 

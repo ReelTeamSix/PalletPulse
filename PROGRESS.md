@@ -1,7 +1,7 @@
 # PalletPulse Development Progress
 
 ## Current Phase: Phase 8 - Expense System Redesign
-**Status:** Phase 8C Complete - Mileage Tracking System Implemented
+**Status:** Phase 8D Complete - Multi-Pallet Expense Linking Implemented
 **Branch:** feature/sales-profit
 
 ---
@@ -280,19 +280,54 @@ Add Trip
 | Equipment | Scale, measuring tools, shelving |
 | Other | Miscellaneous business expenses |
 
+**Legacy Categories (Backward Compatible):**
+| Category | Status |
+|----------|--------|
+| Gas | (Legacy) - Use Mileage Tracking instead |
+| Mileage | (Legacy) - Use Mileage Tracking instead |
+| Fees | (Legacy) - Track per-item at sale time |
+| Shipping | (Legacy) - Track per-item at sale time |
+
 **Multi-Pallet Linking:**
 - Overhead expenses can link to 0, 1, or multiple pallets
 - Junction table `expense_pallets` replaces single `pallet_id`
-- UI: Multi-select pallet picker
+- UI: Multi-select checkbox picker
+- Cost automatically split evenly when linked to multiple pallets
 
 **Tasks:**
-- [ ] Update expense form schema with simplified categories
-- [ ] Update expense form to use multi-pallet selector
-- [ ] Update expenses store to handle junction table
-- [ ] Update ExpenseCard for multi-pallet display
-- [ ] Update pallet detail to query via junction table
-- [ ] Keep receipt photo functionality (already working)
-- [ ] Write tests for multi-pallet expense linking
+- [x] Update expense form schema with simplified categories ✅
+- [x] Update expense form to use multi-pallet selector ✅
+- [x] Update expenses store to handle junction table ✅
+- [x] Update ExpenseCard for multi-pallet display ✅
+- [x] Update pallet detail to query via junction table ✅
+- [x] Keep receipt photo functionality (already working) ✅
+- [x] Write tests for multi-pallet expense linking (26 store tests) ✅
+
+**Completed Files:**
+- `src/features/expenses/schemas/expense-form-schema.ts` - Simplified categories, pallet_ids array, category descriptions
+- `src/features/expenses/components/ExpenseForm.tsx` - Multi-pallet checkbox selector, category hints, cost split preview
+- `src/features/expenses/components/ExpenseCard.tsx` - Multi-pallet display, split amount indicator, "cubes" icon
+- `src/stores/expenses-store.ts` - ExpenseWithPallets type, junction table handling, split cost calculations
+- `src/stores/__tests__/expenses-store.test.ts` - 26 tests for multi-pallet support
+- `src/features/expenses/schemas/expense-form-schema.test.ts` - Updated for Phase 8D changes
+
+**Features Implemented:**
+- Simplified to 5 overhead expense categories (storage, supplies, subscriptions, equipment, other)
+- Legacy categories kept for backward compatibility (gas, mileage, fees, shipping) with "(Legacy)" labels
+- Multi-pallet expense linking via `expense_pallets` junction table
+- Checkbox-style pallet selector in expense form
+- Selected pallets shown as removable chips
+- Automatic cost split calculation (total / number of pallets)
+- Split amount display in ExpenseCard and ExpenseCardCompact
+- "Clear All" button to deselect all pallets
+- Category descriptions shown as hints in form
+- Backward compatibility with legacy single `pallet_id` field
+
+**Test Results:**
+```
+Test Suites: 13 passed, 13 total
+Tests:       626 passed, 626 total
+```
 
 ---
 

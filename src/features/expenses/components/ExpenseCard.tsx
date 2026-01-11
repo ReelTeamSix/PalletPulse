@@ -1,10 +1,11 @@
 // ExpenseCard Component - Displays an expense summary in a list
+// Updated for Phase 8D: Multi-pallet display support
 import React from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
-import { Expense } from '@/src/types/database';
+import { ExpenseWithPallets } from '@/src/stores/expenses-store';
 import {
   formatExpenseAmount,
   formatExpenseDate,
@@ -13,20 +14,38 @@ import {
 } from '../schemas/expense-form-schema';
 
 interface ExpenseCardProps {
-  expense: Expense;
-  palletName?: string | null;
+  expense: ExpenseWithPallets;
+  palletNames?: string[]; // Phase 8D: Support multiple pallet names
   onPress: () => void;
+  // Optional: Show split amount instead of total (for pallet detail view)
+  showSplitAmount?: boolean;
+  splitAmount?: number;
 }
 
 export function ExpenseCard({
   expense,
-  palletName,
+  palletNames,
   onPress,
+  showSplitAmount = false,
+  splitAmount,
 }: ExpenseCardProps) {
   const categoryColor = getCategoryColor(expense.category);
   const categoryLabel = getCategoryLabel(expense.category);
   const hasReceipt = !!expense.receipt_photo_path;
-  const isLinkedToPallet = !!expense.pallet_id;
+  const linkedPalletCount = expense.pallet_ids?.length || (expense.pallet_id ? 1 : 0);
+  const isLinkedToPallet = linkedPalletCount > 0;
+  const isMultiPallet = linkedPalletCount > 1;
+  const displayAmount = showSplitAmount && splitAmount !== undefined ? splitAmount : expense.amount;
+
+  // Get pallet display text
+  const getPalletDisplayText = () => {
+    if (!palletNames || palletNames.length === 0) {
+      if (isMultiPallet) return `${linkedPalletCount} pallets`;
+      return 'Pallet';
+    }
+    if (palletNames.length === 1) return palletNames[0];
+    return `${palletNames.length} pallets`;
+  };
 
   return (
     <Pressable style={styles.container} onPress={onPress}>
@@ -37,7 +56,15 @@ export function ExpenseCard({
         <View style={styles.content}>
           {/* Amount and Category */}
           <View style={styles.header}>
-            <Text style={styles.amount}>{formatExpenseAmount(expense.amount)}</Text>
+            <View style={styles.amountContainer}>
+              <Text style={styles.amount}>{formatExpenseAmount(displayAmount)}</Text>
+              {/* Show split indicator if multi-pallet and showing split amount */}
+              {isMultiPallet && showSplitAmount && (
+                <Text style={styles.splitIndicator}>
+                  (of {formatExpenseAmount(expense.amount)})
+                </Text>
+              )}
+            </View>
             <View style={[styles.categoryBadge, { backgroundColor: categoryColor }]}>
               <Text style={styles.categoryText}>{categoryLabel}</Text>
             </View>
@@ -62,12 +89,16 @@ export function ExpenseCard({
                 </View>
               )}
 
-              {/* Pallet link indicator */}
+              {/* Pallet link indicator - Updated for multi-pallet */}
               {isLinkedToPallet && (
-                <View style={styles.palletBadge}>
-                  <FontAwesome name="cube" size={10} color={colors.primary} />
+                <View style={[styles.palletBadge, isMultiPallet && styles.multiPalletBadge]}>
+                  <FontAwesome
+                    name={isMultiPallet ? 'cubes' : 'cube'}
+                    size={10}
+                    color={colors.primary}
+                  />
                   <Text style={styles.palletName} numberOfLines={1}>
-                    {palletName || 'Pallet'}
+                    {getPalletDisplayText()}
                   </Text>
                 </View>
               )}
@@ -82,23 +113,48 @@ export function ExpenseCard({
 }
 
 // Compact version for use in pallet detail
+// Updated for Phase 8D: Shows split amount for multi-pallet expenses
 export function ExpenseCardCompact({
   expense,
   onPress,
-}: Omit<ExpenseCardProps, 'palletName'>) {
+  splitAmount,
+  totalPallets,
+}: {
+  expense: ExpenseWithPallets;
+  onPress: () => void;
+  splitAmount?: number;
+  totalPallets?: number;
+}) {
   const categoryColor = getCategoryColor(expense.category);
   const categoryLabel = getCategoryLabel(expense.category);
+  const displayAmount = splitAmount !== undefined ? splitAmount : expense.amount;
+  const isSharedExpense = (totalPallets || 0) > 1;
 
   return (
     <Pressable style={styles.compactContainer} onPress={onPress}>
       <View style={[styles.compactCategoryDot, { backgroundColor: categoryColor }]} />
       <View style={styles.compactContent}>
-        <Text style={styles.compactDescription} numberOfLines={1}>
-          {expense.description || categoryLabel}
-        </Text>
+        <View style={styles.compactTitleRow}>
+          <Text style={styles.compactDescription} numberOfLines={1}>
+            {expense.description || categoryLabel}
+          </Text>
+          {isSharedExpense && (
+            <View style={styles.sharedBadge}>
+              <FontAwesome name="share-alt" size={8} color={colors.textSecondary} />
+              <Text style={styles.sharedText}>Split</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.compactDate}>{formatExpenseDate(expense.expense_date)}</Text>
       </View>
-      <Text style={styles.compactAmount}>{formatExpenseAmount(expense.amount)}</Text>
+      <View style={styles.compactAmountContainer}>
+        <Text style={styles.compactAmount}>{formatExpenseAmount(displayAmount)}</Text>
+        {isSharedExpense && (
+          <Text style={styles.compactTotal}>
+            ({formatExpenseAmount(expense.amount)} total)
+          </Text>
+        )}
+      </View>
     </Pressable>
   );
 }
@@ -130,10 +186,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xs,
   },
+  amountContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: spacing.xs,
+  },
   amount: {
     fontSize: fontSize.lg,
     fontWeight: '600',
     color: colors.textPrimary,
+  },
+  splitIndicator: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
   },
   categoryBadge: {
     paddingHorizontal: spacing.sm,
@@ -176,6 +242,9 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     gap: spacing.xs,
   },
+  multiPalletBadge: {
+    backgroundColor: colors.primaryLight || colors.background,
+  },
   palletName: {
     fontSize: fontSize.xs,
     color: colors.primary,
@@ -199,18 +268,45 @@ const styles = StyleSheet.create({
   compactContent: {
     flex: 1,
   },
+  compactTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   compactDescription: {
     fontSize: fontSize.sm,
     color: colors.textPrimary,
+    flex: 1,
   },
   compactDate: {
     fontSize: fontSize.xs,
     color: colors.textSecondary,
   },
+  compactAmountContainer: {
+    alignItems: 'flex-end',
+    marginLeft: spacing.sm,
+  },
   compactAmount: {
     fontSize: fontSize.sm,
     fontWeight: '600',
     color: colors.textPrimary,
-    marginLeft: spacing.sm,
+  },
+  compactTotal: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+  },
+  sharedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 2,
+    borderRadius: borderRadius.xs,
+  },
+  sharedText: {
+    fontSize: 9,
+    color: colors.textSecondary,
   },
 });

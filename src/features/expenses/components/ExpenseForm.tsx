@@ -1,4 +1,5 @@
 // ExpenseForm Component - Form for creating and editing expenses
+// Updated for Phase 8D: Multi-pallet linking and simplified categories
 import React, { useState, useMemo } from 'react';
 import {
   View,
@@ -23,6 +24,7 @@ import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
   EXPENSE_CATEGORY_COLORS,
+  EXPENSE_CATEGORY_DESCRIPTIONS,
   getLocalDateString,
   formatExpenseAmount,
   parseCurrencyInput,
@@ -37,7 +39,7 @@ interface ExpenseFormProps {
   isLoading?: boolean;
   submitLabel?: string;
   expense?: Expense; // For editing
-  palletId?: string | null; // Pre-selected pallet
+  palletIds?: string[]; // Pre-selected pallets (Phase 8D: multi-pallet support)
   onReceiptPhotoSelect?: () => void; // Callback to open photo picker
   receiptPhotoUri?: string | null; // Current receipt photo
   onReceiptPhotoRemove?: () => void; // Remove receipt photo
@@ -50,7 +52,7 @@ export function ExpenseForm({
   isLoading = false,
   submitLabel = 'Save Expense',
   expense,
-  palletId,
+  palletIds,
   onReceiptPhotoSelect,
   receiptPhotoUri,
   onReceiptPhotoRemove,
@@ -78,14 +80,16 @@ export function ExpenseForm({
       category: expense?.category ?? initialValues?.category ?? 'other',
       description: expense?.description ?? initialValues?.description ?? null,
       expense_date: expense?.expense_date ?? initialValues?.expense_date ?? getLocalDateString(),
-      pallet_id: expense?.pallet_id ?? palletId ?? initialValues?.pallet_id ?? null,
+      // Phase 8D: Multi-pallet support
+      pallet_ids: palletIds ?? initialValues?.pallet_ids ?? [],
+      pallet_id: expense?.pallet_id ?? null, // Legacy field for backward compat
       receipt_photo_path: expense?.receipt_photo_path ?? initialValues?.receipt_photo_path ?? null,
     } as ExpenseFormData,
   });
 
   const watchCategory = watch('category');
   const watchExpenseDate = watch('expense_date');
-  const watchPalletId = watch('pallet_id');
+  const watchPalletIds = watch('pallet_ids') || [];
   const watchAmount = watch('amount');
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
@@ -106,11 +110,26 @@ export function ExpenseForm({
     });
   };
 
-  // Get linked pallet info
-  const linkedPallet = useMemo(() => {
-    if (!watchPalletId) return null;
-    return pallets.find(p => p.id === watchPalletId);
-  }, [watchPalletId, pallets]);
+  // Get linked pallets info (Phase 8D: multi-pallet)
+  const linkedPallets = useMemo(() => {
+    if (!watchPalletIds || watchPalletIds.length === 0) return [];
+    return pallets.filter(p => watchPalletIds.includes(p.id));
+  }, [watchPalletIds, pallets]);
+
+  // Toggle pallet selection
+  const togglePalletSelection = (palletId: string) => {
+    const currentIds = watchPalletIds || [];
+    if (currentIds.includes(palletId)) {
+      setValue('pallet_ids', currentIds.filter(id => id !== palletId));
+    } else {
+      setValue('pallet_ids', [...currentIds, palletId]);
+    }
+  };
+
+  // Clear all pallet selections
+  const clearPalletSelection = () => {
+    setValue('pallet_ids', []);
+  };
 
   return (
     <KeyboardAvoidingView
@@ -173,6 +192,10 @@ export function ExpenseForm({
               );
             })}
           </View>
+          {/* Category description hint */}
+          <Text style={styles.categoryHint}>
+            {EXPENSE_CATEGORY_DESCRIPTIONS[watchCategory]}
+          </Text>
           {errors.category && (
             <Text style={styles.error}>{errors.category.message}</Text>
           )}
@@ -227,21 +250,32 @@ export function ExpenseForm({
           )}
         </View>
 
-        {/* Link to Pallet (Optional) */}
+        {/* Link to Pallets (Optional) - Phase 8D: Multi-pallet support */}
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Link to Pallet (Optional)</Text>
+          <View style={styles.palletLabelRow}>
+            <Text style={styles.label}>Link to Pallets (Optional)</Text>
+            {linkedPallets.length > 0 && (
+              <Pressable onPress={clearPalletSelection}>
+                <Text style={styles.clearLink}>Clear All</Text>
+              </Pressable>
+            )}
+          </View>
           <Pressable
             style={styles.palletButton}
             onPress={() => setShowPalletPicker(!showPalletPicker)}
           >
             <FontAwesome
-              name="cube"
+              name="cubes"
               size={16}
-              color={linkedPallet ? colors.primary : colors.textSecondary}
+              color={linkedPallets.length > 0 ? colors.primary : colors.textSecondary}
               style={styles.palletIcon}
             />
-            <Text style={[styles.palletText, linkedPallet && styles.palletTextSelected]}>
-              {linkedPallet ? linkedPallet.name : 'No pallet linked'}
+            <Text style={[styles.palletText, linkedPallets.length > 0 && styles.palletTextSelected]}>
+              {linkedPallets.length === 0
+                ? 'No pallets linked'
+                : linkedPallets.length === 1
+                  ? linkedPallets[0].name
+                  : `${linkedPallets.length} pallets selected`}
             </Text>
             <FontAwesome
               name={showPalletPicker ? 'chevron-up' : 'chevron-down'}
@@ -250,48 +284,56 @@ export function ExpenseForm({
             />
           </Pressable>
 
-          {showPalletPicker && (
-            <View style={styles.palletList}>
-              <Pressable
-                style={styles.palletOption}
-                onPress={() => {
-                  setValue('pallet_id', null);
-                  setShowPalletPicker(false);
-                }}
-              >
-                <Text style={[styles.palletOptionText, !watchPalletId && styles.palletOptionTextSelected]}>
-                  No pallet linked
-                </Text>
-                {!watchPalletId && (
-                  <FontAwesome name="check" size={14} color={colors.primary} />
-                )}
-              </Pressable>
-              {pallets.map((pallet) => (
-                <Pressable
-                  key={pallet.id}
-                  style={styles.palletOption}
-                  onPress={() => {
-                    setValue('pallet_id', pallet.id);
-                    setShowPalletPicker(false);
-                  }}
-                >
-                  <View style={styles.palletOptionContent}>
-                    <Text style={[styles.palletOptionText, watchPalletId === pallet.id && styles.palletOptionTextSelected]}>
-                      {pallet.name}
-                    </Text>
-                    {pallet.supplier && (
-                      <Text style={styles.palletOptionSubtext}>{pallet.supplier}</Text>
-                    )}
-                  </View>
-                  {watchPalletId === pallet.id && (
-                    <FontAwesome name="check" size={14} color={colors.primary} />
-                  )}
-                </Pressable>
+          {/* Selected pallets chips */}
+          {linkedPallets.length > 1 && (
+            <View style={styles.selectedPalletsRow}>
+              {linkedPallets.map((pallet) => (
+                <View key={pallet.id} style={styles.selectedPalletChip}>
+                  <Text style={styles.selectedPalletChipText}>{pallet.name}</Text>
+                  <Pressable onPress={() => togglePalletSelection(pallet.id)}>
+                    <FontAwesome name="times" size={12} color={colors.textSecondary} />
+                  </Pressable>
+                </View>
               ))}
             </View>
           )}
+
+          {showPalletPicker && (
+            <View style={styles.palletList}>
+              {pallets.length === 0 ? (
+                <View style={styles.emptyPalletList}>
+                  <Text style={styles.emptyPalletText}>No pallets available</Text>
+                </View>
+              ) : (
+                pallets.map((pallet) => {
+                  const isSelected = watchPalletIds.includes(pallet.id);
+                  return (
+                    <Pressable
+                      key={pallet.id}
+                      style={styles.palletOption}
+                      onPress={() => togglePalletSelection(pallet.id)}
+                    >
+                      <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                        {isSelected && (
+                          <FontAwesome name="check" size={10} color={colors.background} />
+                        )}
+                      </View>
+                      <View style={styles.palletOptionContent}>
+                        <Text style={[styles.palletOptionText, isSelected && styles.palletOptionTextSelected]}>
+                          {pallet.name}
+                        </Text>
+                        {pallet.supplier && (
+                          <Text style={styles.palletOptionSubtext}>{pallet.supplier}</Text>
+                        )}
+                      </View>
+                    </Pressable>
+                  );
+                })
+              )}
+            </View>
+          )}
           <Text style={styles.hint}>
-            Link this expense to a specific pallet to include it in that pallet's profit calculation
+            Link this expense to one or more pallets to split the cost in profit calculations
           </Text>
         </View>
 
@@ -332,10 +374,22 @@ export function ExpenseForm({
                 <Text style={styles.categoryBadgeText}>{EXPENSE_CATEGORY_LABELS[watchCategory]}</Text>
               </View>
             </View>
-            {linkedPallet && (
+            {linkedPallets.length > 0 && (
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Linked to:</Text>
-                <Text style={styles.summaryPallet}>{linkedPallet.name}</Text>
+                <Text style={styles.summaryPallet}>
+                  {linkedPallets.length === 1
+                    ? linkedPallets[0].name
+                    : `${linkedPallets.length} pallets`}
+                </Text>
+              </View>
+            )}
+            {linkedPallets.length > 1 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Cost split:</Text>
+                <Text style={styles.summarySplitAmount}>
+                  {formatExpenseAmount(watchAmount / linkedPallets.length)} each
+                </Text>
               </View>
             )}
           </View>
@@ -557,6 +611,69 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: '500',
+  },
+  summarySplitAmount: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+  },
+  // Phase 8D: Multi-pallet styles
+  palletLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
+  },
+  clearLink: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+  },
+  selectedPalletsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  selectedPalletChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.full,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    gap: spacing.xs,
+  },
+  selectedPalletChipText: {
+    fontSize: fontSize.xs,
+    color: colors.textPrimary,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: borderRadius.xs,
+    borderWidth: 2,
+    borderColor: colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.sm,
+  },
+  checkboxSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  emptyPalletList: {
+    padding: spacing.md,
+    alignItems: 'center',
+  },
+  emptyPalletText: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  categoryHint: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    marginTop: spacing.xs,
   },
   buttonRow: {
     flexDirection: 'row',

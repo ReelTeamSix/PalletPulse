@@ -9,7 +9,10 @@ export type PalletStatus = 'unprocessed' | 'processing' | 'completed'
 export type ItemCondition = 'new' | 'open_box' | 'used_good' | 'used_fair' | 'damaged' | 'for_parts' | 'unsellable'
 export type ItemStatus = 'unlisted' | 'listed' | 'sold'
 export type SourceType = 'pallet' | 'thrift' | 'garage_sale' | 'retail_arbitrage' | 'mystery_box' | 'other'
-export type ExpenseCategory = 'supplies' | 'gas' | 'mileage' | 'storage' | 'fees' | 'shipping' | 'other'
+// Expense categories - simplified for overhead expenses only
+// Legacy categories (gas, mileage, fees, shipping) kept for backward compatibility
+// New categories: subscriptions, equipment
+export type ExpenseCategory = 'supplies' | 'storage' | 'subscriptions' | 'equipment' | 'other' | 'gas' | 'mileage' | 'fees' | 'shipping'
 export type NotificationType = 'stale_inventory' | 'pallet_milestone' | 'weekly_summary' | 'subscription_reminder' | 'limit_warning' | 'system'
 export type BillingCycle = 'monthly' | 'annual'
 export type PayoutStatus = 'pending' | 'processing' | 'completed' | 'failed'
