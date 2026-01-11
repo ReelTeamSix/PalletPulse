@@ -27,8 +27,11 @@ export default function NewItemScreen() {
   const handleSubmit = async (data: ItemFormData) => {
     setIsSubmitting(true);
     try {
+      // Use pallet_id from form data (dropdown selection) or URL param (from pallet detail)
+      const selectedPalletId = data.pallet_id || palletId || null;
+
       const result = await addItem({
-        pallet_id: palletId || null,
+        pallet_id: selectedPalletId,
         name: data.name,
         description: data.description,
         quantity: data.quantity,
@@ -39,7 +42,7 @@ export default function NewItemScreen() {
         storage_location: data.storage_location,
         status: data.status,
         barcode: data.barcode,
-        source_type: palletId ? 'pallet' : 'other',
+        source_type: selectedPalletId ? 'pallet' : 'other',
         source_name: data.source_name,
         notes: data.notes,
       });
