@@ -57,7 +57,7 @@ export interface ItemsState {
   addItem: (item: ItemInsert) => Promise<{ success: boolean; data?: Item; error?: string }>;
   updateItem: (id: string, updates: ItemUpdate) => Promise<{ success: boolean; error?: string }>;
   deleteItem: (id: string) => Promise<{ success: boolean; error?: string }>;
-  markAsSold: (id: string, salePrice: number, saleDate?: string, salesChannel?: string) => Promise<{ success: boolean; error?: string }>;
+  markAsSold: (id: string, salePrice: number, saleDate?: string, salesChannel?: string, buyerNotes?: string) => Promise<{ success: boolean; error?: string }>;
   setSelectedItem: (id: string | null) => void;
   clearError: () => void;
   clearItems: () => void;
@@ -168,12 +168,22 @@ export const useItemsStore = create<ItemsState>()(
         }
       },
 
-      markAsSold: async (id: string, salePrice: number, saleDate?: string, salesChannel?: string) => {
+      markAsSold: async (id: string, salePrice: number, saleDate?: string, salesChannel?: string, buyerNotes?: string) => {
+        const currentItem = get().items.find(i => i.id === id);
+        const existingNotes = currentItem?.notes || '';
+        // Append buyer notes to existing notes if provided
+        const updatedNotes = buyerNotes
+          ? existingNotes
+            ? `${existingNotes}\n\n--- Sale Notes ---\n${buyerNotes}`
+            : `--- Sale Notes ---\n${buyerNotes}`
+          : existingNotes || null;
+
         return get().updateItem(id, {
           status: 'sold',
           sale_price: salePrice,
           sale_date: saleDate || new Date().toISOString().split('T')[0],
           sales_channel: salesChannel,
+          notes: updatedNotes,
         });
       },
 

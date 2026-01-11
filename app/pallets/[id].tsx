@@ -15,8 +15,16 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
-import { PalletStatus, Item } from '@/src/types/database';
+import { useExpensesStore } from '@/src/stores/expenses-store';
+import { PalletStatus, Item, Expense } from '@/src/types/database';
 import { formatCondition, getConditionColor, getStatusColor } from '@/src/features/items/schemas/item-form-schema';
+import {
+  calculatePalletProfit,
+  formatCurrency,
+  formatProfit,
+  formatROI,
+  getROIColor,
+} from '@/src/lib/profit-utils';
 
 const STATUS_CONFIG: Record<PalletStatus, { label: string; color: string }> = {
   unprocessed: { label: 'Unprocessed', color: colors.statusUnprocessed },
@@ -30,7 +38,9 @@ export default function PalletDetailScreen() {
   const insets = useSafeAreaInsets();
   const { pallets, getPalletById, deletePallet, isLoading, fetchPallets } = usePalletsStore();
   const { items, fetchItems, fetchItemsByPallet } = useItemsStore();
+  const { fetchExpensesByPallet } = useExpensesStore();
   const [palletItems, setPalletItems] = useState<Item[]>([]);
+  const [palletExpenses, setPalletExpenses] = useState<Expense[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
 
   // Fetch pallets if not loaded
@@ -40,17 +50,21 @@ export default function PalletDetailScreen() {
     }
   }, []);
 
-  // Fetch items for this pallet
+  // Fetch items and expenses for this pallet
   useEffect(() => {
-    async function loadItems() {
+    async function loadData() {
       if (id) {
         setLoadingItems(true);
-        const palletItemsList = await fetchItemsByPallet(id);
-        setPalletItems(palletItemsList);
+        const [itemsList, expensesList] = await Promise.all([
+          fetchItemsByPallet(id),
+          fetchExpensesByPallet(id),
+        ]);
+        setPalletItems(itemsList);
+        setPalletExpenses(expensesList);
         setLoadingItems(false);
       }
     }
-    loadItems();
+    loadData();
   }, [id]);
 
   const pallet = useMemo(() => {
@@ -93,13 +107,6 @@ export default function PalletDetailScreen() {
     );
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -108,6 +115,12 @@ export default function PalletDetailScreen() {
       day: 'numeric',
     });
   };
+
+  // Calculate profit metrics
+  const profitMetrics = useMemo(() => {
+    if (!pallet) return null;
+    return calculatePalletProfit(pallet, palletItems, palletExpenses);
+  }, [pallet, palletItems, palletExpenses]);
 
   if (isLoading && !pallet) {
     return (
@@ -140,12 +153,13 @@ export default function PalletDetailScreen() {
     );
   }
 
-  const totalCost = pallet.purchase_cost + (pallet.sales_tax || 0);
   const statusConfig = STATUS_CONFIG[pallet.status];
-  // TODO: Calculate actual profit from items when available
-  const totalProfit = 0;
-  const roi = totalCost > 0 ? ((totalProfit / totalCost) * 100).toFixed(0) : '0';
+  const totalCost = profitMetrics?.totalCost ?? 0;
+  const totalProfit = profitMetrics?.netProfit ?? 0;
+  const roi = profitMetrics?.roi ?? 0;
   const isProfitable = totalProfit >= 0;
+  const profitFormatted = formatProfit(totalProfit);
+  const roiColor = getROIColor(roi);
 
   return (
     <>
@@ -179,19 +193,39 @@ export default function PalletDetailScreen() {
               <Text style={styles.statValue}>{formatCurrency(totalCost)}</Text>
               <Text style={styles.statLabel}>Cost</Text>
             </View>
-            <View style={styles.statCard}>
-              <Text style={[styles.statValue, { color: isProfitable ? colors.profit : colors.loss }]}>
-                {formatCurrency(totalProfit)}
+            <View style={[styles.statCard, { backgroundColor: profitFormatted.isPositive ? colors.profit + '15' : colors.loss + '15' }]}>
+              <Text style={[styles.statValue, { color: profitFormatted.color }]}>
+                {profitFormatted.value}
               </Text>
               <Text style={styles.statLabel}>Profit</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={[styles.statValue, { color: isProfitable ? colors.profit : colors.loss }]}>
-                {roi}%
+              <Text style={[styles.statValue, { color: roiColor }]}>
+                {formatROI(roi)}
               </Text>
               <Text style={styles.statLabel}>ROI</Text>
             </View>
           </View>
+
+          {/* Progress Summary */}
+          {profitMetrics && (
+            <View style={styles.progressSummary}>
+              <View style={styles.progressItem}>
+                <Text style={styles.progressValue}>{profitMetrics.soldItemsCount}</Text>
+                <Text style={styles.progressLabel}>Sold</Text>
+              </View>
+              <View style={styles.progressDivider} />
+              <View style={styles.progressItem}>
+                <Text style={styles.progressValue}>{profitMetrics.unsoldItemsCount}</Text>
+                <Text style={styles.progressLabel}>Unsold</Text>
+              </View>
+              <View style={styles.progressDivider} />
+              <View style={styles.progressItem}>
+                <Text style={styles.progressValue}>{formatCurrency(profitMetrics.totalRevenue)}</Text>
+                <Text style={styles.progressLabel}>Revenue</Text>
+              </View>
+            </View>
+          )}
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Items ({palletItems.length})</Text>
@@ -373,7 +407,35 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  progressSummary: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
     marginBottom: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  progressItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  progressValue: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  progressLabel: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  progressDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: colors.border,
   },
   statCard: {
     flex: 1,

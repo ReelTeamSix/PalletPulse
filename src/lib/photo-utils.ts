@@ -188,7 +188,8 @@ async function uriToArrayBuffer(uri: string): Promise<ArrayBuffer> {
  */
 export function generateStoragePath(userId: string, itemId: string, fileName: string): string {
   const timestamp = Date.now();
-  const extension = fileName.split('.').pop() || 'jpg';
+  // Only use extension if filename contains a dot, otherwise default to jpg
+  const extension = fileName.includes('.') ? fileName.split('.').pop() : 'jpg';
   return `${userId}/${itemId}/${timestamp}.${extension}`;
 }
 
