@@ -1,5 +1,5 @@
 // Mark Item as Sold Screen
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput,
+  Keyboard,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,6 +53,7 @@ export default function SellItemScreen() {
   const { getPalletById, pallets } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showChannelSuggestions, setShowChannelSuggestions] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Fetch items if not loaded
   useEffect(() => {
@@ -203,12 +205,16 @@ export default function SellItemScreen() {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={100}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       >
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={true}
+          bounces={true}
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
         >
           {/* Item Summary */}
           <View style={styles.itemSummary}>
@@ -462,7 +468,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 120,
+    paddingBottom: 200, // Extra padding for keyboard
+    flexGrow: 1,
   },
   itemSummary: {
     backgroundColor: colors.surface,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,9 +7,15 @@ import {
   Pressable,
   Alert,
   ActivityIndicator,
+  Modal,
+  TextInput,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
@@ -18,30 +24,39 @@ import { useItemsStore } from '@/src/stores/items-store';
 import { useExpensesStore } from '@/src/stores/expenses-store';
 import { PalletStatus, Item, Expense } from '@/src/types/database';
 import { formatCondition, getConditionColor, getStatusColor } from '@/src/features/items/schemas/item-form-schema';
+import { PALLET_STATUS_OPTIONS } from '@/src/features/pallets/schemas/pallet-form-schema';
 import {
   calculatePalletProfit,
   formatCurrency,
   formatProfit,
   formatROI,
   getROIColor,
+  calculateItemROIFromValues,
 } from '@/src/lib/profit-utils';
 
 const STATUS_CONFIG: Record<PalletStatus, { label: string; color: string }> = {
   unprocessed: { label: 'Unprocessed', color: colors.statusUnprocessed },
-  processing: { label: 'Processing', color: colors.statusListed },
-  completed: { label: 'Completed', color: colors.statusSold },
+  processing: { label: 'In Progress', color: colors.statusListed },
+  completed: { label: 'Processed', color: colors.statusSold },
 };
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function PalletDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { pallets, getPalletById, deletePallet, isLoading, fetchPallets } = usePalletsStore();
-  const { items, fetchItems, fetchItemsByPallet } = useItemsStore();
+  const { pallets, getPalletById, deletePallet, updatePallet, isLoading, fetchPallets } = usePalletsStore();
+  const { items, fetchItems, fetchItemsByPallet, markAsSold } = useItemsStore();
   const { fetchExpensesByPallet } = useExpensesStore();
   const [palletItems, setPalletItems] = useState<Item[]>([]);
   const [palletExpenses, setPalletExpenses] = useState<Expense[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
+  const [showStatusPicker, setShowStatusPicker] = useState(false);
+  const [quickSellItem, setQuickSellItem] = useState<Item | null>(null);
+  const [quickSellPrice, setQuickSellPrice] = useState('');
+  const [isQuickSelling, setIsQuickSelling] = useState(false);
+  const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
 
   // Fetch pallets if not loaded
   useEffect(() => {
@@ -50,22 +65,26 @@ export default function PalletDetailScreen() {
     }
   }, []);
 
-  // Fetch items and expenses for this pallet
-  useEffect(() => {
-    async function loadData() {
-      if (id) {
-        setLoadingItems(true);
-        const [itemsList, expensesList] = await Promise.all([
-          fetchItemsByPallet(id),
-          fetchExpensesByPallet(id),
-        ]);
-        setPalletItems(itemsList);
-        setPalletExpenses(expensesList);
-        setLoadingItems(false);
-      }
+  // Load data function
+  const loadData = useCallback(async () => {
+    if (id) {
+      setLoadingItems(true);
+      const [itemsList, expensesList] = await Promise.all([
+        fetchItemsByPallet(id),
+        fetchExpensesByPallet(id),
+      ]);
+      setPalletItems(itemsList);
+      setPalletExpenses(expensesList);
+      setLoadingItems(false);
     }
-    loadData();
-  }, [id]);
+  }, [id, fetchItemsByPallet, fetchExpensesByPallet]);
+
+  // Fetch items and expenses on focus (refreshes when coming back from other screens)
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const pallet = useMemo(() => {
     if (!id) return null;
@@ -77,6 +96,8 @@ export default function PalletDetailScreen() {
   };
 
   const handleItemPress = (itemId: string) => {
+    // Close any open swipeable first
+    swipeableRefs.current.forEach((ref) => ref?.close());
     router.push(`/items/${itemId}`);
   };
 
@@ -107,6 +128,50 @@ export default function PalletDetailScreen() {
     );
   };
 
+  const handleStatusChange = async (newStatus: PalletStatus) => {
+    if (!id) return;
+    setShowStatusPicker(false);
+    const result = await updatePallet(id, { status: newStatus });
+    if (!result.success) {
+      Alert.alert('Error', result.error || 'Failed to update status');
+    }
+  };
+
+  // Quick sell handlers
+  const handleQuickSell = (item: Item) => {
+    // Close the swipeable
+    swipeableRefs.current.get(item.id)?.close();
+
+    // Pre-fill with listing price
+    setQuickSellPrice(item.listing_price?.toString() || '');
+    setQuickSellItem(item);
+  };
+
+  const handleConfirmQuickSell = async () => {
+    if (!quickSellItem) return;
+
+    const price = parseFloat(quickSellPrice);
+    if (isNaN(price) || price < 0) {
+      Alert.alert('Invalid Price', 'Please enter a valid sale price');
+      return;
+    }
+
+    setIsQuickSelling(true);
+    try {
+      const result = await markAsSold(quickSellItem.id, price);
+      if (result.success) {
+        setQuickSellItem(null);
+        setQuickSellPrice('');
+        // Refresh the items list
+        loadData();
+      } else {
+        Alert.alert('Error', result.error || 'Failed to mark item as sold');
+      }
+    } finally {
+      setIsQuickSelling(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -121,6 +186,36 @@ export default function PalletDetailScreen() {
     if (!pallet) return null;
     return calculatePalletProfit(pallet, palletItems, palletExpenses);
   }, [pallet, palletItems, palletExpenses]);
+
+  // Calculate allocated cost for quick sell preview
+  const getItemAllocatedCost = useCallback((item: Item) => {
+    if (item.allocated_cost !== null) return item.allocated_cost;
+    if (!pallet) return item.purchase_cost ?? 0;
+    const palletCost = pallet.purchase_cost + (pallet.sales_tax || 0);
+    return palletItems.length > 0 ? palletCost / palletItems.length : 0;
+  }, [pallet, palletItems]);
+
+  // Render swipe action
+  const renderRightActions = (item: Item, progress: Animated.AnimatedInterpolation<number>) => {
+    if (item.status === 'sold') return null;
+
+    const translateX = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [100, 0],
+    });
+
+    return (
+      <Animated.View style={[styles.swipeAction, { transform: [{ translateX }] }]}>
+        <Pressable
+          style={styles.sellButton}
+          onPress={() => handleQuickSell(item)}
+        >
+          <FontAwesome name="dollar" size={20} color={colors.background} />
+          <Text style={styles.sellButtonText}>SELL</Text>
+        </Pressable>
+      </Animated.View>
+    );
+  };
 
   if (isLoading && !pallet) {
     return (
@@ -161,8 +256,20 @@ export default function PalletDetailScreen() {
   const profitFormatted = formatProfit(totalProfit);
   const roiColor = getROIColor(roi);
 
+  // Quick sell profit preview
+  const quickSellProfit = quickSellItem ? (() => {
+    const price = parseFloat(quickSellPrice) || 0;
+    const cost = getItemAllocatedCost(quickSellItem);
+    return price - cost;
+  })() : 0;
+  const quickSellROI = quickSellItem ? (() => {
+    const price = parseFloat(quickSellPrice) || 0;
+    const cost = getItemAllocatedCost(quickSellItem);
+    return calculateItemROIFromValues(price, cost, null);
+  })() : 0;
+
   return (
-    <>
+    <GestureHandlerRootView style={styles.container}>
       <Stack.Screen
         options={{
           title: pallet.name,
@@ -228,7 +335,12 @@ export default function PalletDetailScreen() {
           )}
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Items ({palletItems.length})</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Items ({palletItems.length})</Text>
+              {palletItems.some(i => i.status !== 'sold') && (
+                <Text style={styles.swipeHint}>Swipe right to quick sell</Text>
+              )}
+            </View>
             {loadingItems ? (
               <View style={styles.placeholder}>
                 <ActivityIndicator size="small" color={colors.primary} />
@@ -244,31 +356,45 @@ export default function PalletDetailScreen() {
             ) : (
               <View style={styles.itemsList}>
                 {palletItems.map((item) => (
-                  <Pressable
+                  <Swipeable
                     key={item.id}
-                    style={styles.itemCard}
-                    onPress={() => handleItemPress(item.id)}
+                    ref={(ref) => {
+                      if (ref) swipeableRefs.current.set(item.id, ref);
+                    }}
+                    renderRightActions={(progress) => renderRightActions(item, progress)}
+                    rightThreshold={40}
+                    overshootRight={false}
+                    enabled={item.status !== 'sold'}
                   >
-                    <View style={styles.itemInfo}>
-                      <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                      <View style={styles.itemMeta}>
-                        <View style={[styles.itemConditionBadge, { backgroundColor: getConditionColor(item.condition) }]}>
-                          <Text style={styles.itemConditionText}>{formatCondition(item.condition)}</Text>
-                        </View>
-                        <View style={[styles.itemStatusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-                          <Text style={styles.itemStatusText}>
-                            {item.status === 'unlisted' ? 'Unlisted' : item.status === 'listed' ? 'Listed' : 'Sold'}
-                          </Text>
+                    <Pressable
+                      style={styles.itemCard}
+                      onPress={() => handleItemPress(item.id)}
+                    >
+                      <View style={styles.itemInfo}>
+                        <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                        <View style={styles.itemMeta}>
+                          <View style={[styles.itemConditionBadge, { backgroundColor: getConditionColor(item.condition) }]}>
+                            <Text style={styles.itemConditionText}>{formatCondition(item.condition)}</Text>
+                          </View>
+                          <View style={[styles.itemStatusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+                            <Text style={styles.itemStatusText}>
+                              {item.status === 'unlisted' ? 'Unlisted' : item.status === 'listed' ? 'Listed' : 'Sold'}
+                            </Text>
+                          </View>
                         </View>
                       </View>
-                    </View>
-                    <View style={styles.itemPriceSection}>
-                      {item.listing_price !== null && (
-                        <Text style={styles.itemPrice}>{formatCurrency(item.listing_price)}</Text>
-                      )}
-                      <FontAwesome name="chevron-right" size={14} color={colors.textSecondary} />
-                    </View>
-                  </Pressable>
+                      <View style={styles.itemPriceSection}>
+                        {item.status === 'sold' && item.sale_price !== null ? (
+                          <Text style={[styles.itemPrice, { color: colors.profit }]}>
+                            {formatCurrency(item.sale_price)}
+                          </Text>
+                        ) : item.listing_price !== null ? (
+                          <Text style={styles.itemPrice}>{formatCurrency(item.listing_price)}</Text>
+                        ) : null}
+                        <FontAwesome name="chevron-right" size={14} color={colors.textSecondary} />
+                      </View>
+                    </Pressable>
+                  </Swipeable>
                 ))}
               </View>
             )}
@@ -309,12 +435,18 @@ export default function PalletDetailScreen() {
                   {formatDate(pallet.purchase_date)}
                 </Text>
               </View>
-              <View style={styles.detailRow}>
+              <Pressable
+                style={styles.detailRow}
+                onPress={() => setShowStatusPicker(true)}
+              >
                 <Text style={styles.detailLabel}>Status</Text>
-                <View style={[styles.statusBadge, { backgroundColor: statusConfig.color }]}>
-                  <Text style={styles.statusText}>{statusConfig.label}</Text>
+                <View style={styles.statusTouchable}>
+                  <View style={[styles.statusBadge, { backgroundColor: statusConfig.color }]}>
+                    <Text style={styles.statusText}>{statusConfig.label}</Text>
+                  </View>
+                  <FontAwesome name="chevron-down" size={12} color={colors.textSecondary} />
                 </View>
-              </View>
+              </Pressable>
               {pallet.notes && (
                 <View style={[styles.detailRow, styles.notesRow]}>
                   <Text style={styles.detailLabel}>Notes</Text>
@@ -332,7 +464,121 @@ export default function PalletDetailScreen() {
           <FontAwesome name="plus" size={24} color={colors.background} />
         </Pressable>
       </View>
-    </>
+
+      {/* Status Picker Modal */}
+      <Modal
+        visible={showStatusPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowStatusPicker(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowStatusPicker(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Change Status</Text>
+            {PALLET_STATUS_OPTIONS.map((option) => (
+              <Pressable
+                key={option.value}
+                style={[
+                  styles.statusOption,
+                  pallet.status === option.value && styles.statusOptionSelected,
+                ]}
+                onPress={() => handleStatusChange(option.value)}
+              >
+                <View style={[styles.statusDot, { backgroundColor: STATUS_CONFIG[option.value].color }]} />
+                <Text style={[
+                  styles.statusOptionText,
+                  pallet.status === option.value && styles.statusOptionTextSelected,
+                ]}>
+                  {STATUS_CONFIG[option.value].label}
+                </Text>
+                {pallet.status === option.value && (
+                  <FontAwesome name="check" size={16} color={colors.primary} />
+                )}
+              </Pressable>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Quick Sell Modal */}
+      <Modal
+        visible={quickSellItem !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setQuickSellItem(null)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setQuickSellItem(null)}
+        >
+          <Pressable style={styles.quickSellModal} onPress={(e) => e.stopPropagation()}>
+            {quickSellItem && (
+              <>
+                <View style={styles.quickSellHeader}>
+                  <Text style={styles.quickSellTitle} numberOfLines={1}>
+                    {quickSellItem.name}
+                  </Text>
+                  {quickSellItem.listing_price !== null && (
+                    <Text style={styles.quickSellListing}>
+                      Listed: {formatCurrency(quickSellItem.listing_price)}
+                    </Text>
+                  )}
+                </View>
+
+                <Text style={styles.quickSellLabel}>Sale Price</Text>
+                <View style={styles.quickSellInputContainer}>
+                  <Text style={styles.currencySymbol}>$</Text>
+                  <TextInput
+                    style={styles.quickSellInput}
+                    value={quickSellPrice}
+                    onChangeText={setQuickSellPrice}
+                    keyboardType="decimal-pad"
+                    placeholder="0.00"
+                    placeholderTextColor={colors.textSecondary}
+                    autoFocus
+                  />
+                </View>
+
+                <View style={styles.quickSellPreview}>
+                  <View style={styles.quickSellPreviewRow}>
+                    <Text style={styles.quickSellPreviewLabel}>Profit</Text>
+                    <Text style={[
+                      styles.quickSellPreviewValue,
+                      { color: quickSellProfit >= 0 ? colors.profit : colors.loss }
+                    ]}>
+                      {quickSellProfit >= 0 ? '+' : ''}{formatCurrency(quickSellProfit)}
+                    </Text>
+                  </View>
+                  <View style={styles.quickSellPreviewRow}>
+                    <Text style={styles.quickSellPreviewLabel}>ROI</Text>
+                    <Text style={[
+                      styles.quickSellPreviewValue,
+                      { color: getROIColor(quickSellROI) }
+                    ]}>
+                      {formatROI(quickSellROI)}
+                    </Text>
+                  </View>
+                </View>
+
+                <Pressable
+                  style={[styles.quickSellButton, isQuickSelling && styles.quickSellButtonDisabled]}
+                  onPress={handleConfirmQuickSell}
+                  disabled={isQuickSelling}
+                >
+                  <FontAwesome name="check" size={18} color={colors.background} />
+                  <Text style={styles.quickSellButtonText}>
+                    {isQuickSelling ? 'Saving...' : 'Confirm Sale'}
+                  </Text>
+                </Pressable>
+              </>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </GestureHandlerRootView>
   );
 }
 
@@ -457,11 +703,21 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: spacing.lg,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
     color: colors.textPrimary,
-    marginBottom: spacing.md,
+  },
+  swipeHint: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
   },
   placeholder: {
     backgroundColor: colors.surface,
@@ -531,6 +787,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textPrimary,
   },
+  swipeAction: {
+    width: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sellButton: {
+    backgroundColor: colors.profit,
+    width: 70,
+    height: '100%',
+    borderRadius: borderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: spacing.sm,
+  },
+  sellButtonText: {
+    color: colors.background,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    marginTop: 4,
+  },
   detailsCard: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
@@ -565,6 +841,11 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginTop: spacing.xs,
   },
+  statusTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   statusBadge: {
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
@@ -589,5 +870,138 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    width: '80%',
+    maxWidth: 300,
+  },
+  modalTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  statusOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.xs,
+  },
+  statusOptionSelected: {
+    backgroundColor: colors.primary + '15',
+  },
+  statusDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: spacing.md,
+  },
+  statusOptionText: {
+    fontSize: fontSize.md,
+    color: colors.textPrimary,
+    flex: 1,
+  },
+  statusOptionTextSelected: {
+    fontWeight: '600',
+  },
+  // Quick Sell Modal
+  quickSellModal: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    padding: spacing.lg,
+    paddingBottom: spacing.xl,
+    width: '100%',
+    position: 'absolute',
+    bottom: 0,
+  },
+  quickSellHeader: {
+    marginBottom: spacing.lg,
+  },
+  quickSellTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  quickSellListing: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  quickSellLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  quickSellInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  currencySymbol: {
+    fontSize: fontSize.xxl,
+    color: colors.textSecondary,
+    marginRight: spacing.xs,
+  },
+  quickSellInput: {
+    flex: 1,
+    fontSize: fontSize.xxl,
+    color: colors.textPrimary,
+    paddingVertical: spacing.md,
+  },
+  quickSellPreview: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  quickSellPreviewRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xs,
+  },
+  quickSellPreviewLabel: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+  },
+  quickSellPreviewValue: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+  },
+  quickSellButton: {
+    backgroundColor: colors.profit,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    gap: spacing.sm,
+  },
+  quickSellButtonDisabled: {
+    opacity: 0.6,
+  },
+  quickSellButtonText: {
+    color: colors.background,
+    fontSize: fontSize.md,
+    fontWeight: '600',
   },
 });
