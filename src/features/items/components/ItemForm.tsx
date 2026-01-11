@@ -22,6 +22,8 @@ import {
   getUniqueItemSourceNames,
 } from '../schemas/item-form-schema';
 import { Item } from '@/src/types/database';
+import { PLATFORM_PRESETS } from '@/src/features/sales/schemas/sale-form-schema';
+import { formatCurrency } from '@/src/lib/profit-utils';
 import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 
@@ -142,6 +144,18 @@ export function ItemForm({
     onPhotosChange?.(newPhotos);
   };
 
+  // Sync all text states to form values before submit
+  // This ensures values are captured even if user didn't blur the field
+  const syncTextStatesToForm = () => {
+    const retailNum = parseFloat(retailPriceText) || null;
+    const listingNum = parseFloat(listingPriceText) || null;
+    const purchaseNum = parseFloat(purchaseCostText) || null;
+
+    setValue('retail_price', retailNum);
+    setValue('listing_price', listingNum);
+    setValue('purchase_cost', purchaseNum);
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -159,6 +173,47 @@ export function ItemForm({
             <Text style={styles.palletBannerText}>
               Adding to: {linkedPallet.name}
             </Text>
+          </View>
+        )}
+
+        {/* Sale Details (read-only, shown when editing a sold item) */}
+        {item?.status === 'sold' && item.sale_price !== null && (
+          <View style={styles.saleDetailsSection}>
+            <Text style={styles.saleDetailsTitle}>Sale Details</Text>
+            <View style={styles.saleDetailsGrid}>
+              <View style={styles.saleDetailItem}>
+                <Text style={styles.saleDetailLabel}>Sale Price</Text>
+                <Text style={styles.saleDetailValue}>{formatCurrency(item.sale_price)}</Text>
+              </View>
+              {item.sale_date && (
+                <View style={styles.saleDetailItem}>
+                  <Text style={styles.saleDetailLabel}>Sale Date</Text>
+                  <Text style={styles.saleDetailValue}>
+                    {new Date(item.sale_date + 'T00:00:00').toLocaleDateString()}
+                  </Text>
+                </View>
+              )}
+              {item.platform && (
+                <View style={styles.saleDetailItem}>
+                  <Text style={styles.saleDetailLabel}>Platform</Text>
+                  <Text style={styles.saleDetailValue}>
+                    {PLATFORM_PRESETS[item.platform]?.name || item.platform}
+                  </Text>
+                </View>
+              )}
+              {item.platform_fee !== null && item.platform_fee > 0 && (
+                <View style={styles.saleDetailItem}>
+                  <Text style={styles.saleDetailLabel}>Platform Fee</Text>
+                  <Text style={styles.saleDetailValue}>{formatCurrency(item.platform_fee)}</Text>
+                </View>
+              )}
+              {item.shipping_cost !== null && item.shipping_cost > 0 && (
+                <View style={styles.saleDetailItem}>
+                  <Text style={styles.saleDetailLabel}>Shipping Cost</Text>
+                  <Text style={styles.saleDetailValue}>{formatCurrency(item.shipping_cost)}</Text>
+                </View>
+              )}
+            </View>
           </View>
         )}
 
@@ -583,7 +638,10 @@ export function ItemForm({
           />
           <Button
             title={submitLabel}
-            onPress={handleSubmit((data) => onSubmit(data as ItemFormData))}
+            onPress={() => {
+              syncTextStatesToForm();
+              handleSubmit((data) => onSubmit(data as ItemFormData))();
+            }}
             style={styles.submitButton}
             loading={isLoading}
           />
@@ -612,6 +670,39 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.sm,
     fontWeight: '600',
+  },
+  saleDetailsSection: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.profit,
+  },
+  saleDetailsTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.profit,
+    marginBottom: spacing.sm,
+  },
+  saleDetailsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  saleDetailItem: {
+    minWidth: '45%',
+    marginBottom: spacing.xs,
+  },
+  saleDetailLabel: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginBottom: 2,
+  },
+  saleDetailValue: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    color: colors.textPrimary,
   },
   palletSelector: {
     marginBottom: spacing.md,

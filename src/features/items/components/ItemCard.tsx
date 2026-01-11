@@ -32,7 +32,9 @@ export function ItemCard({
   const profit = calculateItemProfit(
     item.sale_price,
     item.allocated_cost,
-    item.purchase_cost
+    item.purchase_cost,
+    item.platform_fee,
+    item.shipping_cost
   );
   const isProfitable = profit >= 0;
   const hasSold = item.status === 'sold';

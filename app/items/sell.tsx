@@ -387,26 +387,40 @@ export default function SellItemScreen() {
               )}
             />
 
-            {/* Shipped Toggle (for FB/OfferUp) */}
+            {/* Shipped Toggle (for FB/OfferUp/LetGo) */}
             {platformConfig?.hasShippedRate && (
-              <View style={styles.inputGroup}>
-                <View style={styles.toggleRow}>
-                  <View>
-                    <Text style={styles.inputLabel}>Was this item shipped?</Text>
-                    <Text style={styles.helperText}>
-                      {isShipped
-                        ? `${((platformConfig.rateShipped || 0) * 100).toFixed(1)}% fee for shipped items`
-                        : `${(platformConfig.rate * 100).toFixed(1)}% fee for local pickup`}
-                    </Text>
+              <Controller
+                control={control}
+                name="platform_fee"
+                render={({ field: { onChange } }) => (
+                  <View style={styles.inputGroup}>
+                    <View style={styles.toggleRow}>
+                      <View>
+                        <Text style={styles.inputLabel}>Was this item shipped?</Text>
+                        <Text style={styles.helperText}>
+                          {isShipped
+                            ? `${((platformConfig.rateShipped || 0) * 100).toFixed(1)}% fee for shipped items`
+                            : `${(platformConfig.rate * 100).toFixed(1)}% fee for local pickup`}
+                        </Text>
+                      </View>
+                      <Pressable
+                        style={[styles.toggle, isShipped && styles.toggleActive]}
+                        onPress={() => {
+                          const newIsShipped = !isShipped;
+                          setIsShipped(newIsShipped);
+                          // Recalculate fee with new shipped state (reset manual override)
+                          setManualFeeOverride(false);
+                          const autoFee = calculatePlatformFee(salePrice || 0, platform!, newIsShipped);
+                          onChange(autoFee);
+                          setPlatformFeeText(autoFee.toFixed(2));
+                        }}
+                      >
+                        <View style={[styles.toggleThumb, isShipped && styles.toggleThumbActive]} />
+                      </Pressable>
+                    </View>
                   </View>
-                  <Pressable
-                    style={[styles.toggle, isShipped && styles.toggleActive]}
-                    onPress={() => setIsShipped(!isShipped)}
-                  >
-                    <View style={[styles.toggleThumb, isShipped && styles.toggleThumbActive]} />
-                  </Pressable>
-                </View>
-              </View>
+                )}
+              />
             )}
 
             {/* Platform Fee (auto-calculated or manual) */}
