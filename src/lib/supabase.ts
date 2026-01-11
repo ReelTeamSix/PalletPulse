@@ -3,7 +3,6 @@
 
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Database } from '@/src/types/database';
 
 // Environment variables - must be set in .env file
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -16,8 +15,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-// Create Supabase client with type safety
-export const supabase = createClient<Database>(
+// Create Supabase client
+// Note: Type safety can be added later using `npx supabase gen types typescript`
+export const supabase = createClient(
   supabaseUrl ?? '',
   supabaseAnonKey ?? '',
   {

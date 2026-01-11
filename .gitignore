@@ -51,3 +51,4 @@ yarn-error.*
 
 # Coverage
 coverage/
+.mcp.json
