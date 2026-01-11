@@ -83,7 +83,7 @@ export default function EditExpenseScreen() {
         category: data.category,
         description: data.description,
         expense_date: data.expense_date,
-        pallet_id: data.pallet_id,
+        pallet_ids: data.pallet_ids || [], // Use pallet_ids array for multi-pallet support
         receipt_photo_path: receiptPhotoUri,
       });
 

@@ -56,12 +56,18 @@ export default function NewExpenseScreen() {
   const handleSubmit = async (data: ExpenseFormData) => {
     setIsSubmitting(true);
     try {
+      // Use pallet_ids array for multi-pallet support (Phase 8D)
+      // Fall back to palletId from route params if form has no selections
+      const palletIds = data.pallet_ids?.length
+        ? data.pallet_ids
+        : (palletId ? [palletId] : []);
+
       const result = await addExpense({
         amount: data.amount,
         category: data.category,
         description: data.description,
         expense_date: data.expense_date,
-        pallet_id: data.pallet_id || palletId || null,
+        pallet_ids: palletIds,
         receipt_photo_path: receiptPhotoUri, // For now, store local URI; Phase 8+ can add cloud upload
       });
 

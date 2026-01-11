@@ -45,9 +45,16 @@ export default function ExpenseDetailScreen() {
     return getExpenseById(id);
   }, [id, expenses]);
 
-  const pallet = useMemo(() => {
-    if (!expense?.pallet_id) return null;
-    return getPalletById(expense.pallet_id);
+  // Get all linked pallets from pallet_ids array (Phase 8D multi-pallet support)
+  const linkedPallets = useMemo(() => {
+    if (!expense) return [];
+    // Check pallet_ids array first, fallback to legacy pallet_id
+    const palletIds = expense.pallet_ids?.length
+      ? expense.pallet_ids
+      : (expense.pallet_id ? [expense.pallet_id] : []);
+    return palletIds
+      .map(id => getPalletById(id))
+      .filter((p): p is NonNullable<typeof p> => p !== undefined);
   }, [expense]);
 
   const handleEdit = () => {
@@ -77,10 +84,8 @@ export default function ExpenseDetailScreen() {
     );
   };
 
-  const handlePalletPress = () => {
-    if (pallet) {
-      router.push(`/pallets/${pallet.id}`);
-    }
+  const handlePalletPress = (palletId: string) => {
+    router.push(`/pallets/${palletId}`);
   };
 
   if (!expense) {
@@ -145,18 +150,26 @@ export default function ExpenseDetailScreen() {
             </View>
           )}
 
-          {pallet && (
-            <Pressable style={styles.detailRow} onPress={handlePalletPress}>
-              <Text style={styles.detailLabel}>Linked Pallet</Text>
-              <View style={styles.palletLink}>
-                <FontAwesome name="cube" size={14} color={colors.primary} style={styles.palletIcon} />
-                <Text style={styles.palletLinkText}>{pallet.name}</Text>
-                <FontAwesome name="chevron-right" size={12} color={colors.textSecondary} />
+          {linkedPallets.length > 0 ? (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>
+                {linkedPallets.length === 1 ? 'Linked Pallet' : 'Linked Pallets'}
+              </Text>
+              <View style={styles.palletsContainer}>
+                {linkedPallets.map((pallet) => (
+                  <Pressable
+                    key={pallet.id}
+                    style={styles.palletLink}
+                    onPress={() => handlePalletPress(pallet.id)}
+                  >
+                    <FontAwesome name="cube" size={14} color={colors.primary} style={styles.palletIcon} />
+                    <Text style={styles.palletLinkText}>{pallet.name}</Text>
+                    <FontAwesome name="chevron-right" size={12} color={colors.textSecondary} />
+                  </Pressable>
+                ))}
               </View>
-            </Pressable>
-          )}
-
-          {!pallet && (
+            </View>
+          ) : (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Linked Pallet</Text>
               <Text style={styles.detailValueMuted}>Not linked to any pallet</Text>
@@ -351,9 +364,14 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textSecondary,
   },
+  palletsContainer: {
+    flex: 1,
+    gap: spacing.sm,
+  },
   palletLink: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: spacing.xs,
   },
   palletIcon: {
     marginRight: spacing.xs,
