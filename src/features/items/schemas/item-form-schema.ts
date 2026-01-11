@@ -41,7 +41,7 @@ export const itemFormSchema = z.object({
     .string()
     .trim()
     .min(1, 'Item name is required')
-    .max(100, 'Name must be 100 characters or less'),
+    .max(50, 'Name must be 50 characters or less'),
 
   description: z
     .string()
