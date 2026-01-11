@@ -58,8 +58,7 @@ export async function pickImageFromCamera(): Promise<PhotoPickResult | null> {
 
   const result = await ImagePicker.launchCameraAsync({
     mediaTypes: ['images'],
-    allowsEditing: true,
-    aspect: [4, 3],
+    allowsEditing: false, // Don't force crop - let users keep full image
     quality: COMPRESSION_CONFIG.quality,
   });
 
@@ -88,8 +87,7 @@ export async function pickImageFromGallery(): Promise<PhotoPickResult | null> {
 
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
-    allowsEditing: true,
-    aspect: [4, 3],
+    allowsEditing: false, // Don't force crop - let users keep full image
     quality: COMPRESSION_CONFIG.quality,
   });
 
@@ -153,8 +151,9 @@ export function getImageDimensions(uri: string): Promise<{ width: number; height
 
 /**
  * Calculate new dimensions while maintaining aspect ratio
+ * Exported for testing
  */
-function calculateResizedDimensions(
+export function calculateResizedDimensions(
   width: number,
   height: number,
   maxWidth: number,
@@ -176,17 +175,18 @@ function calculateResizedDimensions(
 }
 
 /**
- * Convert image URI to blob for upload
+ * Convert image URI to ArrayBuffer for upload (React Native/Expo compatible)
  */
-async function uriToBlob(uri: string): Promise<Blob> {
+async function uriToArrayBuffer(uri: string): Promise<ArrayBuffer> {
   const response = await fetch(uri);
-  return await response.blob();
+  return await response.arrayBuffer();
 }
 
 /**
  * Generate a unique storage path for an image
+ * Exported for testing
  */
-function generateStoragePath(userId: string, itemId: string, fileName: string): string {
+export function generateStoragePath(userId: string, itemId: string, fileName: string): string {
   const timestamp = Date.now();
   const extension = fileName.split('.').pop() || 'jpg';
   return `${userId}/${itemId}/${timestamp}.${extension}`;
@@ -205,13 +205,13 @@ export async function uploadItemPhoto(
     // Generate storage path
     const storagePath = generateStoragePath(userId, itemId, photo.fileName ?? 'photo.jpg');
 
-    // Convert to blob
-    const blob = await uriToBlob(photo.uri);
+    // Convert to ArrayBuffer (React Native/Expo compatible)
+    const arrayBuffer = await uriToArrayBuffer(photo.uri);
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .upload(storagePath, blob, {
+      .upload(storagePath, arrayBuffer, {
         contentType: photo.type ?? 'image/jpeg',
         cacheControl: '3600',
         upsert: false,
