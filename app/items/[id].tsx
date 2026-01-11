@@ -171,13 +171,24 @@ export default function ItemDetailScreen() {
 
   const statusColor = getStatusColor(item.status);
   const conditionColor = getConditionColor(item.condition);
-  const profit = calculateItemProfit(item.sale_price, item.allocated_cost, item.purchase_cost);
+
+  // Calculate cost allocation for pallet items
+  const palletItems = pallet ? useItemsStore.getState().getItemsByPallet(pallet.id) : [];
+  const palletItemCount = palletItems.length || 1;
+  const calculatedAllocatedCost = pallet && pallet.purchase_cost
+    ? (pallet.purchase_cost + (pallet.sales_tax || 0)) / palletItemCount
+    : null;
+
+  // Use stored allocated_cost if available, otherwise calculate from pallet, otherwise use purchase_cost
+  const effectiveCost = item.allocated_cost ?? calculatedAllocatedCost ?? item.purchase_cost ?? 0;
+  const isEstimatedCost = !item.allocated_cost && calculatedAllocatedCost !== null;
+
+  const profit = calculateItemProfit(item.sale_price, effectiveCost, null);
   const estimatedProfit = item.listing_price
-    ? calculateItemProfit(item.listing_price, item.allocated_cost, item.purchase_cost)
+    ? calculateItemProfit(item.listing_price, effectiveCost, null)
     : null;
   const isProfitable = profit >= 0;
   const hasSold = item.status === 'sold';
-  const effectiveCost = item.allocated_cost ?? item.purchase_cost ?? 0;
 
   return (
     <>
@@ -270,7 +281,7 @@ export default function ItemDetailScreen() {
                   </Text>
                 </View>
                 <View style={styles.priceCard}>
-                  <Text style={styles.priceLabel}>Cost</Text>
+                  <Text style={styles.priceLabel}>{isEstimatedCost ? 'Est. Cost' : 'Cost'}</Text>
                   <Text style={styles.priceValue}>{formatCurrency(effectiveCost)}</Text>
                 </View>
                 <View style={[styles.priceCard, { backgroundColor: isProfitable ? colors.profit + '15' : colors.loss + '15' }]}>
@@ -287,7 +298,7 @@ export default function ItemDetailScreen() {
                   <Text style={styles.priceValue}>{formatCurrency(item.listing_price)}</Text>
                 </View>
                 <View style={styles.priceCard}>
-                  <Text style={styles.priceLabel}>Cost</Text>
+                  <Text style={styles.priceLabel}>{isEstimatedCost ? 'Est. Cost' : 'Cost'}</Text>
                   <Text style={styles.priceValue}>{formatCurrency(effectiveCost)}</Text>
                 </View>
                 <View style={[styles.priceCard, styles.profitCard]}>
@@ -299,6 +310,16 @@ export default function ItemDetailScreen() {
               </>
             )}
           </View>
+
+          {/* Cost Allocation Info for Pallet Items */}
+          {isEstimatedCost && pallet && (
+            <View style={styles.costAllocationInfo}>
+              <FontAwesome name="info-circle" size={14} color={colors.textSecondary} />
+              <Text style={styles.costAllocationText}>
+                Cost allocated from pallet: {formatCurrency(pallet.purchase_cost + (pallet.sales_tax || 0))} ÷ {palletItemCount} items
+              </Text>
+            </View>
+          )}
 
           {pallet && (
             <Pressable style={styles.palletLink} onPress={handlePalletPress}>
@@ -568,6 +589,20 @@ const styles = StyleSheet.create({
   },
   profitText: {
     color: colors.profit,
+  },
+  costAllocationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.sm,
+    gap: spacing.xs,
+  },
+  costAllocationText: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    flex: 1,
   },
   palletLink: {
     flexDirection: 'row',
