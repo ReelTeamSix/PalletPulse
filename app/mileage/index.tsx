@@ -88,6 +88,11 @@ export default function MileageLogScreen() {
     router.push(`/mileage/${trip.id}`);
   };
 
+  const handleClearFilters = () => {
+    setDateRange({ start: null, end: null, preset: 'all' });
+  };
+
+  // True empty state - no trips at all
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <FontAwesome name="road" size={64} color={colors.border} />
@@ -101,6 +106,30 @@ export default function MileageLogScreen() {
       </Pressable>
     </View>
   );
+
+  // Filtered empty state - trips exist but none match filter
+  const renderNoResults = () => (
+    <View style={styles.emptyState}>
+      <FontAwesome name="filter" size={48} color={colors.border} />
+      <Text style={styles.emptyTitle}>No trips found</Text>
+      <Text style={styles.emptySubtitle}>
+        No mileage trips in the selected date range
+      </Text>
+      <Pressable style={styles.emptyButton} onPress={handleClearFilters}>
+        <Text style={styles.emptyButtonText}>Show all trips</Text>
+      </Pressable>
+    </View>
+  );
+
+  // Determine which empty component to show
+  const getEmptyComponent = () => {
+    // If there are trips but none match the filter, show no results
+    if (trips.length > 0 && filteredTrips.length === 0) {
+      return renderNoResults();
+    }
+    // Otherwise show true empty state
+    return renderEmptyState();
+  };
 
   // Get dynamic title based on date range
   const getSummaryTitle = () => {
@@ -207,7 +236,7 @@ export default function MileageLogScreen() {
             keyExtractor={(item) => item.id}
             renderItem={renderTrip}
             ListHeaderComponent={trips.length > 0 ? renderHeader : null}
-            ListEmptyComponent={renderEmptyState}
+            ListEmptyComponent={getEmptyComponent}
             contentContainerStyle={[
               styles.listContent,
               filteredTrips.length === 0 && styles.emptyContent,

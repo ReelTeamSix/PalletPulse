@@ -129,16 +129,33 @@ export default function ExpensesScreen() {
     </View>
   );
 
+  const handleClearFilters = () => {
+    setActiveCategory('all');
+    setDateRange({ start: null, end: null, preset: 'all' });
+  };
+
+  const getNoResultsMessage = () => {
+    const hasDateFilter = dateRange.preset !== 'all';
+    const hasCategoryFilter = activeCategory !== 'all';
+
+    if (hasDateFilter && hasCategoryFilter) {
+      return `No "${activeCategory}" expenses in the selected date range`;
+    } else if (hasDateFilter) {
+      return 'No expenses in the selected date range';
+    } else if (hasCategoryFilter) {
+      return `No expenses in the "${activeCategory}" category`;
+    }
+    return 'No expenses match your filters';
+  };
+
   const renderNoResults = () => (
     <View style={styles.noResults}>
       <FontAwesome name="filter" size={32} color={colors.neutral} />
       <Text style={styles.noResultsTitle}>No expenses found</Text>
-      <Text style={styles.noResultsText}>
-        No expenses in the "{activeCategory}" category
-      </Text>
+      <Text style={styles.noResultsText}>{getNoResultsMessage()}</Text>
       <Pressable
         style={styles.clearFilterButton}
-        onPress={() => setActiveCategory('all')}
+        onPress={handleClearFilters}
       >
         <Text style={styles.clearFilterText}>Show all expenses</Text>
       </Pressable>
