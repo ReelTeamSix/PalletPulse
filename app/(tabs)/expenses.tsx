@@ -362,9 +362,9 @@ export default function ExpensesScreen() {
   const renderExpensesEmptyState = () => (
     <View style={styles.placeholder}>
       <FontAwesome name="dollar" size={48} color={colors.neutral} />
-      <Text style={styles.placeholderTitle}>No expenses yet</Text>
+      <Text style={styles.placeholderTitle}>No overhead expenses</Text>
       <Text style={styles.placeholderText}>
-        Tap the + button to log your first expense. Track supplies, fees, and more.
+        Tap the + button to log your first expense. Track storage, supplies, subscriptions, and more.
       </Text>
     </View>
   );
@@ -404,13 +404,13 @@ export default function ExpensesScreen() {
     const hasCategoryFilter = activeCategory !== 'all';
 
     if (hasDateFilter && hasCategoryFilter) {
-      return `No "${activeCategory}" expenses in the selected date range`;
+      return `No "${activeCategory}" overhead expenses in the selected date range`;
     } else if (hasDateFilter) {
-      return 'No expenses in the selected date range';
+      return 'No overhead expenses in the selected date range';
     } else if (hasCategoryFilter) {
-      return `No expenses in the "${activeCategory}" category`;
+      return `No overhead expenses in the "${activeCategory}" category`;
     }
-    return 'No expenses match your filters';
+    return 'No overhead expenses match your filters';
   };
 
   const renderNoResults = () => (
@@ -444,8 +444,8 @@ export default function ExpensesScreen() {
 
   const headerSubtitle = activeSegment === 'expenses'
     ? (expenses.length > 0
-        ? `${filteredExpenses.length} expense${filteredExpenses.length === 1 ? '' : 's'}${activeCategory !== 'all' ? ` in ${activeCategory}` : ''}`
-        : 'Track your business expenses')
+        ? `${filteredExpenses.length} overhead expense${filteredExpenses.length === 1 ? '' : 's'}${activeCategory !== 'all' ? ` in ${activeCategory}` : ''}`
+        : 'Track your overhead expenses')
     : (trips.length > 0
         ? `${filteredTrips.length} trip${filteredTrips.length === 1 ? '' : 's'}`
         : 'Track your business mileage');
@@ -481,7 +481,7 @@ export default function ExpensesScreen() {
                 activeSegment === 'expenses' && styles.segmentButtonTextActive,
               ]}
             >
-              Expenses
+              Overhead
             </Text>
           </Pressable>
           <Pressable
@@ -551,7 +551,7 @@ export default function ExpensesScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>
-            Loading {activeSegment === 'expenses' ? 'expenses' : 'mileage'}...
+            Loading {activeSegment === 'expenses' ? 'overhead expenses' : 'mileage'}...
           </Text>
         </View>
       ) : error && !hasData ? (
