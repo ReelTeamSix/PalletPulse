@@ -629,15 +629,49 @@ Admin → App Settings
 
 ### Phase 8H: Cleanup & Migration
 
-**Remove/Deprecate:**
-- [ ] Remove old expense categories: gas, mileage, fees, shipping
-- [ ] Migrate existing "gas" expenses to mileage trips (if possible, or archive)
-- [ ] Update profit calculations to use new structure
-- [ ] Remove single pallet_id from expenses (use junction table)
+**Completed:** Jan 11, 2026
+
+**Summary:**
+Cleaned up deprecated expense categories from the codebase. Legacy categories (gas, mileage, fees, shipping) are no longer valid for new expenses. Existing data with legacy categories is handled gracefully through fallbacks.
+
+**Changes Made:**
+- [x] Updated `expense-form-schema.ts`:
+  - Removed `ALL_EXPENSE_CATEGORIES` constant entirely
+  - `EXPENSE_CATEGORIES` now only contains 5 current categories: storage, supplies, subscriptions, equipment, other
+  - `EXPENSE_CATEGORY_LABELS` reduced to 5 entries
+  - `EXPENSE_CATEGORY_COLORS` reduced to 5 entries (removed gas, mileage, fees, shipping colors)
+  - `EXPENSE_CATEGORY_DESCRIPTIONS` provides helpful hints for each category
+  - `getCategoryLabel()` returns raw category name as fallback for legacy categories
+  - `getCategoryColor()` returns grey (#9E9E9E) as fallback for legacy categories
+  - `groupExpensesByCategory()` and `calculateTotalByCategory()` handle legacy categories dynamically
+
+- [x] Updated `app/(tabs)/expenses.tsx`:
+  - Removed legacy category icons from `getCategoryIcon()` switch statement
+  - Legacy categories display with fallback ellipsis icon
+
+- [x] Updated `expense-form-schema.test.ts`:
+  - Removed import of `ALL_EXPENSE_CATEGORIES`
+  - Updated `getCategoryLabel` tests for fallback behavior (no "(Legacy)" suffix)
+  - Updated `getCategoryColor` tests for grey fallback
+  - Updated `groupExpensesByCategory` tests with current categories
+  - Updated `calculateTotalByCategory` tests with current categories
+  - Added tests for legacy category handling in grouping/totaling functions
+  - Removed entire `ALL_EXPENSE_CATEGORIES constant` test block
+
+**Backward Compatibility:**
+- Legacy expenses (gas, mileage, fees, shipping) from existing data still display correctly
+- Labels show raw category name (e.g., "gas" instead of "Gas (Legacy)")
+- Colors default to grey for unknown categories
+- Grouping/totaling functions create buckets dynamically for legacy categories
+
+**Not Changed (Intentional):**
+- Database schema unchanged - ExpenseCategory enum still includes legacy values for backward compatibility
+- Existing expense records are preserved as-is
+- Legacy `pallet_id` field kept alongside `pallet_ids` array for backward compatibility
 
 **Data Migration:**
-- [ ] Create migration script for existing expense data
-- [ ] Handle existing test data in Supabase
+- [ ] Create migration script for existing expense data (deferred - low priority)
+- [ ] Handle existing test data in Supabase (deferred - low priority)
 
 ---
 

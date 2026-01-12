@@ -232,11 +232,7 @@ export default function ExpensesScreen() {
       case 'supplies': return 'shopping-bag';
       case 'subscriptions': return 'refresh';
       case 'equipment': return 'wrench';
-      case 'gas': return 'car';
-      case 'mileage': return 'road';
-      case 'fees': return 'money';
-      case 'shipping': return 'truck';
-      default: return 'ellipsis-h';
+      default: return 'ellipsis-h'; // Fallback for 'other' and any legacy categories
     }
   };
 

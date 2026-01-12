@@ -2,8 +2,8 @@
 import { z } from 'zod';
 import { ExpenseCategory } from '@/src/types/database';
 
-// Simplified overhead expense categories (Phase 8D)
-// Legacy categories (gas, mileage, fees, shipping) are deprecated but supported for backward compatibility
+// Overhead expense categories
+// Note: gas, mileage, fees, shipping are deprecated - use Mileage Tracking and per-item costs instead
 export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
   'storage',
   'supplies',
@@ -12,59 +12,31 @@ export const EXPENSE_CATEGORIES: ExpenseCategory[] = [
   'other',
 ];
 
-// All categories including legacy (for displaying old data)
-export const ALL_EXPENSE_CATEGORIES: ExpenseCategory[] = [
-  'storage',
-  'supplies',
-  'subscriptions',
-  'equipment',
-  'other',
-  // Legacy categories - still supported for old data
-  'gas',
-  'mileage',
-  'fees',
-  'shipping',
-];
-
 // Display labels for expense categories
-export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+export const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
   storage: 'Storage',
   supplies: 'Supplies',
   subscriptions: 'Subscriptions',
   equipment: 'Equipment',
   other: 'Other',
-  // Legacy labels
-  gas: 'Gas (Legacy)',
-  mileage: 'Mileage (Legacy)',
-  fees: 'Fees (Legacy)',
-  shipping: 'Shipping (Legacy)',
 };
 
 // Category colors for visual distinction
-export const EXPENSE_CATEGORY_COLORS: Record<ExpenseCategory, string> = {
+export const EXPENSE_CATEGORY_COLORS: Record<string, string> = {
   storage: '#4CAF50', // Green
   supplies: '#2196F3', // Blue
   subscriptions: '#9C27B0', // Purple
   equipment: '#FF9800', // Orange
   other: '#9E9E9E', // Grey
-  // Legacy colors
-  gas: '#FF9800', // Orange
-  mileage: '#9C27B0', // Purple
-  fees: '#F44336', // Red
-  shipping: '#00BCD4', // Cyan
 };
 
 // Category descriptions for help text
-export const EXPENSE_CATEGORY_DESCRIPTIONS: Record<ExpenseCategory, string> = {
+export const EXPENSE_CATEGORY_DESCRIPTIONS: Record<string, string> = {
   storage: 'Storage unit rent, warehouse fees',
   supplies: 'Boxes, tape, bubble wrap, labels',
   subscriptions: 'eBay store fee, software subscriptions',
   equipment: 'Scale, measuring tools, shelving',
   other: 'Miscellaneous business expenses',
-  gas: 'Use Mileage Tracking instead',
-  mileage: 'Use Mileage Tracking instead',
-  fees: 'Track per-item at sale time',
-  shipping: 'Track per-item at sale time',
 };
 
 // Expense form schema
@@ -75,8 +47,8 @@ export const expenseFormSchema = z.object({
     .positive('Amount must be greater than zero')
     .max(999999.99, 'Amount cannot exceed $999,999.99'),
 
-  // Category is required enum - accepts all categories for backward compatibility
-  category: z.enum(ALL_EXPENSE_CATEGORIES as [ExpenseCategory, ...ExpenseCategory[]], {
+  // Category is required enum
+  category: z.enum(EXPENSE_CATEGORIES as [ExpenseCategory, ...ExpenseCategory[]], {
     message: 'Please select a category',
   }),
 
@@ -167,13 +139,13 @@ export function formatExpenseDate(dateString: string): string {
   });
 }
 
-// Get category display label
-export function getCategoryLabel(category: ExpenseCategory): string {
+// Get category display label (handles legacy categories by returning raw name)
+export function getCategoryLabel(category: string): string {
   return EXPENSE_CATEGORY_LABELS[category] || category;
 }
 
-// Get category color
-export function getCategoryColor(category: ExpenseCategory): string {
+// Get category color (handles legacy categories with grey fallback)
+export function getCategoryColor(category: string): string {
   return EXPENSE_CATEGORY_COLORS[category] || '#9E9E9E';
 }
 
@@ -196,21 +168,19 @@ export function parseCurrencyInput(input: string): number {
 // Get expenses grouped by category
 export function groupExpensesByCategory<T extends { category: ExpenseCategory }>(
   expenses: T[]
-): Record<ExpenseCategory, T[]> {
-  const grouped: Record<ExpenseCategory, T[]> = {
-    storage: [],
-    supplies: [],
-    subscriptions: [],
-    equipment: [],
-    other: [],
-    // Legacy categories
-    gas: [],
-    mileage: [],
-    fees: [],
-    shipping: [],
-  };
+): Record<string, T[]> {
+  const grouped: Record<string, T[]> = {};
+
+  // Initialize with current categories
+  for (const cat of EXPENSE_CATEGORIES) {
+    grouped[cat] = [];
+  }
 
   for (const expense of expenses) {
+    // Handle any category (including legacy ones from old data)
+    if (!grouped[expense.category]) {
+      grouped[expense.category] = [];
+    }
     grouped[expense.category].push(expense);
   }
 
@@ -220,21 +190,19 @@ export function groupExpensesByCategory<T extends { category: ExpenseCategory }>
 // Calculate total by category
 export function calculateTotalByCategory<T extends { category: ExpenseCategory; amount: number }>(
   expenses: T[]
-): Record<ExpenseCategory, number> {
-  const totals: Record<ExpenseCategory, number> = {
-    storage: 0,
-    supplies: 0,
-    subscriptions: 0,
-    equipment: 0,
-    other: 0,
-    // Legacy categories
-    gas: 0,
-    mileage: 0,
-    fees: 0,
-    shipping: 0,
-  };
+): Record<string, number> {
+  const totals: Record<string, number> = {};
+
+  // Initialize with current categories
+  for (const cat of EXPENSE_CATEGORIES) {
+    totals[cat] = 0;
+  }
 
   for (const expense of expenses) {
+    // Handle any category (including legacy ones from old data)
+    if (totals[expense.category] === undefined) {
+      totals[expense.category] = 0;
+    }
     totals[expense.category] += expense.amount;
   }
 

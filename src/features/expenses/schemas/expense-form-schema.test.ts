@@ -1,9 +1,8 @@
-// Expense Form Schema Tests - Updated for Phase 8D
+// Expense Form Schema Tests - Updated for Phase 8H (deprecated categories removed)
 import {
   expenseFormSchema,
   ExpenseFormData,
   EXPENSE_CATEGORIES,
-  ALL_EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
   EXPENSE_CATEGORY_COLORS,
   getDefaultExpenseFormValues,
@@ -394,23 +393,28 @@ describe('getCategoryLabel', () => {
     expect(getCategoryLabel('other')).toBe('Other');
   });
 
-  it('should return legacy labels with (Legacy) suffix', () => {
-    expect(getCategoryLabel('gas')).toBe('Gas (Legacy)');
-    expect(getCategoryLabel('mileage')).toBe('Mileage (Legacy)');
-    expect(getCategoryLabel('fees')).toBe('Fees (Legacy)');
-    expect(getCategoryLabel('shipping')).toBe('Shipping (Legacy)');
+  it('should return raw name for unknown/legacy categories', () => {
+    // Legacy categories return raw name as fallback
+    expect(getCategoryLabel('gas')).toBe('gas');
+    expect(getCategoryLabel('mileage')).toBe('mileage');
+    expect(getCategoryLabel('unknown_category')).toBe('unknown_category');
   });
 });
 
 describe('getCategoryColor', () => {
-  it('should return color for each category', () => {
-    expect(getCategoryColor('supplies')).toBe('#2196F3');
-    expect(getCategoryColor('gas')).toBe('#FF9800');
-    expect(getCategoryColor('mileage')).toBe('#9C27B0');
+  it('should return color for each current category', () => {
     expect(getCategoryColor('storage')).toBe('#4CAF50');
-    expect(getCategoryColor('fees')).toBe('#F44336');
-    expect(getCategoryColor('shipping')).toBe('#00BCD4');
+    expect(getCategoryColor('supplies')).toBe('#2196F3');
+    expect(getCategoryColor('subscriptions')).toBe('#9C27B0');
+    expect(getCategoryColor('equipment')).toBe('#FF9800');
     expect(getCategoryColor('other')).toBe('#9E9E9E');
+  });
+
+  it('should return grey fallback for unknown/legacy categories', () => {
+    // Legacy and unknown categories get grey fallback
+    expect(getCategoryColor('gas')).toBe('#9E9E9E');
+    expect(getCategoryColor('mileage')).toBe('#9E9E9E');
+    expect(getCategoryColor('unknown_category')).toBe('#9E9E9E');
   });
 });
 
@@ -474,7 +478,7 @@ describe('parseCurrencyInput', () => {
 describe('groupExpensesByCategory', () => {
   const expenses = [
     { category: 'supplies' as ExpenseCategory, amount: 50 },
-    { category: 'gas' as ExpenseCategory, amount: 30 },
+    { category: 'equipment' as ExpenseCategory, amount: 30 },
     { category: 'supplies' as ExpenseCategory, amount: 25 },
     { category: 'storage' as ExpenseCategory, amount: 100 },
   ];
@@ -483,17 +487,29 @@ describe('groupExpensesByCategory', () => {
     const result = groupExpensesByCategory(expenses);
 
     expect(result.supplies).toHaveLength(2);
-    expect(result.gas).toHaveLength(1);
+    expect(result.equipment).toHaveLength(1);
     expect(result.storage).toHaveLength(1);
-    expect(result.fees).toHaveLength(0);
+    expect(result.subscriptions).toHaveLength(0);
   });
 
   it('should return empty arrays for unused categories', () => {
     const result = groupExpensesByCategory(expenses);
 
-    expect(result.mileage).toHaveLength(0);
-    expect(result.shipping).toHaveLength(0);
+    expect(result.subscriptions).toHaveLength(0);
     expect(result.other).toHaveLength(0);
+  });
+
+  it('should handle legacy categories in existing data', () => {
+    // Legacy categories from old data should be grouped dynamically
+    const legacyExpenses = [
+      { category: 'gas' as ExpenseCategory, amount: 30 },
+      { category: 'mileage' as ExpenseCategory, amount: 50 },
+    ];
+    const result = groupExpensesByCategory(legacyExpenses);
+
+    // Legacy categories are handled dynamically
+    expect(result['gas']).toHaveLength(1);
+    expect(result['mileage']).toHaveLength(1);
   });
 
   it('should handle empty array', () => {
@@ -508,7 +524,7 @@ describe('groupExpensesByCategory', () => {
 describe('calculateTotalByCategory', () => {
   const expenses = [
     { category: 'supplies' as ExpenseCategory, amount: 50 },
-    { category: 'gas' as ExpenseCategory, amount: 30 },
+    { category: 'equipment' as ExpenseCategory, amount: 30 },
     { category: 'supplies' as ExpenseCategory, amount: 25 },
     { category: 'storage' as ExpenseCategory, amount: 100 },
   ];
@@ -517,17 +533,28 @@ describe('calculateTotalByCategory', () => {
     const result = calculateTotalByCategory(expenses);
 
     expect(result.supplies).toBe(75);
-    expect(result.gas).toBe(30);
+    expect(result.equipment).toBe(30);
     expect(result.storage).toBe(100);
   });
 
   it('should return 0 for unused categories', () => {
     const result = calculateTotalByCategory(expenses);
 
-    expect(result.mileage).toBe(0);
-    expect(result.fees).toBe(0);
-    expect(result.shipping).toBe(0);
+    expect(result.subscriptions).toBe(0);
     expect(result.other).toBe(0);
+  });
+
+  it('should handle legacy categories in existing data', () => {
+    // Legacy categories from old data should be calculated dynamically
+    const legacyExpenses = [
+      { category: 'gas' as ExpenseCategory, amount: 30 },
+      { category: 'mileage' as ExpenseCategory, amount: 50 },
+    ];
+    const result = calculateTotalByCategory(legacyExpenses);
+
+    // Legacy categories are totaled dynamically
+    expect(result['gas']).toBe(30);
+    expect(result['mileage']).toBe(50);
   });
 
   it('should handle empty array', () => {
@@ -590,7 +617,7 @@ describe('filterExpensesByDateRange', () => {
 describe('filterExpensesByCategory', () => {
   const expenses = [
     { category: 'supplies' as ExpenseCategory },
-    { category: 'gas' as ExpenseCategory },
+    { category: 'equipment' as ExpenseCategory },
     { category: 'supplies' as ExpenseCategory },
   ];
 
@@ -719,26 +746,6 @@ describe('EXPENSE_CATEGORIES constant', () => {
 
   it('should have 5 categories', () => {
     expect(EXPENSE_CATEGORIES).toHaveLength(5);
-  });
-});
-
-describe('ALL_EXPENSE_CATEGORIES constant', () => {
-  it('should contain all categories including legacy', () => {
-    // Current categories
-    expect(ALL_EXPENSE_CATEGORIES).toContain('storage');
-    expect(ALL_EXPENSE_CATEGORIES).toContain('supplies');
-    expect(ALL_EXPENSE_CATEGORIES).toContain('subscriptions');
-    expect(ALL_EXPENSE_CATEGORIES).toContain('equipment');
-    expect(ALL_EXPENSE_CATEGORIES).toContain('other');
-    // Legacy categories
-    expect(ALL_EXPENSE_CATEGORIES).toContain('gas');
-    expect(ALL_EXPENSE_CATEGORIES).toContain('mileage');
-    expect(ALL_EXPENSE_CATEGORIES).toContain('fees');
-    expect(ALL_EXPENSE_CATEGORIES).toContain('shipping');
-  });
-
-  it('should have 9 total categories (5 current + 4 legacy)', () => {
-    expect(ALL_EXPENSE_CATEGORIES).toHaveLength(9);
   });
 });
 
