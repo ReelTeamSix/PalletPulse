@@ -438,26 +438,30 @@ export default function ExpensesScreen() {
   const filteredData = activeSegment === 'expenses' ? filteredExpenses : filteredTrips;
 
   // Compute header amounts
-  const headerAmount = activeSegment === 'expenses'
-    ? formatExpenseAmount(totalAllExpenses)
-    : formatDeduction(mileageSummary.totalDeduction);
+  // Combined total for prominent display (overhead + mileage deductions)
+  const combinedTotal = totalAllExpenses + mileageSummary.totalDeduction;
+  const hasCombinedData = expenses.length > 0 || trips.length > 0;
 
+  // Segment-specific subtitle with amount
   const headerSubtitle = activeSegment === 'expenses'
     ? (expenses.length > 0
-        ? `${filteredExpenses.length} overhead expense${filteredExpenses.length === 1 ? '' : 's'}${activeCategory !== 'all' ? ` in ${activeCategory}` : ''}`
+        ? `${filteredExpenses.length} expense${filteredExpenses.length === 1 ? '' : 's'} · ${formatExpenseAmount(totalAllExpenses)}`
         : 'Track your overhead expenses')
     : (trips.length > 0
-        ? `${filteredTrips.length} trip${filteredTrips.length === 1 ? '' : 's'}`
+        ? `${filteredTrips.length} trip${filteredTrips.length === 1 ? '' : 's'} · ${formatDeduction(mileageSummary.totalDeduction)}`
         : 'Track your business mileage');
 
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>Expenses</Text>
-          <Text style={[styles.totalAmount, activeSegment === 'mileage' && styles.deductionAmount]}>
-            {headerAmount}
-          </Text>
+          <Text style={styles.title}>Deductions</Text>
+          <View style={styles.headerRight}>
+            <Text style={styles.totalAmount}>
+              {hasCombinedData ? formatExpenseAmount(combinedTotal) : '$0.00'}
+            </Text>
+            <Text style={styles.totalLabel}>total</Text>
+          </View>
         </View>
         <Text style={styles.subtitle}>{headerSubtitle}</Text>
 
@@ -627,13 +631,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.textPrimary,
   },
+  headerRight: {
+    alignItems: 'flex-end',
+  },
   totalAmount: {
     fontSize: fontSize.xl,
-    fontWeight: '600',
-    color: colors.loss,
+    fontWeight: '700',
+    color: colors.textPrimary,
   },
-  deductionAmount: {
-    color: colors.profit,
+  totalLabel: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: fontSize.lg,
