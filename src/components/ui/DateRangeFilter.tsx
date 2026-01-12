@@ -34,6 +34,8 @@ interface DateRangeFilterProps {
   showTotal?: boolean;
   totalAmount?: number;
   totalLabel?: string;
+  /** Hide the selected range label above pills (default: false) */
+  compact?: boolean;
 }
 
 // Get quarter boundaries
@@ -148,6 +150,7 @@ export function DateRangeFilter({
   showTotal = false,
   totalAmount = 0,
   totalLabel = 'Total',
+  compact = false,
 }: DateRangeFilterProps) {
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customStart, setCustomStart] = useState<Date>(value.start || new Date());
@@ -214,19 +217,21 @@ export function DateRangeFilter({
   const displayLabel = formatDateRange(value);
 
   return (
-    <View style={styles.container}>
-      {/* Selected range indicator */}
-      <View style={styles.selectedRow}>
-        <View style={styles.selectedIndicator}>
-          <FontAwesome name="calendar" size={14} color={colors.primary} />
-          <Text style={styles.selectedText}>{displayLabel}</Text>
+    <View style={[styles.container, compact && styles.containerCompact]}>
+      {/* Selected range indicator - hidden in compact mode */}
+      {!compact && (
+        <View style={styles.selectedRow}>
+          <View style={styles.selectedIndicator}>
+            <FontAwesome name="calendar" size={14} color={colors.primary} />
+            <Text style={styles.selectedText}>{displayLabel}</Text>
+          </View>
+          {showTotal && (
+            <Text style={styles.totalText}>
+              {totalLabel}: <Text style={styles.totalAmount}>${totalAmount.toFixed(2)}</Text>
+            </Text>
+          )}
         </View>
-        {showTotal && (
-          <Text style={styles.totalText}>
-            {totalLabel}: <Text style={styles.totalAmount}>${totalAmount.toFixed(2)}</Text>
-          </Text>
-        )}
-      </View>
+      )}
 
       {/* Preset pills */}
       <ScrollView
@@ -370,6 +375,9 @@ export function isWithinDateRange(
 const styles = StyleSheet.create({
   container: {
     marginBottom: spacing.sm,
+  },
+  containerCompact: {
+    marginBottom: spacing.xs,
   },
   selectedRow: {
     flexDirection: 'row',

@@ -442,15 +442,6 @@ export default function ExpensesScreen() {
   const combinedTotal = totalAllExpenses + mileageSummary.totalDeduction;
   const hasCombinedData = expenses.length > 0 || trips.length > 0;
 
-  // Segment-specific subtitle with amount
-  const headerSubtitle = activeSegment === 'expenses'
-    ? (expenses.length > 0
-        ? `${filteredExpenses.length} expense${filteredExpenses.length === 1 ? '' : 's'} · ${formatExpenseAmount(totalAllExpenses)}`
-        : 'Track your overhead expenses')
-    : (trips.length > 0
-        ? `${filteredTrips.length} trip${filteredTrips.length === 1 ? '' : 's'} · ${formatDeduction(mileageSummary.totalDeduction)}`
-        : 'Track your business mileage');
-
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
@@ -463,7 +454,6 @@ export default function ExpensesScreen() {
             <Text style={styles.totalLabel}>total</Text>
           </View>
         </View>
-        <Text style={styles.subtitle}>{headerSubtitle}</Text>
 
         {/* Segmented Control */}
         <View style={styles.segmentedControl}>
@@ -516,6 +506,7 @@ export default function ExpensesScreen() {
           <DateRangeFilter
             value={dateRange}
             onChange={setDateRange}
+            compact
           />
         )}
 
@@ -618,13 +609,13 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.sm,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   title: {
     fontSize: fontSize.xxxl,
@@ -640,17 +631,12 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   totalLabel: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     color: colors.textSecondary,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginTop: -2,
-  },
-  subtitle: {
-    fontSize: fontSize.lg,
-    color: colors.textSecondary,
-    marginBottom: spacing.md,
+    marginTop: -4,
   },
   // Segmented Control
   segmentedControl: {
@@ -658,7 +644,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     padding: spacing.xs,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   segmentButton: {
     flex: 1,
@@ -683,14 +669,15 @@ const styles = StyleSheet.create({
   // Filter
   filterContainer: {
     marginHorizontal: -spacing.lg,
+    marginTop: spacing.xs,
   },
   filterContent: {
     paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   filterChip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.full || 20,
     borderWidth: 1,
@@ -701,7 +688,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   filterChipText: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.xs,
     color: colors.textSecondary,
     fontWeight: '500',
   },
