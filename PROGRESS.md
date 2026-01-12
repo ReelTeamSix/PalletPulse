@@ -452,14 +452,14 @@ Added segmented control to Expenses tab allowing users to switch between Expense
 
 **Changes:**
 - `app/(tabs)/expenses.tsx` - Complete rewrite with segmented control:
-  - Segmented control: **Expenses | Mileage**
+  - Segmented control: **Overhead | Mileage**
   - Segment selection persists via AsyncStorage
-  - **Expenses segment**: Full expense list with category filter, cost breakdown summary
+  - **Overhead segment**: Full expense list with category filter, cost breakdown summary
   - **Mileage segment**: Mileage trip list with YTD summary, trips/miles/deduction stats
   - Date range filter applies to both segments
   - Context-aware FAB (adds expense or mileage trip based on segment)
   - Separate empty states for each segment
-  - Header amount changes color (red for expenses, green for mileage deduction)
+  - Combined total (overhead + mileage) displayed prominently at top
 
 - `app/pallets/[id].tsx` - Removed expense add button:
   - Expenses section now read-only (view linked expenses only)
@@ -520,6 +520,58 @@ Added date range filtering to Expenses tab and Mileage Log for quarterly tax fil
 **Future UX Ideas:**
 - Consider grouping expenses by month with section headers
 - Compact list rows as alternative to full cards for long lists
+
+---
+
+### Deductions Tab UI Refinement
+
+**Completed:** Jan 11, 2026
+
+**Overview:**
+Major UI refinement to the Expenses/Deductions tab for a cleaner, more elegant appearance. Renamed screen to "Deductions" to reflect combined overhead + mileage tracking.
+
+**Header Redesign:**
+```
+Before:                              After:
+┌────────────────────────────┐      ┌────────────────────────────┐
+│ Expenses         $235.91   │      │ Deductions        $250.41  │
+│ 5 expenses · $235.91       │      │                     TOTAL  │
+│ ┌─────────┬─────────┐      │      │ ┌─────────┬─────────┐      │
+│ │Overhead │ Mileage │      │      │ │Overhead │ Mileage │      │
+│ └─────────┴─────────┘      │      │ └─────────┴─────────┘      │
+│ 📅 All Time                │      │ All Time│This Mo│Q1│Q4│... │
+│ All Time│This Mo│Q1│Q4│... │      │ All│Storage│Supplies│...   │
+│ All│Storage│Supplies│...   │      └────────────────────────────┘
+└────────────────────────────┘
+```
+
+**Changes:**
+- Renamed screen title from "Expenses" to "Deductions"
+- Combined total (overhead + mileage) always visible at top right
+- Removed redundant subtitle (Cost Breakdown card shows this info)
+- Removed redundant "📅 All Time" label above date pills
+- Added `compact` prop to DateRangeFilter component
+- Tightened spacing throughout header
+- Smaller category filter pills (reduced padding/font)
+- Made total amount more prominent (32px bold)
+
+**Files Modified:**
+- `app/(tabs)/expenses.tsx` - Header redesign, combined total, tighter spacing
+- `src/components/ui/DateRangeFilter.tsx` - Added `compact` prop to hide selected label
+
+**Tests Added:**
+- `src/components/ui/__tests__/DateRangeFilter.test.ts` - 20+ tests for:
+  - `isWithinDateRange` function (all presets, date boundaries)
+  - `getDateRangeFromPreset` function (all presets, quarter calculations)
+  - Edge cases (leap year, year boundary crossings)
+
+**Commits:**
+- `feat(expenses): add mileage segment to expenses tab with tier updates`
+- `refactor(expenses): rename segment label from Expenses to Overhead`
+- `feat(expenses): show combined total with segment-specific subtitle`
+- `style(expenses): increase combined total font size for prominence`
+- `style(expenses): refine header UI for cleaner look`
+- `test(DateRangeFilter): add unit tests for date range utilities`
 
 ---
 
