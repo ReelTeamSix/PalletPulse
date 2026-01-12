@@ -52,3 +52,6 @@ yarn-error.*
 # Coverage
 coverage/
 .mcp.json
+
+# Troubleshooting screenshots
+troubleshooting images/
