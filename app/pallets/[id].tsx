@@ -117,10 +117,6 @@ export default function PalletDetailScreen() {
     router.push({ pathname: '/items/new', params: { palletId: id } });
   };
 
-  const handleAddExpense = () => {
-    router.push({ pathname: '/expenses/new', params: { palletId: id } });
-  };
-
   const handleExpensePress = (expenseId: string) => {
     router.push(`/expenses/${expenseId}`);
   };
@@ -547,52 +543,35 @@ export default function PalletDetailScreen() {
             </View>
           </View>
 
-          {/* Expenses Section - only shown when expense tracking is enabled */}
-          {expenseTrackingEnabled && (
+          {/* Expenses Section - read-only, only shown when has expenses */}
+          {expenseTrackingEnabled && palletExpenses.length > 0 && (
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>
-                  Expenses ({palletExpenses.length})
-                  {palletExpenses.length > 0 && (
-                    <Text style={styles.expensesTotalInline}>
-                      {' '} - {formatExpenseAmount(
-                        palletExpenses.reduce((sum, e) => {
-                          // Calculate this pallet's share of each expense
-                          const palletCount = e.pallet_ids?.length || 1;
-                          return sum + (e.amount / palletCount);
-                        }, 0)
-                      )}
-                    </Text>
+              <Text style={styles.sectionTitle}>
+                Expenses ({palletExpenses.length})
+                <Text style={styles.expensesTotalInline}>
+                  {' '} - {formatExpenseAmount(
+                    palletExpenses.reduce((sum, e) => {
+                      const palletCount = e.pallet_ids?.length || 1;
+                      return sum + (e.amount / palletCount);
+                    }, 0)
                   )}
                 </Text>
-                <Pressable style={styles.addExpenseButton} onPress={handleAddExpense}>
-                  <FontAwesome name="plus" size={12} color={colors.primary} />
-                  <Text style={styles.addExpenseText}>Add</Text>
-                </Pressable>
+              </Text>
+              <View style={styles.expensesList}>
+                {palletExpenses.map((expense) => {
+                  const palletCount = expense.pallet_ids?.length || 1;
+                  const splitAmount = expense.amount / palletCount;
+                  return (
+                    <ExpenseCardCompact
+                      key={expense.id}
+                      expense={expense}
+                      onPress={() => handleExpensePress(expense.id)}
+                      splitAmount={splitAmount}
+                      totalPallets={palletCount}
+                    />
+                  );
+                })}
               </View>
-              {palletExpenses.length === 0 ? (
-                <View style={styles.expensesPlaceholder}>
-                  <Text style={styles.expensesPlaceholderText}>
-                    No expenses recorded for this pallet
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.expensesList}>
-                  {palletExpenses.map((expense) => {
-                    const palletCount = expense.pallet_ids?.length || 1;
-                    const splitAmount = expense.amount / palletCount;
-                    return (
-                      <ExpenseCardCompact
-                        key={expense.id}
-                        expense={expense}
-                        onPress={() => handleExpensePress(expense.id)}
-                        splitAmount={splitAmount}
-                        totalPallets={palletCount}
-                      />
-                    );
-                  })}
-                </View>
-              )}
             </View>
           )}
         </ScrollView>
@@ -1208,33 +1187,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: '400',
   },
-  addExpenseButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-    gap: spacing.xs,
-  },
-  addExpenseText: {
-    fontSize: fontSize.sm,
-    color: colors.primary,
-    fontWeight: '500',
-  },
-  expensesPlaceholder: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    alignItems: 'center',
-  },
-  expensesPlaceholderText: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
   expensesList: {
     gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   // Quick sell platform picker styles
   quickSellPlatformScroll: {

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +19,9 @@ import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { useExpensesStore, ExpenseWithPallets } from '@/src/stores/expenses-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
+import { useMileageStore, MileageTripWithPallets } from '@/src/stores/mileage-store';
 import { ExpenseCard } from '@/src/features/expenses/components/ExpenseCard';
+import { MileageTripCard, formatDeduction, formatMiles } from '@/src/features/mileage';
 import {
   formatExpenseAmount,
   EXPENSE_CATEGORIES,
@@ -32,6 +35,9 @@ import {
 } from '@/src/components/ui/DateRangeFilter';
 
 type CategoryFilter = 'all' | ExpenseCategory;
+type Segment = 'expenses' | 'mileage';
+
+const SEGMENT_STORAGE_KEY = '@expenses_tab_segment';
 
 export default function ExpensesScreen() {
   const router = useRouter();
@@ -39,7 +45,16 @@ export default function ExpensesScreen() {
   const { expenses, isLoading, error, fetchExpenses } = useExpensesStore();
   const { pallets, getPalletById, fetchPallets } = usePalletsStore();
   const { items, fetchItems } = useItemsStore();
+  const {
+    trips,
+    isLoading: mileageLoading,
+    fetchTrips,
+    getYTDSummary,
+    currentMileageRate,
+    fetchCurrentMileageRate,
+  } = useMileageStore();
 
+  const [activeSegment, setActiveSegment] = useState<Segment>('expenses');
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all');
   const [dateRange, setDateRange] = useState<DateRange>({
     start: null,
@@ -47,12 +62,29 @@ export default function ExpensesScreen() {
     preset: 'all',
   });
 
+  // Load saved segment on mount
+  useEffect(() => {
+    AsyncStorage.getItem(SEGMENT_STORAGE_KEY).then((value) => {
+      if (value === 'expenses' || value === 'mileage') {
+        setActiveSegment(value);
+      }
+    });
+  }, []);
+
+  // Save segment when changed
+  const handleSegmentChange = (segment: Segment) => {
+    setActiveSegment(segment);
+    AsyncStorage.setItem(SEGMENT_STORAGE_KEY, segment);
+  };
+
   // Fetch data on focus
   useFocusEffect(
     useCallback(() => {
       fetchExpenses();
       fetchPallets();
       fetchItems();
+      fetchTrips();
+      fetchCurrentMileageRate();
     }, [])
   );
 
@@ -70,6 +102,21 @@ export default function ExpensesScreen() {
       return true;
     });
   }, [expenses, activeCategory, dateRange]);
+
+  // Filter mileage trips by date range
+  const filteredTrips = useMemo(() => {
+    return trips.filter(trip => isWithinDateRange(trip.trip_date, dateRange));
+  }, [trips, dateRange]);
+
+  // Calculate mileage summary based on filtered trips
+  const mileageSummary = useMemo(() => {
+    const totalMiles = filteredTrips.reduce((sum, trip) => sum + trip.miles, 0);
+    const totalDeduction = filteredTrips.reduce(
+      (sum, trip) => sum + trip.miles * trip.mileage_rate,
+      0
+    );
+    return { totalMiles, totalDeduction };
+  }, [filteredTrips]);
 
   // Calculate total operating expenses
   const totalOperatingExpenses = useMemo(() => {
@@ -111,12 +158,26 @@ export default function ExpensesScreen() {
     router.push('/expenses/new');
   };
 
+  const handleAddMileage = () => {
+    router.push('/mileage/new');
+  };
+
   const handleExpensePress = (expense: ExpenseWithPallets) => {
     router.push(`/expenses/${expense.id}`);
   };
 
+  const handleMileagePress = (trip: MileageTripWithPallets) => {
+    router.push(`/mileage/${trip.id}`);
+  };
+
   const handleRefresh = useCallback(async () => {
-    await Promise.all([fetchExpenses(), fetchPallets(), fetchItems()]);
+    await Promise.all([
+      fetchExpenses(),
+      fetchPallets(),
+      fetchItems(),
+      fetchTrips(),
+      fetchCurrentMileageRate(),
+    ]);
   }, []);
 
   // Get linked pallets for an expense
@@ -131,6 +192,16 @@ export default function ExpensesScreen() {
       .filter((p): p is NonNullable<typeof p> => p !== undefined);
   };
 
+  // Get pallet names for mileage trips
+  const getPalletNames = useCallback(
+    (palletIds: string[]) => {
+      return palletIds
+        .map((id) => getPalletById(id)?.name)
+        .filter((name): name is string => !!name);
+    },
+    [pallets]
+  );
+
   const renderExpenseCard = ({ item }: { item: ExpenseWithPallets }) => {
     const linkedPallets = getLinkedPallets(item);
     return (
@@ -141,6 +212,14 @@ export default function ExpensesScreen() {
       />
     );
   };
+
+  const renderMileageCard = ({ item }: { item: MileageTripWithPallets }) => (
+    <MileageTripCard
+      trip={item}
+      onPress={() => handleMileagePress(item)}
+      palletNames={getPalletNames(item.pallet_ids)}
+    />
+  );
 
   // Summary card showing sales costs + operating expenses breakdown
   const hasSalesCosts = salesCosts.platformFees > 0 || salesCosts.shippingCosts > 0;
@@ -161,7 +240,7 @@ export default function ExpensesScreen() {
     }
   };
 
-  const renderSummaryCard = () => {
+  const renderExpensesSummaryCard = () => {
     // Show if there are sales costs OR operating expenses
     if (!hasSalesCosts && !hasOperatingExpenses) return null;
 
@@ -234,12 +313,68 @@ export default function ExpensesScreen() {
     );
   };
 
-  const renderEmptyState = () => (
+  const renderMileageSummaryCard = () => {
+    if (filteredTrips.length === 0) return null;
+
+    const displaySummary = dateRange.preset === 'all' ? getYTDSummary() : mileageSummary;
+
+    return (
+      <View style={styles.summaryCard}>
+        <View style={styles.summaryHeader}>
+          <FontAwesome name="road" size={16} color={colors.primary} />
+          <Text style={styles.summaryTitle}>
+            {dateRange.preset === 'all' ? `${new Date().getFullYear()} Year-to-Date` : 'Period Summary'}
+          </Text>
+          <View style={styles.rateTag}>
+            <Text style={styles.rateTagText}>${currentMileageRate.toFixed(3)}/mi</Text>
+          </View>
+        </View>
+
+        <View style={styles.mileageStats}>
+          <View style={styles.mileageStat}>
+            <Text style={styles.mileageStatValue}>{filteredTrips.length}</Text>
+            <Text style={styles.mileageStatLabel}>Trips</Text>
+          </View>
+          <View style={styles.mileageStatDivider} />
+          <View style={styles.mileageStat}>
+            <Text style={styles.mileageStatValue}>{formatMiles(displaySummary.totalMiles)}</Text>
+            <Text style={styles.mileageStatLabel}>Miles</Text>
+          </View>
+          <View style={styles.mileageStatDivider} />
+          <View style={styles.mileageStat}>
+            <Text style={[styles.mileageStatValue, styles.deductionValue]}>
+              {formatDeduction(displaySummary.totalDeduction)}
+            </Text>
+            <Text style={styles.mileageStatLabel}>Deduction</Text>
+          </View>
+        </View>
+
+        <View style={styles.mileageDisclaimer}>
+          <FontAwesome name="info-circle" size={12} color={colors.warning} />
+          <Text style={styles.mileageDisclaimerText}>
+            Consult a tax professional. PalletPulse is not tax advice.
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  const renderExpensesEmptyState = () => (
     <View style={styles.placeholder}>
       <FontAwesome name="dollar" size={48} color={colors.neutral} />
       <Text style={styles.placeholderTitle}>No expenses yet</Text>
       <Text style={styles.placeholderText}>
-        Tap the + button to log your first expense. Track supplies, mileage, fees, and more.
+        Tap the + button to log your first expense. Track supplies, fees, and more.
+      </Text>
+    </View>
+  );
+
+  const renderMileageEmptyState = () => (
+    <View style={styles.placeholder}>
+      <FontAwesome name="road" size={48} color={colors.neutral} />
+      <Text style={styles.placeholderTitle}>No mileage trips</Text>
+      <Text style={styles.placeholderText}>
+        Tap the + button to log your first trip. Track business miles for tax deductions.
       </Text>
     </View>
   );
@@ -261,6 +396,10 @@ export default function ExpensesScreen() {
   };
 
   const getNoResultsMessage = () => {
+    if (activeSegment === 'mileage') {
+      return 'No mileage trips in the selected date range';
+    }
+
     const hasDateFilter = dateRange.preset !== 'all';
     const hasCategoryFilter = activeCategory !== 'all';
 
@@ -277,13 +416,13 @@ export default function ExpensesScreen() {
   const renderNoResults = () => (
     <View style={styles.noResults}>
       <FontAwesome name="filter" size={32} color={colors.neutral} />
-      <Text style={styles.noResultsTitle}>No expenses found</Text>
+      <Text style={styles.noResultsTitle}>No results found</Text>
       <Text style={styles.noResultsText}>{getNoResultsMessage()}</Text>
       <Pressable
         style={styles.clearFilterButton}
         onPress={handleClearFilters}
       >
-        <Text style={styles.clearFilterText}>Show all expenses</Text>
+        <Text style={styles.clearFilterText}>Clear filters</Text>
       </Pressable>
     </View>
   );
@@ -294,29 +433,90 @@ export default function ExpensesScreen() {
     ...EXPENSE_CATEGORIES.map(cat => ({ value: cat as CategoryFilter, label: EXPENSE_CATEGORY_LABELS[cat] })),
   ];
 
+  const isLoadingData = activeSegment === 'expenses' ? isLoading : mileageLoading;
+  const hasData = activeSegment === 'expenses' ? expenses.length > 0 : trips.length > 0;
+  const filteredData = activeSegment === 'expenses' ? filteredExpenses : filteredTrips;
+
+  // Compute header amounts
+  const headerAmount = activeSegment === 'expenses'
+    ? formatExpenseAmount(totalAllExpenses)
+    : formatDeduction(mileageSummary.totalDeduction);
+
+  const headerSubtitle = activeSegment === 'expenses'
+    ? (expenses.length > 0
+        ? `${filteredExpenses.length} expense${filteredExpenses.length === 1 ? '' : 's'}${activeCategory !== 'all' ? ` in ${activeCategory}` : ''}`
+        : 'Track your business expenses')
+    : (trips.length > 0
+        ? `${filteredTrips.length} trip${filteredTrips.length === 1 ? '' : 's'}`
+        : 'Track your business mileage');
+
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
         <View style={styles.headerTop}>
           <Text style={styles.title}>Expenses</Text>
-          <Text style={styles.totalAmount}>{formatExpenseAmount(totalAllExpenses)}</Text>
+          <Text style={[styles.totalAmount, activeSegment === 'mileage' && styles.deductionAmount]}>
+            {headerAmount}
+          </Text>
         </View>
-        <Text style={styles.subtitle}>
-          {expenses.length > 0
-            ? `${filteredExpenses.length} expense${filteredExpenses.length === 1 ? '' : 's'}${activeCategory !== 'all' ? ` in ${activeCategory}` : ''}`
-            : 'Track your business expenses'}
-        </Text>
+        <Text style={styles.subtitle}>{headerSubtitle}</Text>
+
+        {/* Segmented Control */}
+        <View style={styles.segmentedControl}>
+          <Pressable
+            style={[
+              styles.segmentButton,
+              activeSegment === 'expenses' && styles.segmentButtonActive,
+            ]}
+            onPress={() => handleSegmentChange('expenses')}
+          >
+            <FontAwesome
+              name="dollar"
+              size={14}
+              color={activeSegment === 'expenses' ? colors.background : colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.segmentButtonText,
+                activeSegment === 'expenses' && styles.segmentButtonTextActive,
+              ]}
+            >
+              Expenses
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.segmentButton,
+              activeSegment === 'mileage' && styles.segmentButtonActive,
+            ]}
+            onPress={() => handleSegmentChange('mileage')}
+          >
+            <FontAwesome
+              name="road"
+              size={14}
+              color={activeSegment === 'mileage' ? colors.background : colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.segmentButtonText,
+                activeSegment === 'mileage' && styles.segmentButtonTextActive,
+              ]}
+            >
+              Mileage
+            </Text>
+          </Pressable>
+        </View>
 
         {/* Date Range Filter */}
-        {expenses.length > 0 && (
+        {hasData && (
           <DateRangeFilter
             value={dateRange}
             onChange={setDateRange}
           />
         )}
 
-        {/* Category Filter */}
-        {expenses.length > 0 && (
+        {/* Category Filter (Expenses only) */}
+        {activeSegment === 'expenses' && expenses.length > 0 && (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -347,23 +547,25 @@ export default function ExpensesScreen() {
       </View>
 
       {/* Content */}
-      {isLoading && expenses.length === 0 ? (
+      {isLoadingData && !hasData ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading expenses...</Text>
+          <Text style={styles.loadingText}>
+            Loading {activeSegment === 'expenses' ? 'expenses' : 'mileage'}...
+          </Text>
         </View>
-      ) : error && expenses.length === 0 ? (
+      ) : error && !hasData ? (
         renderErrorState()
-      ) : expenses.length === 0 ? (
-        renderEmptyState()
-      ) : filteredExpenses.length === 0 ? (
+      ) : !hasData ? (
+        activeSegment === 'expenses' ? renderExpensesEmptyState() : renderMileageEmptyState()
+      ) : filteredData.length === 0 ? (
         renderNoResults()
-      ) : (
+      ) : activeSegment === 'expenses' ? (
         <FlatList
           data={filteredExpenses}
           renderItem={renderExpenseCard}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderSummaryCard}
+          ListHeaderComponent={renderExpensesSummaryCard}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -375,12 +577,29 @@ export default function ExpensesScreen() {
             />
           }
         />
+      ) : (
+        <FlatList
+          data={filteredTrips}
+          renderItem={renderMileageCard}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={renderMileageSummaryCard}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={mileageLoading}
+              onRefresh={handleRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+        />
       )}
 
-      {/* FAB */}
+      {/* FAB - context-aware */}
       <Pressable
         style={[styles.fab, { bottom: Math.max(insets.bottom, spacing.lg) }]}
-        onPress={handleAddExpense}
+        onPress={activeSegment === 'expenses' ? handleAddExpense : handleAddMileage}
       >
         <FontAwesome name="plus" size={24} color={colors.background} />
       </Pressable>
@@ -413,10 +632,41 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.loss,
   },
+  deductionAmount: {
+    color: colors.profit,
+  },
   subtitle: {
     fontSize: fontSize.lg,
     color: colors.textSecondary,
     marginBottom: spacing.md,
+  },
+  // Segmented Control
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  segmentButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.sm,
+  },
+  segmentButtonActive: {
+    backgroundColor: colors.primary,
+  },
+  segmentButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  segmentButtonTextActive: {
+    color: colors.background,
   },
   // Filter
   filterContainer: {
@@ -541,7 +791,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
-  // Summary Card
+  // Summary Card (Expenses)
   summaryCard: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
@@ -558,6 +808,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     fontWeight: '600',
     color: colors.textPrimary,
+    flex: 1,
   },
   summarySection: {
     marginBottom: spacing.md,
@@ -622,5 +873,57 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     fontStyle: 'italic',
+  },
+  // Mileage Summary
+  rateTag: {
+    backgroundColor: colors.primary + '20',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  rateTagText: {
+    fontSize: fontSize.xs,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  mileageStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  mileageStat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  mileageStatDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: colors.border,
+  },
+  mileageStatValue: {
+    fontSize: fontSize.xl,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+  },
+  mileageStatLabel: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  deductionValue: {
+    color: colors.profit,
+  },
+  mileageDisclaimer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.md,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  mileageDisclaimerText: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    flex: 1,
   },
 });

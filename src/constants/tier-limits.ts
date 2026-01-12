@@ -12,6 +12,9 @@ export interface TierLimits {
   csvExport: boolean;
   pdfExport: boolean;
   expenseTracking: boolean;
+  // Mileage tracking features (tiered)
+  mileageTracking: boolean;        // Basic manual mileage entry (Starter+)
+  mileageSavedRoutes: boolean;     // Save frequent routes for quick-log (Pro+)
   bulkImportExport: boolean;
   prioritySupport: boolean;
   multiUser: boolean;
@@ -27,6 +30,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     csvExport: false,
     pdfExport: false,
     expenseTracking: false,
+    mileageTracking: false,
+    mileageSavedRoutes: false,
     bulkImportExport: false,
     prioritySupport: false,
     multiUser: false,
@@ -40,6 +45,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     csvExport: true,
     pdfExport: false,
     expenseTracking: true,
+    mileageTracking: true,       // Manual mileage entry
+    mileageSavedRoutes: false,   // Upgrade to Pro for saved routes
     bulkImportExport: false,
     prioritySupport: false,
     multiUser: false,
@@ -53,6 +60,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     csvExport: true,
     pdfExport: true,
     expenseTracking: true,
+    mileageTracking: true,       // Manual mileage entry
+    mileageSavedRoutes: true,    // Save frequent routes for quick-log
     bulkImportExport: true,
     prioritySupport: true,
     multiUser: false,
@@ -66,6 +75,8 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     csvExport: true,
     pdfExport: true,
     expenseTracking: true,
+    mileageTracking: true,
+    mileageSavedRoutes: true,
     bulkImportExport: true,
     prioritySupport: true,
     multiUser: true,

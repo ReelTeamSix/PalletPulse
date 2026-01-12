@@ -21,9 +21,9 @@
 
 | Tier | Monthly | Annual | Features |
 |------|---------|--------|----------|
-| **Free** | $0 | N/A | 1 pallet, 20 items total (across all sources), 1 photo/item, 30-day analytics |
-| **Starter** | $9.99/mo | $99.99/yr (~$8.33/mo) | 25 pallets, 500 items, 3 photos/item, AI descriptions (50/mo), unlimited analytics, expense tracking, CSV export |
-| **Pro** | $24.99/mo | $249.99/yr (~$20.83/mo) | Unlimited pallets/items, 10 photos/item, advanced analytics, AI descriptions (200/mo), bulk import/export, priority support |
+| **Free** | $0 | N/A | 1 pallet, 20 items total (across all sources), 1 photo/item, 30-day analytics, **no expense/mileage tracking** |
+| **Starter** | $9.99/mo | $99.99/yr (~$8.33/mo) | 25 pallets, 500 items, 3 photos/item, AI descriptions (50/mo), unlimited analytics, **basic expense tracking, manual mileage tracking**, CSV export |
+| **Pro** | $24.99/mo | $249.99/yr (~$20.83/mo) | Unlimited pallets/items, 10 photos/item, advanced analytics, AI descriptions (200/mo), bulk import/export, priority support, **advanced expense reports, PDF export, saved routes & quick-log mileage** |
 | **Enterprise** | Custom | Custom | Multi-user, white-label, API access, dedicated support, conflict resolution for concurrent edits |
 
 ### Affiliate Discounts
@@ -303,9 +303,20 @@ Add Trip
 - Trip deduction = Miles × Current IRS Rate
 - Mileage log exportable for tax records
 
-**Future Enhancement (High Tier):**
-- Auto-calculate mileage using Maps API (addresses → distance)
-- Trip history with map visualization
+**Tiered Expense & Mileage Features:**
+
+| Tier | Features |
+|------|----------|
+| **Free** | No expense tracking, no mileage tracking |
+| **Starter** | Basic expenses, manual mileage entry (date, purpose, miles, linked pallets), CSV export |
+| **Pro** | + Advanced expense reports, PDF export, saved/frequent routes with quick-log from history |
+
+**Pro Tier: Saved Routes & Quick-Log**
+- Save frequent trips as "routes" (e.g., "GRPL Pickup", "Post Office Run")
+- Each saved route stores: name, typical miles, purpose
+- "Recent Trips" section shows last 5-10 trips for one-tap re-logging
+- "Quick Log" button on saved routes: auto-fills form, user just confirms date
+- Useful for users with recurring travel patterns
 
 #### 4C: Overhead Expenses
 
@@ -382,11 +393,11 @@ How do you flip? (Screen 3 of 5)
 ```
 
 **Tier Alignment:**
-| Tier | Expense Tracking |
-|------|------------------|
-| Free | Per-item costs only (shipping/fees at sale) |
-| Starter | + Overhead expenses, mileage tracking, receipt photos |
-| Pro | + Auto mileage calculation (future), tax export |
+| Tier | Expense & Mileage Features |
+|------|----------------------------|
+| Free | No expense tracking, no mileage tracking |
+| Starter | Basic expense tracking, overhead expenses, **manual mileage tracking**, receipt photos, CSV export |
+| Pro | + **Advanced expense reports**, **PDF export**, **saved routes & quick-log mileage** |
 
 **Subscription CTA:** When Free user tries to access mileage/overhead features:
 > "Track mileage and expenses for taxes? Upgrade to Starter for full expense tracking."

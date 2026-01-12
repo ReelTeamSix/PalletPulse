@@ -1,8 +1,8 @@
 # PalletPulse Development Progress
 
 ## Current Phase: Phase 8 - Expense System Redesign
-**Status:** Tab Restructure Complete - Inventory & Expenses Tabs
-**Branch:** feature/expenses
+**Status:** Expenses Tab with Mileage Segmented Control Complete
+**Branch:** feature/sales-profit
 
 ---
 
@@ -36,9 +36,9 @@ Expense tracking is **opt-in** to keep the app simple for casual/hobby flippers 
 ### Tier Alignment
 | Tier | Expense Features |
 |------|------------------|
-| Free | Per-item costs only (shipping/fees at sale time) |
-| Starter | + Overhead expenses, mileage tracking, receipt photos |
-| Pro | + Auto mileage calculation (future), tax export |
+| Free | Per-item costs only (no expense tracking, no mileage) |
+| Starter | + Overhead expenses, manual mileage tracking, receipt photos, CSV export |
+| Pro | + Advanced expense reports, PDF export, saved routes & quick-log mileage |
 
 ---
 
@@ -440,6 +440,51 @@ Dashboard | Inventory | Expenses | Analytics | Settings
 **Commits:**
 - `fix(expenses): send pallet_ids array for multi-pallet linking`
 - `feat(tabs): restructure tabs with Inventory and Expenses`
+
+---
+
+### Expenses Tab: Segmented Control with Mileage
+
+**Completed:** Jan 11, 2026
+
+**Overview:**
+Added segmented control to Expenses tab allowing users to switch between Expenses and Mileage views. Previously mileage was only accessible at `/mileage` with no UI navigation path.
+
+**Changes:**
+- `app/(tabs)/expenses.tsx` - Complete rewrite with segmented control:
+  - Segmented control: **Expenses | Mileage**
+  - Segment selection persists via AsyncStorage
+  - **Expenses segment**: Full expense list with category filter, cost breakdown summary
+  - **Mileage segment**: Mileage trip list with YTD summary, trips/miles/deduction stats
+  - Date range filter applies to both segments
+  - Context-aware FAB (adds expense or mileage trip based on segment)
+  - Separate empty states for each segment
+  - Header amount changes color (red for expenses, green for mileage deduction)
+
+- `app/pallets/[id].tsx` - Removed expense add button:
+  - Expenses section now read-only (view linked expenses only)
+  - Section only shows when there are existing expenses
+  - Simplifies pallet detail, single source of truth for expense creation
+
+**Bug Fix:**
+- Fixed `trip.date` → `trip.trip_date` in mileage filtering
+- Mileage trips now correctly appear in Q1/YTD/date range filters
+
+**Tiered Expense & Mileage Features:**
+Updated `src/constants/tier-limits.ts` with feature flags:
+| Tier | Expense & Mileage Features |
+|------|----------------------------|
+| Free | No expense tracking, no mileage tracking |
+| Starter | Basic expenses, manual mileage entry, CSV export |
+| Pro | + Advanced expense reports, PDF export, saved routes & quick-log |
+
+*Note: Enterprise tier exists for multi-user features but expense/mileage features are same as Pro.*
+
+**Files Modified:**
+- `app/(tabs)/expenses.tsx` - Segmented control, mileage integration
+- `app/pallets/[id].tsx` - Removed expense add button
+- `src/constants/tier-limits.ts` - Added mileage feature flags
+- `PALLETPULSE_ONESHOT_CONTEXT.md` - Documented tiered mileage features
 
 ---
 
