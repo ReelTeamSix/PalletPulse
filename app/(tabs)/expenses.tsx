@@ -635,15 +635,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   totalAmount: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
+    fontSize: fontSize.xxxl,
+    fontWeight: 'bold',
     color: colors.textPrimary,
   },
   totalLabel: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
+    fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    marginTop: -2,
   },
   subtitle: {
     fontSize: fontSize.lg,
