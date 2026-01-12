@@ -324,7 +324,7 @@ export function MileageForm({
                     onPress={() => togglePallet(pallet.id)}
                     hitSlop={8}
                   >
-                    <FontAwesome name="times" size={12} color={colors.textSecondary} />
+                    <FontAwesome name="times" size={12} color={colors.background} />
                   </Pressable>
                 </View>
               ))}
@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
   palletTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.primary + '20',
+    backgroundColor: colors.primary,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
@@ -633,7 +633,8 @@ const styles = StyleSheet.create({
   },
   palletTagText: {
     fontSize: fontSize.sm,
-    color: colors.primary,
+    color: colors.background,
+    fontWeight: '500',
     flex: 1,
   },
   palletList: {

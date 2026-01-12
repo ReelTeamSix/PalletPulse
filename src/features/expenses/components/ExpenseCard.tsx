@@ -95,9 +95,9 @@ export function ExpenseCard({
                   <FontAwesome
                     name={isMultiPallet ? 'cubes' : 'cube'}
                     size={10}
-                    color={colors.primary}
+                    color={isMultiPallet ? colors.background : colors.primary}
                   />
-                  <Text style={styles.palletName} numberOfLines={1}>
+                  <Text style={[styles.palletName, isMultiPallet && styles.multiPalletText]} numberOfLines={1}>
                     {getPalletDisplayText()}
                   </Text>
                 </View>
@@ -243,12 +243,16 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   multiPalletBadge: {
-    backgroundColor: colors.primaryLight || colors.background,
+    backgroundColor: colors.primary,
   },
   palletName: {
     fontSize: fontSize.xs,
     color: colors.primary,
     maxWidth: 80,
+  },
+  multiPalletText: {
+    color: colors.background,
+    fontWeight: '500',
   },
   // Compact styles
   compactContainer: {

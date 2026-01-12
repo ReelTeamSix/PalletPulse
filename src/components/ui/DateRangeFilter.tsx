@@ -17,8 +17,10 @@ import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 export type DateRangePreset =
   | 'all'
   | 'this_month'
-  | 'this_quarter'
-  | 'last_quarter'
+  | 'q1'
+  | 'q2'
+  | 'q3'
+  | 'q4'
   | 'this_year'
   | 'custom';
 
@@ -67,7 +69,6 @@ export function getDateRangeFromPreset(preset: DateRangePreset): { start: Date |
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
-  const currentQuarter = getCurrentQuarter();
 
   switch (preset) {
     case 'all':
@@ -79,14 +80,17 @@ export function getDateRangeFromPreset(preset: DateRangePreset): { start: Date |
         end: new Date(year, month + 1, 0),
       };
 
-    case 'this_quarter':
-      return getQuarterDates(year, currentQuarter);
+    case 'q1':
+      return getQuarterDates(year, 1);
 
-    case 'last_quarter': {
-      const lastQ = currentQuarter === 1 ? 4 : (currentQuarter - 1) as 1 | 2 | 3 | 4;
-      const lastQYear = currentQuarter === 1 ? year - 1 : year;
-      return getQuarterDates(lastQYear, lastQ);
-    }
+    case 'q2':
+      return getQuarterDates(year, 2);
+
+    case 'q3':
+      return getQuarterDates(year, 3);
+
+    case 'q4':
+      return getQuarterDates(year, 4);
 
     case 'this_year':
       return {
@@ -101,22 +105,18 @@ export function getDateRangeFromPreset(preset: DateRangePreset): { start: Date |
 
 // Format date range for display
 function formatDateRange(range: DateRange): string {
+  const year = new Date().getFullYear();
+
   if (range.preset === 'all') return 'All Time';
   if (range.preset === 'this_month') {
     return new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }
-  if (range.preset === 'this_quarter') {
-    const q = getCurrentQuarter();
-    return `Q${q} ${new Date().getFullYear()}`;
-  }
-  if (range.preset === 'last_quarter') {
-    const currentQ = getCurrentQuarter();
-    const lastQ = currentQ === 1 ? 4 : currentQ - 1;
-    const year = currentQ === 1 ? new Date().getFullYear() - 1 : new Date().getFullYear();
-    return `Q${lastQ} ${year}`;
-  }
+  if (range.preset === 'q1') return `Q1 ${year}`;
+  if (range.preset === 'q2') return `Q2 ${year}`;
+  if (range.preset === 'q3') return `Q3 ${year}`;
+  if (range.preset === 'q4') return `Q4 ${year}`;
   if (range.preset === 'this_year') {
-    return `${new Date().getFullYear()}`;
+    return `${year}`;
   }
   if (range.preset === 'custom' && range.start && range.end) {
     const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
@@ -127,20 +127,19 @@ function formatDateRange(range: DateRange): string {
   return 'Select Range';
 }
 
-// Get quarter label for display
-function getQuarterLabel(preset: 'this_quarter' | 'last_quarter'): string {
-  const currentQ = getCurrentQuarter();
-  if (preset === 'this_quarter') return `Q${currentQ}`;
-  const lastQ = currentQ === 1 ? 4 : currentQ - 1;
-  return `Q${lastQ}`;
+// Check if a quarter is the current quarter
+function isCurrentQuarter(quarter: 1 | 2 | 3 | 4): boolean {
+  return getCurrentQuarter() === quarter;
 }
 
-const PRESETS: { value: DateRangePreset; label: string; getLabel?: () => string }[] = [
-  { value: 'all', label: 'All Time' },
-  { value: 'this_month', label: 'This Month' },
-  { value: 'this_quarter', label: 'This Quarter', getLabel: () => getQuarterLabel('this_quarter') },
-  { value: 'last_quarter', label: 'Last Quarter', getLabel: () => getQuarterLabel('last_quarter') },
-  { value: 'this_year', label: 'This Year' },
+const PRESETS: { value: DateRangePreset; label: string; isCurrent?: boolean }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'this_month', label: 'Month' },
+  { value: 'q1', label: 'Q1', isCurrent: isCurrentQuarter(1) },
+  { value: 'q2', label: 'Q2', isCurrent: isCurrentQuarter(2) },
+  { value: 'q3', label: 'Q3', isCurrent: isCurrentQuarter(3) },
+  { value: 'q4', label: 'Q4', isCurrent: isCurrentQuarter(4) },
+  { value: 'this_year', label: 'Year' },
   { value: 'custom', label: 'Custom' },
 ];
 
@@ -241,17 +240,22 @@ export function DateRangeFilter({
       >
         {PRESETS.map((preset) => {
           const isActive = value.preset === preset.value;
-          const label = preset.getLabel ? preset.getLabel() : preset.label;
+          const showCurrentDot = preset.isCurrent && !isActive;
 
           return (
             <Pressable
               key={preset.value}
-              style={[styles.presetPill, isActive && styles.presetPillActive]}
+              style={[
+                styles.presetPill,
+                isActive && styles.presetPillActive,
+                preset.isCurrent && !isActive && styles.presetPillCurrent,
+              ]}
               onPress={() => handlePresetSelect(preset.value)}
             >
               <Text style={[styles.presetText, isActive && styles.presetTextActive]}>
-                {label}
+                {preset.label}
               </Text>
+              {showCurrentDot && <View style={styles.currentDot} />}
             </Pressable>
           );
         })}
@@ -407,15 +411,21 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   presetPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.full || 20,
     borderWidth: 1,
     borderColor: colors.border,
+    gap: 4,
   },
   presetPillActive: {
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  presetPillCurrent: {
     borderColor: colors.primary,
   },
   presetText: {
@@ -425,6 +435,12 @@ const styles = StyleSheet.create({
   },
   presetTextActive: {
     color: colors.background,
+  },
+  currentDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.primary,
   },
   // Modal styles
   modalOverlay: {
