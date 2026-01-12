@@ -15,13 +15,13 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 
 export type DateRangePreset =
-  | 'all'
   | 'this_month'
   | 'q1'
   | 'q2'
   | 'q3'
   | 'q4'
   | 'this_year'
+  | 'last_year'
   | 'custom';
 
 export interface DateRange {
@@ -62,9 +62,6 @@ export function getDateRangeFromPreset(preset: DateRangePreset): { start: Date |
   const month = now.getMonth();
 
   switch (preset) {
-    case 'all':
-      return { start: null, end: null };
-
     case 'this_month':
       return {
         start: new Date(year, month, 1),
@@ -89,6 +86,12 @@ export function getDateRangeFromPreset(preset: DateRangePreset): { start: Date |
         end: new Date(year, 11, 31),
       };
 
+    case 'last_year':
+      return {
+        start: new Date(year - 1, 0, 1),
+        end: new Date(year - 1, 11, 31),
+      };
+
     default:
       return { start: null, end: null };
   }
@@ -98,7 +101,6 @@ export function getDateRangeFromPreset(preset: DateRangePreset): { start: Date |
 function formatDateRange(range: DateRange): string {
   const year = new Date().getFullYear();
 
-  if (range.preset === 'all') return 'All Time';
   if (range.preset === 'this_month') {
     return new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }
@@ -106,9 +108,8 @@ function formatDateRange(range: DateRange): string {
   if (range.preset === 'q2') return `Q2 ${year}`;
   if (range.preset === 'q3') return `Q3 ${year}`;
   if (range.preset === 'q4') return `Q4 ${year}`;
-  if (range.preset === 'this_year') {
-    return `${year}`;
-  }
+  if (range.preset === 'this_year') return `${year}`;
+  if (range.preset === 'last_year') return `${year - 1}`;
   if (range.preset === 'custom' && range.start && range.end) {
     const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
     const startStr = range.start.toLocaleDateString('en-US', opts);
@@ -118,16 +119,20 @@ function formatDateRange(range: DateRange): string {
   return 'Select Range';
 }
 
-const PRESETS: { value: DateRangePreset; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'this_month', label: 'Month' },
-  { value: 'q1', label: 'Q1' },
-  { value: 'q2', label: 'Q2' },
-  { value: 'q3', label: 'Q3' },
-  { value: 'q4', label: 'Q4' },
-  { value: 'this_year', label: 'Year' },
-  { value: 'custom', label: 'Custom' },
-];
+// Dynamic presets - years update automatically
+function getPresets(): { value: DateRangePreset; label: string }[] {
+  const year = new Date().getFullYear();
+  return [
+    { value: 'this_month', label: 'Month' },
+    { value: 'q1', label: 'Q1' },
+    { value: 'q2', label: 'Q2' },
+    { value: 'q3', label: 'Q3' },
+    { value: 'q4', label: 'Q4' },
+    { value: 'this_year', label: `${year}` },
+    { value: 'last_year', label: `${year - 1}` },
+    { value: 'custom', label: 'Custom' },
+  ];
+}
 
 export function DateRangeFilter({
   value,
@@ -224,7 +229,7 @@ export function DateRangeFilter({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.presetsContainer}
       >
-        {PRESETS.map((preset) => {
+        {getPresets().map((preset) => {
           const isActive = value.preset === preset.value;
 
           return (
@@ -342,7 +347,7 @@ export function isWithinDateRange(
   dateString: string,
   range: DateRange
 ): boolean {
-  if (range.preset === 'all' || (!range.start && !range.end)) {
+  if (!range.start && !range.end) {
     return true;
   }
 

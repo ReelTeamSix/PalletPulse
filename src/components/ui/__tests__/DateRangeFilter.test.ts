@@ -7,18 +7,12 @@ import {
 
 describe('DateRangeFilter', () => {
   describe('isWithinDateRange', () => {
-    it('should return true for "all" preset regardless of date', () => {
-      const range: DateRange = { start: null, end: null, preset: 'all' };
-
-      expect(isWithinDateRange('2024-01-15', range)).toBe(true);
-      expect(isWithinDateRange('2025-06-01', range)).toBe(true);
-      expect(isWithinDateRange('2020-12-31', range)).toBe(true);
-    });
-
     it('should return true when both start and end are null', () => {
       const range: DateRange = { start: null, end: null, preset: 'custom' };
 
       expect(isWithinDateRange('2024-01-15', range)).toBe(true);
+      expect(isWithinDateRange('2025-06-01', range)).toBe(true);
+      expect(isWithinDateRange('2020-12-31', range)).toBe(true);
     });
 
     it('should return true for date within range', () => {
@@ -66,13 +60,6 @@ describe('DateRangeFilter', () => {
 
     afterEach(() => {
       jest.useRealTimers();
-    });
-
-    it('should return null dates for "all" preset', () => {
-      const result = getDateRangeFromPreset('all');
-
-      expect(result.start).toBeNull();
-      expect(result.end).toBeNull();
     });
 
     it('should return current month for "this_month" preset', () => {
@@ -139,6 +126,18 @@ describe('DateRangeFilter', () => {
       expect(result.start?.getDate()).toBe(1);
 
       expect(result.end?.getFullYear()).toBe(2024);
+      expect(result.end?.getMonth()).toBe(11); // December
+      expect(result.end?.getDate()).toBe(31);
+    });
+
+    it('should return previous year for "last_year" preset', () => {
+      const result = getDateRangeFromPreset('last_year');
+
+      expect(result.start?.getFullYear()).toBe(2023);
+      expect(result.start?.getMonth()).toBe(0); // January
+      expect(result.start?.getDate()).toBe(1);
+
+      expect(result.end?.getFullYear()).toBe(2023);
       expect(result.end?.getMonth()).toBe(11); // December
       expect(result.end?.getDate()).toBe(31);
     });
