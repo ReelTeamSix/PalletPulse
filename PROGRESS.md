@@ -577,27 +577,66 @@ Before:                              After:
 
 ### Phase 8F: Onboarding Integration
 
-**New Onboarding Screen:**
-```
-How do you flip? (Screen 3 of 5)
+**Completed:** Jan 11, 2026
 
-○ Just for fun
-  Track profits simply - no expense tracking needed
+**Summary:**
+Implemented research-backed onboarding flow with tier selection and reverse trial pattern. Based on conversion optimization research from UserPilot, RevenueCat 2025, Adapty, Smashing Magazine, and Orbix Studio.
 
-○ Side income
-  Basic tracking with shipping and platform fees
+**Research-Backed Design Decisions:**
 
-● Serious business
-  Full expense tracking for tax reporting
+| Decision | Research Source | Implementation |
+|----------|-----------------|----------------|
+| **Reverse Trial** | UserPilot: "Users who started on premium are less likely to return to bare minimum" | Always offer 7-day Pro trial |
+| **No Credit Card** | First Page Sage: "No-CC delivers 27% more paying customers" | Trial starts without payment |
+| **Annual Pricing Visible** | RevenueCat 2025: "Position annual as primary offer" | Show monthly + annual with "Save 17%" badge |
+| **Three-Tier Structure** | Harvard Business Review: "Three tiers optimal for decision-making" | Free / Starter / Pro cards |
+| **"Most Popular" Badge** | Smashing Magazine: "Social proof badges drive 25%+ selection increase" | Badge on Starter tier |
+| **Natural Progression Order** | Mobile UX research: "Vertical scroll better than horizontal" | Free → Starter → Pro (top to bottom) |
 
-[This affects which features you see. Change anytime in Settings.]
-```
+**Files Created:**
+- `app/onboarding/_layout.tsx` - Onboarding stack navigator
+- `app/onboarding/user-type.tsx` - Main tier selection screen
+- `src/components/onboarding/TierCard.tsx` - Reusable tier card component
+- `src/components/onboarding/TrialBanner.tsx` - Trial status banner
+- `src/components/onboarding/index.ts` - Component exports
+- `src/stores/onboarding-store.ts` - Trial and onboarding state management
+- `src/stores/__tests__/onboarding-store.test.ts` - Store unit tests
 
-**Tasks:**
-- [ ] Create user type selection screen
-- [ ] Auto-enable expense tracking for "business" selection
-- [ ] Store user_type in user_settings
-- [ ] Use as upsell CTA for subscription tier
+**Files Modified:**
+- `app/_layout.tsx` - Added onboarding flow check and routing
+
+**Features Implemented:**
+- [x] Tier selection cards with features, pricing, badges
+- [x] Monthly + Annual pricing display with savings percentage
+- [x] "Most Popular" and "Best Value" badges
+- [x] 7-day Pro trial (reverse trial pattern)
+- [x] No credit card required messaging
+- [x] "Skip for now" option for Free tier
+- [x] Trial state persistence (AsyncStorage)
+- [x] Automatic trial expiration check
+- [x] Trial banner component (shows in last 3 days)
+- [x] User type auto-set based on tier selection
+- [x] Auto-enable expense tracking for paid tiers
+- [x] Onboarding completion routing
+
+**Trial Flow:**
+1. User selects a tier card (defaults to "Side Income" / Starter)
+2. Taps "Start with Pro Trial" → 7-day Pro access begins
+3. After trial: prompted to subscribe to selected tier
+4. If skipped: starts on Free tier immediately
+
+**Tests Added:**
+- Initial state verification
+- `startTrial()` - creates 7-day trial with Pro access
+- `completeOnboarding()` - marks completion, sets tier
+- `endTrial()` - downgrades to free
+- `getTrialDaysRemaining()` - calculates remaining days
+- `checkTrialStatus()` - auto-ends expired trials
+- `resetOnboarding()` - resets for testing
+
+**Deferred to Phase 8G:**
+- [ ] Subscription screen (RevenueCat integration)
+- [ ] Upgrade flow from trial to paid
 
 ---
 

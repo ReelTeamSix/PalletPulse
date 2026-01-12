@@ -1,4 +1,4 @@
-// Root Layout - Handles auth state and navigation
+// Root Layout - Handles auth state, onboarding, and navigation
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -10,6 +10,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { useAuthStore } from '@/src/stores/auth-store';
+import { useOnboardingStore } from '@/src/stores/onboarding-store';
 import { colors } from '@/src/constants/colors';
 
 export {
@@ -63,25 +64,38 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { session } = useAuthStore();
+  const { hasCompletedOnboarding, checkTrialStatus } = useOnboardingStore();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
     const inAuthGroup = segments[0] === '(auth)';
+    const inOnboardingGroup = segments[0] === 'onboarding';
 
     if (!session && !inAuthGroup) {
       // User is not signed in and trying to access protected route
       router.replace('/(auth)/login');
     } else if (session && inAuthGroup) {
-      // User is signed in but on auth screen, redirect to main app
-      router.replace('/(tabs)');
+      // User is signed in but on auth screen
+      // Check if they need onboarding
+      if (!hasCompletedOnboarding) {
+        router.replace('/onboarding/user-type');
+      } else {
+        // Check trial status on app launch
+        checkTrialStatus();
+        router.replace('/(tabs)');
+      }
+    } else if (session && !inOnboardingGroup && !hasCompletedOnboarding) {
+      // User is signed in but hasn't completed onboarding
+      router.replace('/onboarding/user-type');
     }
-  }, [session, segments, router]);
+  }, [session, segments, router, hasCompletedOnboarding, checkTrialStatus]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
+        <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
           name="pallets/[id]"
