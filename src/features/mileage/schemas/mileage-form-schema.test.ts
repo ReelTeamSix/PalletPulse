@@ -1,4 +1,16 @@
 // Mileage Form Schema Tests
+
+// Mock the app settings store before importing
+jest.mock('@/src/stores/admin-store', () => ({
+  useAppSettingsStore: {
+    getState: () => ({
+      getMileageRate: () => 0.725,
+      settingsLoaded: true,
+      fetchSettings: jest.fn(),
+    }),
+  },
+}));
+
 import {
   mileageFormSchema,
   MileageFormData,

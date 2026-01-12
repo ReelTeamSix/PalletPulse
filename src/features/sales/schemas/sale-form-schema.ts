@@ -1,68 +1,162 @@
 // Sale Form Validation Schema
 import { z } from 'zod';
 import type { SalesPlatform } from '@/src/types/database';
+import { useAppSettingsStore } from '@/src/stores/admin-store';
 
-// Sales platforms with fee structures
-export const PLATFORM_PRESETS: Record<SalesPlatform, PlatformFeeConfig> = {
+// Platform static configuration (structure only - rates are fetched dynamically)
+// Note: rates here are fallback defaults; actual rates come from app_settings
+const PLATFORM_STATIC_CONFIG: Record<SalesPlatform, Omit<PlatformFeeConfig, 'rate' | 'rateShipped'> & { defaultRate: number; defaultRateShipped?: number }> = {
   ebay: {
     name: 'eBay',
-    rate: 0.1325, // 13.25% final value fee
-    description: '13.25% final value fee',
+    defaultRate: 0.1325, // Fallback: 13.25%
+    description: 'Final value fee',
     hasShippedRate: false,
   },
   poshmark: {
     name: 'Poshmark',
-    rate: 0.20, // 20% flat
-    description: '20% flat fee',
+    defaultRate: 0.20, // Fallback: 20%
+    description: 'Flat fee',
     hasShippedRate: false,
   },
   mercari: {
     name: 'Mercari',
-    rate: 0.10, // 10%
-    description: '10% selling fee',
+    defaultRate: 0.10, // Fallback: 10%
+    description: 'Selling fee',
     hasShippedRate: false,
   },
   whatnot: {
     name: 'Whatnot',
-    rate: 0.089, // 8.9% seller fee
-    description: '8.9% seller fee',
+    defaultRate: 0.10, // Fallback: 10%
+    description: 'Seller fee',
     hasShippedRate: false,
   },
   facebook: {
     name: 'Facebook Marketplace',
-    rate: 0, // 0% local
-    rateShipped: 0.05, // 5% shipped
-    description: '0% local, 5% shipped',
+    defaultRate: 0, // 0% local
+    defaultRateShipped: 0.05, // Fallback: 5% shipped
+    description: 'Local free, shipped fee',
     hasShippedRate: true,
   },
   offerup: {
     name: 'OfferUp',
-    rate: 0, // 0% local
-    rateShipped: 0.129, // 12.9% shipped
-    description: '0% local, 12.9% shipped',
+    defaultRate: 0, // 0% local
+    defaultRateShipped: 0.129, // Fallback: 12.9% shipped
+    description: 'Local free, shipped fee',
     hasShippedRate: true,
   },
   letgo: {
     name: 'LetGo',
-    rate: 0, // 0% local (merged with OfferUp)
-    rateShipped: 0.129, // 12.9% shipped
-    description: '0% local, 12.9% shipped',
+    defaultRate: 0, // 0% local (merged with OfferUp)
+    defaultRateShipped: 0.129, // Fallback: 12.9% shipped
+    description: 'Local free, shipped fee',
     hasShippedRate: true,
   },
   craigslist: {
     name: 'Craigslist',
-    rate: 0,
+    defaultRate: 0,
     description: 'Free (no fees)',
     hasShippedRate: false,
   },
   other: {
     name: 'Other/Custom',
-    rate: 0,
+    defaultRate: 0,
     description: 'Enter fee manually',
     hasShippedRate: false,
     isManual: true,
   },
 };
+
+/**
+ * Get the current platform fee rate from app settings
+ * Falls back to default if not available
+ * Note: For platforms with shipped rates (Facebook, OfferUp), this returns the LOCAL rate (0)
+ */
+export function getPlatformFeeRate(platform: SalesPlatform): number {
+  const config = PLATFORM_STATIC_CONFIG[platform];
+  if (!config) return 0;
+
+  // Platforms with shipped rates have 0% for local sales
+  if (config.hasShippedRate) {
+    return 0;
+  }
+
+  // Get dynamic rate from settings store
+  const feePercent = useAppSettingsStore.getState().getPlatformFee(platform);
+
+  // If settings store returns a value, convert from percentage to decimal
+  if (feePercent > 0) {
+    return feePercent / 100;
+  }
+
+  // Fallback to default rate
+  return config.defaultRate;
+}
+
+/**
+ * Get the shipped rate for platforms with different local/shipped fees
+ */
+export function getPlatformShippedRate(platform: SalesPlatform): number {
+  const config = PLATFORM_STATIC_CONFIG[platform];
+  if (!config || !config.hasShippedRate) return 0;
+
+  // Get dynamic rate from settings store
+  const feePercent = useAppSettingsStore.getState().getPlatformFee(platform);
+
+  // If settings store returns a value, use it for shipped rate
+  if (feePercent > 0) {
+    return feePercent / 100;
+  }
+
+  // Fallback to default shipped rate
+  return config.defaultRateShipped ?? 0;
+}
+
+/**
+ * Get full platform config with current dynamic rates
+ * Use this when you need the complete PlatformFeeConfig
+ */
+export function getPlatformConfig(platform: SalesPlatform): PlatformFeeConfig {
+  const staticConfig = PLATFORM_STATIC_CONFIG[platform];
+  if (!staticConfig) {
+    return {
+      name: platform,
+      rate: 0,
+      description: 'Unknown platform',
+      hasShippedRate: false,
+    };
+  }
+
+  const rate = getPlatformFeeRate(platform);
+  const rateShipped = staticConfig.hasShippedRate ? getPlatformShippedRate(platform) : undefined;
+
+  // Build dynamic description
+  let description: string;
+  if (staticConfig.isManual) {
+    description = 'Enter fee manually';
+  } else if (staticConfig.hasShippedRate) {
+    const shippedPercent = ((rateShipped ?? 0) * 100).toFixed(1).replace(/\.0$/, '');
+    description = `0% local, ${shippedPercent}% shipped`;
+  } else if (rate === 0) {
+    description = 'Free (no fees)';
+  } else {
+    const percent = (rate * 100).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1');
+    description = `${percent}% fee`;
+  }
+
+  return {
+    name: staticConfig.name,
+    rate,
+    rateShipped,
+    description,
+    hasShippedRate: staticConfig.hasShippedRate,
+    isManual: staticConfig.isManual,
+  };
+}
+
+// Legacy export for backward compatibility - builds from dynamic config
+export const PLATFORM_PRESETS: Record<SalesPlatform, PlatformFeeConfig> = Object.fromEntries(
+  Object.keys(PLATFORM_STATIC_CONFIG).map(key => [key, getPlatformConfig(key as SalesPlatform)])
+) as Record<SalesPlatform, PlatformFeeConfig>;
 
 // Platform fee configuration type
 export interface PlatformFeeConfig {
@@ -74,18 +168,28 @@ export interface PlatformFeeConfig {
   isManual?: boolean;
 }
 
-// Platform options for dropdown
-export const PLATFORM_OPTIONS: { value: SalesPlatform; label: string; description: string }[] = [
-  { value: 'ebay', label: 'eBay', description: '13.25% fee' },
-  { value: 'poshmark', label: 'Poshmark', description: '20% fee' },
-  { value: 'mercari', label: 'Mercari', description: '10% fee' },
-  { value: 'whatnot', label: 'Whatnot', description: '8.9% fee' },
-  { value: 'facebook', label: 'Facebook', description: '0%/5% shipped' },
-  { value: 'offerup', label: 'OfferUp', description: '0%/12.9% shipped' },
-  { value: 'letgo', label: 'LetGo', description: '0%/12.9% shipped' },
-  { value: 'craigslist', label: 'Craigslist', description: 'Free' },
-  { value: 'other', label: 'Other', description: 'Manual' },
+// Platform options order (for dropdown)
+const PLATFORM_ORDER: SalesPlatform[] = [
+  'ebay', 'poshmark', 'mercari', 'whatnot', 'facebook', 'offerup', 'letgo', 'craigslist', 'other'
 ];
+
+/**
+ * Get platform options with current dynamic fees for dropdown
+ * Call this function to get up-to-date fee descriptions
+ */
+export function getPlatformOptions(): { value: SalesPlatform; label: string; description: string }[] {
+  return PLATFORM_ORDER.map(platform => {
+    const config = getPlatformConfig(platform);
+    return {
+      value: platform,
+      label: config.name.replace(' Marketplace', ''), // Shorten for dropdown
+      description: config.description,
+    };
+  });
+}
+
+// Legacy static export - use getPlatformOptions() for dynamic rates
+export const PLATFORM_OPTIONS: { value: SalesPlatform; label: string; description: string }[] = getPlatformOptions();
 
 // Common sales channels for suggestions (legacy, kept for backward compatibility)
 export const SALES_CHANNEL_SUGGESTIONS = [
@@ -201,6 +305,7 @@ export function getDefaultSaleFormValues(listingPrice?: number | null): SaleForm
 
 /**
  * Calculate platform fee based on sale price and platform
+ * Uses dynamic rates from app_settings store
  * @param salePrice - The sale price of the item
  * @param platform - The sales platform
  * @param hasShipping - Whether the item is being shipped (affects FB/OfferUp)
@@ -213,15 +318,21 @@ export function calculatePlatformFee(
 ): number {
   if (!platform || salePrice <= 0) return 0;
 
-  const config = PLATFORM_PRESETS[platform];
-  if (!config) return 0;
+  const staticConfig = PLATFORM_STATIC_CONFIG[platform];
+  if (!staticConfig) return 0;
+
+  // Skip auto-calculation for manual/custom platforms
+  if (staticConfig.isManual) return 0;
 
   // For platforms with different shipped rates (Facebook, OfferUp)
-  if (config.hasShippedRate && hasShipping && config.rateShipped) {
-    return Math.round(salePrice * config.rateShipped * 100) / 100;
+  if (staticConfig.hasShippedRate && hasShipping) {
+    const shippedRate = getPlatformShippedRate(platform);
+    return Math.round(salePrice * shippedRate * 100) / 100;
   }
 
-  return Math.round(salePrice * config.rate * 100) / 100;
+  // Use dynamic rate from settings
+  const rate = getPlatformFeeRate(platform);
+  return Math.round(salePrice * rate * 100) / 100;
 }
 
 /**
@@ -250,7 +361,7 @@ export function calculateNetProfit(
  */
 export function getPlatformName(platform: SalesPlatform | null): string {
   if (!platform) return 'Not specified';
-  return PLATFORM_PRESETS[platform]?.name ?? platform;
+  return getPlatformConfig(platform).name;
 }
 
 /**
@@ -258,7 +369,7 @@ export function getPlatformName(platform: SalesPlatform | null): string {
  */
 export function getSalesChannelFromPlatform(platform: SalesPlatform | null): string | null {
   if (!platform) return null;
-  return PLATFORM_PRESETS[platform]?.name ?? null;
+  return getPlatformConfig(platform).name;
 }
 
 // Helper to format date for display

@@ -3,8 +3,11 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/src/lib/supabase';
-import { MileageTrip, TripPurpose } from '@/src/types/database';
-import { DEFAULT_IRS_MILEAGE_RATE } from '@/src/features/mileage/schemas/mileage-form-schema';
+import { MileageTrip, TripPurpose, APP_SETTING_DEFAULTS } from '@/src/types/database';
+import { useAppSettingsStore } from './admin-store';
+
+// Fallback IRS mileage rate from centralized defaults
+const DEFAULT_IRS_MILEAGE_RATE = APP_SETTING_DEFAULTS.irs_mileage_rate.value;
 
 // Extended mileage trip with linked pallet IDs
 export interface MileageTripWithPallets extends MileageTrip {
@@ -293,22 +296,15 @@ export const useMileageStore = create<MileageState>()(
 
       fetchCurrentMileageRate: async () => {
         try {
-          const { data, error } = await supabase
-            .from('app_settings')
-            .select('value')
-            .eq('key', 'irs_mileage_rate')
-            .single();
+          // Use centralized app settings store (has caching)
+          const settingsStore = useAppSettingsStore.getState();
 
-          if (error) {
-            console.warn('Failed to fetch IRS mileage rate, using default:', error.message);
-            return DEFAULT_IRS_MILEAGE_RATE;
+          // Ensure settings are fetched
+          if (!settingsStore.settingsLoaded) {
+            await settingsStore.fetchSettings();
           }
 
-          const rate = typeof data.value === 'number' ? data.value : parseFloat(String(data.value));
-          if (isNaN(rate)) {
-            return DEFAULT_IRS_MILEAGE_RATE;
-          }
-
+          const rate = settingsStore.getMileageRate();
           set({ currentMileageRate: rate });
           return rate;
         } catch (error) {

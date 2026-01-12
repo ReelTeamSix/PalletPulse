@@ -10,6 +10,17 @@ jest.mock('@/src/lib/supabase', () => ({
   },
 }));
 
+// Mock the app settings store
+jest.mock('../admin-store', () => ({
+  useAppSettingsStore: {
+    getState: () => ({
+      getMileageRate: () => 0.725,
+      settingsLoaded: true,
+      fetchSettings: jest.fn().mockResolvedValue(undefined),
+    }),
+  },
+}));
+
 const mockTrip = {
   id: 'trip-1',
   user_id: 'user-123',

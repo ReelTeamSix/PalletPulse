@@ -1,7 +1,7 @@
 # PalletPulse Development Progress
 
 ## Current Phase: Phase 8 - Expense System Redesign
-**Status:** Phase 8G App Settings Complete - Ready for Integration
+**Status:** Phase 8 COMPLETE - All integrations done
 **Branch:** feature/sales-profit
 
 ---
@@ -14,7 +14,7 @@
 - [x] Phase 5: Pallet Management (approved)
 - [x] Phase 6: Item Management (approved)
 - [x] Phase 7: Sales & Profit (approved)
-- [ ] Phase 8: Expense System Redesign ← **IN PROGRESS**
+- [x] Phase 8: Expense System Redesign (approved) ← **COMPLETE**
 - [ ] Phase 9: Analytics
 - [ ] Phase 10: Subscription
 - [ ] Phase 11: Polish
@@ -724,8 +724,29 @@ Separate web application with:
 **Remaining Tasks:**
 - [x] Create Supabase migration for `app_settings` table (done in Phase 8A)
 - [x] Write unit tests for `useAppSettingsStore`
-- [ ] Integrate settings store with sale form (auto-fetch platform fees)
-- [ ] Integrate settings store with mileage form (auto-fetch IRS rate)
+- [x] Integrate settings store with sale form (auto-fetch platform fees)
+- [x] Integrate settings store with mileage form (auto-fetch IRS rate)
+
+**Integration Details:**
+
+*Sale Form Integration (`sale-form-schema.ts`):*
+- Added `getPlatformFeeRate(platform)` - fetches rate from settings store
+- Added `getPlatformShippedRate(platform)` - for FB/OfferUp shipped fees
+- Added `getPlatformConfig(platform)` - full config with dynamic rates
+- Added `getPlatformOptions()` - dropdown options with current fee descriptions
+- Updated `calculatePlatformFee()` to use dynamic rates
+- Platforms with local/shipped rates (Facebook, OfferUp) handled correctly
+
+*Mileage Integration (`mileage-store.ts`, `mileage-form-schema.ts`):*
+- `fetchCurrentMileageRate()` now uses `useAppSettingsStore.getState().getMileageRate()`
+- Added `getCurrentMileageRate()` helper function
+- `DEFAULT_IRS_MILEAGE_RATE` now sourced from `APP_SETTING_DEFAULTS`
+
+*Test Updates:*
+- Added settings store mocks to `sale-form-schema.test.ts`
+- Added settings store mocks to `mileage-store.test.ts`
+- Added settings store mocks to `mileage-form-schema.test.ts`
+- Updated Whatnot test to use 10% (centralized default)
 
 ---
 

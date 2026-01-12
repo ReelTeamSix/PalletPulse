@@ -386,6 +386,11 @@ See "### Future: Web Admin Dashboard" section below for planned secure web inter
 - Falls back to hardcoded defaults if fetch fails
 - Convenience hooks: `usePlatformFee()`, `useMileageRate()`
 
+**Integration Points:**
+- Sale form (`sale-form-schema.ts`): `calculatePlatformFee()` uses dynamic rates from settings
+- Mileage form (`mileage-form-schema.ts`): `getCurrentMileageRate()` fetches from settings
+- All platform fee calculations automatically use admin-configured rates
+
 **Notification:** When new year approaches, remember to update IRS rate via Supabase Studio.
 
 #### 4E: Onboarding Integration

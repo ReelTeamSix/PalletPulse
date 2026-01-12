@@ -1,6 +1,7 @@
 // Mileage Trip Form Validation Schema
 import { z } from 'zod';
-import { TripPurpose } from '@/src/types/database';
+import { TripPurpose, APP_SETTING_DEFAULTS } from '@/src/types/database';
+import { useAppSettingsStore } from '@/src/stores/admin-store';
 
 // Trip purpose options for dropdown
 export const TRIP_PURPOSE_OPTIONS: { label: string; value: TripPurpose }[] = [
@@ -13,8 +14,17 @@ export const TRIP_PURPOSE_OPTIONS: { label: string; value: TripPurpose }[] = [
   { label: 'Other', value: 'other' },
 ];
 
-// Default IRS mileage rate (2026)
-export const DEFAULT_IRS_MILEAGE_RATE = 0.725;
+// Default IRS mileage rate from centralized app settings
+// Note: Use getCurrentMileageRate() for the most up-to-date rate
+export const DEFAULT_IRS_MILEAGE_RATE = APP_SETTING_DEFAULTS.irs_mileage_rate.value;
+
+/**
+ * Get the current IRS mileage rate from app settings
+ * Falls back to DEFAULT_IRS_MILEAGE_RATE if not available
+ */
+export function getCurrentMileageRate(): number {
+  return useAppSettingsStore.getState().getMileageRate();
+}
 
 // Mileage trip form schema
 export const mileageFormSchema = z.object({

@@ -1,4 +1,28 @@
 // Sale Form Schema Tests
+
+// Mock the app settings store before importing the schema
+jest.mock('@/src/stores/admin-store', () => ({
+  useAppSettingsStore: {
+    getState: () => ({
+      getPlatformFee: (platform: string) => {
+        // Return default fee percentages for testing
+        const fees: Record<string, number> = {
+          ebay: 13.25,
+          poshmark: 20,
+          mercari: 10,
+          whatnot: 10, // Updated to match app_settings default
+          facebook: 5,
+          offerup: 12.9,
+        };
+        return fees[platform] ?? 0;
+      },
+      getMileageRate: () => 0.725,
+      settingsLoaded: true,
+      fetchSettings: jest.fn(),
+    }),
+  },
+}));
+
 import {
   saleFormSchema,
   getDefaultSaleFormValues,
@@ -513,9 +537,10 @@ describe('calculatePlatformFee', () => {
     expect(calculatePlatformFee(100, 'mercari')).toBe(10);
   });
 
-  it('should calculate Whatnot fee correctly (8.9%)', () => {
-    expect(calculatePlatformFee(100, 'whatnot')).toBe(8.9);
-    expect(calculatePlatformFee(50, 'whatnot')).toBe(4.45);
+  it('should calculate Whatnot fee correctly (10%)', () => {
+    // Note: Whatnot fee is now configurable via app_settings, default is 10%
+    expect(calculatePlatformFee(100, 'whatnot')).toBe(10);
+    expect(calculatePlatformFee(50, 'whatnot')).toBe(5);
   });
 
   it('should return 0 for Craigslist (free)', () => {
