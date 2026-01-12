@@ -55,15 +55,6 @@ function getQuarterDates(year: number, quarter: 1 | 2 | 3 | 4): { start: Date; e
   };
 }
 
-// Get current quarter (1-4)
-function getCurrentQuarter(): 1 | 2 | 3 | 4 {
-  const month = new Date().getMonth();
-  if (month <= 2) return 1;
-  if (month <= 5) return 2;
-  if (month <= 8) return 3;
-  return 4;
-}
-
 // Calculate date range from preset
 export function getDateRangeFromPreset(preset: DateRangePreset): { start: Date | null; end: Date | null } {
   const now = new Date();
@@ -127,18 +118,13 @@ function formatDateRange(range: DateRange): string {
   return 'Select Range';
 }
 
-// Check if a quarter is the current quarter
-function isCurrentQuarter(quarter: 1 | 2 | 3 | 4): boolean {
-  return getCurrentQuarter() === quarter;
-}
-
-const PRESETS: { value: DateRangePreset; label: string; isCurrent?: boolean }[] = [
+const PRESETS: { value: DateRangePreset; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'this_month', label: 'Month' },
-  { value: 'q1', label: 'Q1', isCurrent: isCurrentQuarter(1) },
-  { value: 'q2', label: 'Q2', isCurrent: isCurrentQuarter(2) },
-  { value: 'q3', label: 'Q3', isCurrent: isCurrentQuarter(3) },
-  { value: 'q4', label: 'Q4', isCurrent: isCurrentQuarter(4) },
+  { value: 'q1', label: 'Q1' },
+  { value: 'q2', label: 'Q2' },
+  { value: 'q3', label: 'Q3' },
+  { value: 'q4', label: 'Q4' },
   { value: 'this_year', label: 'Year' },
   { value: 'custom', label: 'Custom' },
 ];
@@ -240,7 +226,6 @@ export function DateRangeFilter({
       >
         {PRESETS.map((preset) => {
           const isActive = value.preset === preset.value;
-          const showCurrentDot = preset.isCurrent && !isActive;
 
           return (
             <Pressable
@@ -248,14 +233,12 @@ export function DateRangeFilter({
               style={[
                 styles.presetPill,
                 isActive && styles.presetPillActive,
-                preset.isCurrent && !isActive && styles.presetPillCurrent,
               ]}
               onPress={() => handlePresetSelect(preset.value)}
             >
               <Text style={[styles.presetText, isActive && styles.presetTextActive]}>
                 {preset.label}
               </Text>
-              {showCurrentDot && <View style={styles.currentDot} />}
             </Pressable>
           );
         })}
@@ -425,9 +408,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  presetPillCurrent: {
-    borderColor: colors.primary,
-  },
   presetText: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
@@ -435,12 +415,6 @@ const styles = StyleSheet.create({
   },
   presetTextActive: {
     color: colors.background,
-  },
-  currentDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.primary,
   },
   // Modal styles
   modalOverlay: {
