@@ -1,7 +1,7 @@
 # PalletPulse Development Progress
 
 ## Current Phase: Phase 8 - Expense System Redesign
-**Status:** Expenses Tab with Mileage Segmented Control Complete
+**Status:** Phase 8G App Settings Complete - Ready for Integration
 **Branch:** feature/sales-profit
 
 ---
@@ -640,29 +640,92 @@ Implemented research-backed onboarding flow with tier selection and reverse tria
 
 ---
 
-### Phase 8G: Admin Dashboard - IRS Rate Management
+### Phase 8G: App Settings (Read-Only Store)
 
-**Admin Settings Screen:**
+**Completed:** Jan 11, 2026
+
+**Summary:**
+Implemented secure app settings architecture. Mobile app has READ-ONLY access to configurable variables. Admin writes are done via Supabase Studio (now) or a separate web admin dashboard (future, post-launch).
+
+**Security Decision:**
+After evaluating security implications, decided NOT to include admin write capabilities in the mobile app:
+- Mobile apps can be reverse-engineered
+- Admin endpoints create attack surface
+- Better security through separation of concerns
+- Web admin dashboard with server-side auth is more secure
+
+**Current Admin Workflow (Supabase Studio):**
 ```
-Admin → App Settings
-├── IRS Mileage Rate
-│   ├── Current Rate: $0.725/mile
-│   ├── Effective Date: Jan 1, 2026
-│   └── [Update Rate] → modal with new rate + date
-├── Platform Fee Defaults
-│   ├── eBay: 13.25% [Edit]
-│   ├── Poshmark: 20% [Edit]
-│   ├── Mercari: 10% [Edit]
-│   └── ...
-└── New Year Reminder: "Update IRS rate for 2027"
+Supabase Dashboard → Table Editor → app_settings
+├── Select row by key (e.g., 'irs_mileage_rate')
+├── Edit value field
+└── Save → Changes reflected in mobile app on next fetch
 ```
 
-**Tasks:**
-- [ ] Create admin settings screen (gated by admin role)
-- [ ] Build IRS rate editor with effective date
-- [ ] Build platform fee editor
-- [ ] Add new year reminder logic
-- [ ] Write tests for admin settings
+**Future Admin Workflow (Post-Launch):**
+Separate web application with:
+- Server-side authentication (admin role)
+- Service role key for writes (never client-exposed)
+- Audit logging for all changes
+- Business metrics dashboard
+
+**Files Created:**
+- `src/stores/admin-store.ts` - Renamed to `useAppSettingsStore` (READ-ONLY)
+  - `fetchSettings()` - Fetch from Supabase with 5-min cache
+  - `getSetting(key)` - Get single setting value
+  - `getPlatformFee(platform)` - Get fee % for platform
+  - `getMileageRate()` - Get current IRS rate
+  - `refreshSettings()` - Force refresh
+- `src/types/database.ts` - Added app settings types:
+  - `AppSettingKey` type with all configurable keys
+  - `APP_SETTING_DEFAULTS` with fallback values
+  - `PLATFORM_FEE_KEYS` mapping platforms to settings
+
+**Convenience Hooks:**
+- `usePlatformFee(platform)` - Get fee % with auto-fetch
+- `useMileageRate()` - Get IRS rate with auto-fetch
+- `useAllPlatformFees()` - Get all platform fees at once
+
+**Helper Functions:**
+- `calculatePlatformFee(price, platform)` - Calculate fee amount
+- `calculateMileageDeduction(miles)` - Calculate mileage deduction
+
+**App Settings Available:**
+| Key | Default | Description |
+|-----|---------|-------------|
+| `irs_mileage_rate` | 0.725 | IRS rate ($/mile) |
+| `platform_fee_ebay` | 13.25 | eBay fee (%) |
+| `platform_fee_poshmark` | 20 | Poshmark fee (%) |
+| `platform_fee_mercari` | 10 | Mercari fee (%) |
+| `platform_fee_facebook` | 5 | FB Marketplace (%) |
+| `platform_fee_offerup` | 12.9 | OfferUp (%) |
+| `platform_fee_whatnot` | 10 | Whatnot (%) |
+| `affiliate_commission_rate` | 25 | Affiliate commission (%) |
+| `trial_duration_days` | 7 | Trial length (days) |
+| `default_stale_threshold` | 30 | Stale inventory (days) |
+
+**Documentation Updated:**
+- [x] `PALLETPULSE_ONESHOT_CONTEXT.md` - Section 4D updated with security architecture
+- [x] `PALLETPULSE_ONESHOT_CONTEXT.md` - Added "Web Admin Dashboard (Post-Launch Priority)" section
+- [x] `PROGRESS.md` - This section
+
+**Tests Created:**
+- `src/stores/__tests__/app-settings-store.test.ts` - 35 tests covering:
+  - Initial state verification
+  - `fetchSettings()` - fetch, cache, error handling, string parsing
+  - `getSetting()` - value retrieval with defaults
+  - `getPlatformFee()` - all platforms (eBay, Poshmark, Mercari, etc.)
+  - `getMileageRate()`, `getTrialDuration()`, `getDefaultStaleThreshold()`
+  - `refreshSettings()` - force fetch
+  - `clearError()` - error state management
+  - `calculatePlatformFee()` - helper function tests
+  - `calculateMileageDeduction()` - helper function tests
+
+**Remaining Tasks:**
+- [x] Create Supabase migration for `app_settings` table (done in Phase 8A)
+- [x] Write unit tests for `useAppSettingsStore`
+- [ ] Integrate settings store with sale form (auto-fetch platform fees)
+- [ ] Integrate settings store with mileage form (auto-fetch IRS rate)
 
 ---
 

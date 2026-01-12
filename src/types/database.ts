@@ -270,3 +270,63 @@ export type TablesUpdate<T extends keyof Database['public']['Tables']> = Databas
 export const SALES_PLATFORMS: SalesPlatform[] = ['ebay', 'poshmark', 'mercari', 'whatnot', 'facebook', 'offerup', 'craigslist', 'other']
 export const TRIP_PURPOSES: TripPurpose[] = ['pallet_pickup', 'thrift_run', 'garage_sale', 'post_office', 'auction', 'sourcing', 'other']
 export const USER_TYPES: UserType[] = ['hobby', 'side_hustle', 'business']
+
+// App Settings Keys - Admin-configurable variables
+export type AppSettingKey =
+  | 'irs_mileage_rate'           // IRS standard mileage rate (updates annually)
+  | 'platform_fee_ebay'          // eBay final value fee %
+  | 'platform_fee_poshmark'      // Poshmark fee %
+  | 'platform_fee_mercari'       // Mercari fee %
+  | 'platform_fee_facebook'      // Facebook Marketplace shipped fee %
+  | 'platform_fee_offerup'       // OfferUp shipped fee %
+  | 'platform_fee_whatnot'       // Whatnot fee %
+  | 'affiliate_commission_rate'  // Affiliate commission %
+  | 'trial_duration_days'        // Free trial length
+  | 'default_stale_threshold'    // Default stale inventory days
+
+export const APP_SETTING_KEYS: AppSettingKey[] = [
+  'irs_mileage_rate',
+  'platform_fee_ebay',
+  'platform_fee_poshmark',
+  'platform_fee_mercari',
+  'platform_fee_facebook',
+  'platform_fee_offerup',
+  'platform_fee_whatnot',
+  'affiliate_commission_rate',
+  'trial_duration_days',
+  'default_stale_threshold',
+]
+
+// Default values for app settings
+export const APP_SETTING_DEFAULTS: Record<AppSettingKey, { value: number; description: string }> = {
+  irs_mileage_rate: { value: 0.725, description: 'IRS standard mileage rate ($/mile)' },
+  platform_fee_ebay: { value: 13.25, description: 'eBay final value fee (%)' },
+  platform_fee_poshmark: { value: 20, description: 'Poshmark commission (%)' },
+  platform_fee_mercari: { value: 10, description: 'Mercari selling fee (%)' },
+  platform_fee_facebook: { value: 5, description: 'Facebook Marketplace shipped (%)' },
+  platform_fee_offerup: { value: 12.9, description: 'OfferUp shipped (%)' },
+  platform_fee_whatnot: { value: 10, description: 'Whatnot selling fee (%)' },
+  affiliate_commission_rate: { value: 25, description: 'Affiliate commission (%)' },
+  trial_duration_days: { value: 7, description: 'Free trial length (days)' },
+  default_stale_threshold: { value: 30, description: 'Default stale inventory (days)' },
+}
+
+// Platform fee mapping for sale form auto-calculation
+export const PLATFORM_FEE_KEYS: Partial<Record<SalesPlatform, AppSettingKey>> = {
+  ebay: 'platform_fee_ebay',
+  poshmark: 'platform_fee_poshmark',
+  mercari: 'platform_fee_mercari',
+  facebook: 'platform_fee_facebook',
+  offerup: 'platform_fee_offerup',
+  whatnot: 'platform_fee_whatnot',
+}
+
+// App Settings Audit Log Entry
+export interface AppSettingAuditEntry {
+  key: AppSettingKey
+  oldValue: number | null
+  newValue: number
+  changedBy: string
+  changedAt: string
+  reason?: string
+}

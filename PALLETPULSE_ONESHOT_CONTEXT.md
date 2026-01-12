@@ -348,31 +348,45 @@ Add Expense
 - Can optionally link to pallets for attribution
 - Receipt photos stored for documentation
 
-#### 4D: Admin: IRS Rate Management
+#### 4D: Admin: App Settings (Configurable Variables)
 
-**Location:** Admin Dashboard → App Settings
+**Security Architecture:**
+- Mobile app has **READ-ONLY** access to app settings
+- Settings writes via Supabase Studio (now) or Web Admin Dashboard (future)
+- No admin write capabilities in mobile app by design
 
-**Admin Settings:**
+**App Settings Table (`app_settings`):**
+| Key | Default Value | Description |
+|-----|---------------|-------------|
+| `irs_mileage_rate` | 0.725 | IRS standard mileage rate ($/mile) |
+| `platform_fee_ebay` | 13.25 | eBay final value fee (%) |
+| `platform_fee_poshmark` | 20 | Poshmark commission (%) |
+| `platform_fee_mercari` | 10 | Mercari selling fee (%) |
+| `platform_fee_facebook` | 5 | Facebook Marketplace shipped (%) |
+| `platform_fee_offerup` | 12.9 | OfferUp shipped (%) |
+| `platform_fee_whatnot` | 10 | Whatnot selling fee (%) |
+| `affiliate_commission_rate` | 25 | Affiliate commission (%) |
+| `trial_duration_days` | 7 | Free trial length (days) |
+| `default_stale_threshold` | 30 | Default stale inventory (days) |
+
+**Current Admin Workflow (Supabase Studio):**
 ```
-IRS Mileage Rate
-├── Current Rate: $0.725/mile
-├── Effective Date: Jan 1, 2026
-├── Rate History:
-│   ├── 2026: $0.725
-│   ├── 2025: $0.70
-│   └── 2024: $0.67
-└── [Update Rate] button → prompts for new rate + effective date
-
-Platform Fee Defaults
-├── eBay: 13.25%
-├── Poshmark: 20%
-├── Mercari: 10%
-├── Facebook MP (shipped): 5%
-├── OfferUp (shipped): 12.9%
-└── [Edit] buttons for each
+Supabase Dashboard → Table Editor → app_settings
+├── Select row by key
+├── Edit value field
+└── Save changes → Immediately reflected in mobile app (next fetch)
 ```
 
-**Notification:** When new year approaches, admin dashboard shows reminder to update IRS rate.
+**Future Admin Workflow (Web Dashboard):**
+See "### Future: Web Admin Dashboard" section below for planned secure web interface.
+
+**Mobile App Behavior:**
+- `useAppSettingsStore` fetches settings on app load
+- 5-minute cache to avoid excessive API calls
+- Falls back to hardcoded defaults if fetch fails
+- Convenience hooks: `usePlatformFee()`, `useMileageRate()`
+
+**Notification:** When new year approaches, remember to update IRS rate via Supabase Studio.
 
 #### 4E: Onboarding Integration
 
@@ -1355,6 +1369,48 @@ subscriptions (managed by RevenueCat, mirrored in DB)
 - Mileage tracking (GPS-based)
 - 1099 preparation
 - Quarterly tax estimates
+
+**Web Admin Dashboard (Post-Launch Priority):**
+
+A separate, secure web application for admin/owner access. Mobile app remains read-only for settings.
+
+*Architecture:*
+- Separate Supabase project OR same project with server-side auth
+- Next.js/React web app with SSR
+- Admin authentication via Supabase Auth (separate admin role)
+- Service role key for write operations (never exposed to client)
+
+*Features - App Settings Management:*
+- Edit all app_settings values with audit trail
+- IRS mileage rate updates (annual reminder)
+- Platform fee management
+- Trial duration configuration
+- Affiliate commission rates
+
+*Features - Business Metrics:*
+- Total users (free/paid breakdown by tier)
+- MRR, ARR, churn rate with trends
+- Trial → Paid conversion funnel
+- Revenue by tier over time
+- New signups (daily/weekly/monthly charts)
+
+*Features - Affiliate Management:*
+- Create/edit affiliate codes
+- View affiliate performance
+- Track referrals and conversions
+- Manage pending payouts
+
+*Features - Operational:*
+- Storage usage monitoring (for cost control)
+- Error rates and API latency
+- User support tools (view user data for debugging)
+- System health dashboard
+
+*Security Requirements:*
+- Admin-only access (not regular users)
+- Audit logging for all changes
+- Rate limiting on admin endpoints
+- 2FA for admin accounts (recommended)
 
 ---
 
