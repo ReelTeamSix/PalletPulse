@@ -1,27 +1,33 @@
-// PalletCard Component - Displays a pallet summary in a list
+// PalletCard Component - Displays a pallet summary in a card
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Card } from '@/src/components/ui/Card';
+import { Badge } from '@/src/components/ui/Badge';
+import { ProgressBar } from '@/src/components/ui/ProgressBar';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { spacing, fontSize } from '@/src/constants/spacing';
 import { Pallet, PalletStatus } from '@/src/types/database';
+import { formatCurrency } from '@/src/lib/profit-utils';
 
 interface PalletCardProps {
   pallet: Pallet;
   itemCount?: number;
+  processedCount?: number;
   totalProfit?: number;
   onPress: () => void;
 }
 
-const STATUS_CONFIG: Record<PalletStatus, { label: string; color: string }> = {
-  unprocessed: { label: 'Unprocessed', color: colors.statusUnprocessed },
-  processing: { label: 'Processing', color: colors.statusListed },
-  completed: { label: 'Completed', color: colors.statusSold },
+const STATUS_CONFIG: Record<PalletStatus, { label: string; variant: 'default' | 'success' | 'warning' | 'info' }> = {
+  unprocessed: { label: 'Unprocessed', variant: 'default' },
+  processing: { label: 'In Progress', variant: 'warning' },
+  completed: { label: 'Completed', variant: 'success' },
 };
 
 export function PalletCard({
   pallet,
   itemCount = 0,
+  processedCount = 0,
   totalProfit = 0,
   onPress,
 }: PalletCardProps) {
@@ -30,15 +36,7 @@ export function PalletCard({
   const roi = totalCost > 0 ? ((totalProfit / totalCost) * 100).toFixed(0) : '0';
   const isProfitable = totalProfit >= 0;
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
   const formatDate = (dateString: string) => {
-    // Parse date string as local date (not UTC) to avoid timezone issues
     const [year, month, day] = dateString.split('-').map(Number);
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
@@ -49,31 +47,25 @@ export function PalletCard({
   };
 
   return (
-    <Pressable style={styles.container} onPress={onPress}>
+    <Card shadow="sm" padding="md" onPress={onPress} style={styles.card}>
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={styles.name} numberOfLines={1}>
-            {pallet.name}
-          </Text>
-          <View style={[styles.statusBadge, { backgroundColor: statusConfig.color }]}>
-            <Text style={styles.statusText}>{statusConfig.label}</Text>
+        <View style={styles.headerContent}>
+          <View style={styles.titleRow}>
+            <Text style={styles.name} numberOfLines={1}>
+              {pallet.name}
+            </Text>
+            <Badge variant={statusConfig.variant} size="sm" label={statusConfig.label} />
           </View>
-        </View>
-        {pallet.supplier && (
-          <Text style={styles.supplier} numberOfLines={1}>
-            {pallet.supplier}
+          <Text style={styles.date}>
+            Purchased {formatDate(pallet.purchase_date)}
           </Text>
-        )}
+        </View>
       </View>
 
       <View style={styles.statsRow}>
         <View style={styles.stat}>
           <Text style={styles.statLabel}>Cost</Text>
           <Text style={styles.statValue}>{formatCurrency(totalCost)}</Text>
-        </View>
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>Items</Text>
-          <Text style={styles.statValue}>{itemCount}</Text>
         </View>
         <View style={styles.stat}>
           <Text style={styles.statLabel}>Profit</Text>
@@ -83,7 +75,7 @@ export function PalletCard({
               { color: isProfitable ? colors.profit : colors.loss },
             ]}
           >
-            {formatCurrency(totalProfit)}
+            {isProfitable ? '+' : ''}{formatCurrency(totalProfit)}
           </Text>
         </View>
         <View style={styles.stat}>
@@ -99,25 +91,38 @@ export function PalletCard({
         </View>
       </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.date}>
-          Purchased {formatDate(pallet.purchase_date)}
-        </Text>
-        <FontAwesome name="chevron-right" size={14} color={colors.textSecondary} />
-      </View>
-    </Pressable>
+      {itemCount > 0 && (
+        <View style={styles.progressSection}>
+          <ProgressBar
+            current={processedCount}
+            total={itemCount}
+            label="Items Processed"
+            color={pallet.status === 'completed' ? colors.profit : colors.primary}
+          />
+        </View>
+      )}
+
+      {pallet.supplier && (
+        <View style={styles.footer}>
+          <Ionicons name="business-outline" size={12} color={colors.textDisabled} />
+          <Text style={styles.supplierText} numberOfLines={1}>
+            {pallet.supplier}
+          </Text>
+        </View>
+      )}
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
+  card: {
     marginBottom: spacing.md,
   },
   header: {
     marginBottom: spacing.md,
+  },
+  headerContent: {
+    flex: 1,
   },
   titleRow: {
     flexDirection: 'row',
@@ -132,27 +137,17 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: spacing.sm,
   },
-  statusBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  statusText: {
-    fontSize: fontSize.xs,
-    color: colors.background,
-    fontWeight: '600',
-  },
-  supplier: {
+  date: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
   },
   statsRow: {
     flexDirection: 'row',
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: 8,
     paddingVertical: spacing.sm,
-    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
   },
   stat: {
     flex: 1,
@@ -160,21 +155,28 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
+    fontWeight: '500',
+    color: colors.textDisabled,
+    marginBottom: 2,
   },
   statValue: {
     fontSize: fontSize.md,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.textPrimary,
+  },
+  progressSection: {
+    marginBottom: spacing.sm,
   },
   footer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.xs,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
-  date: {
+  supplierText: {
     fontSize: fontSize.sm,
-    color: colors.textSecondary,
+    color: colors.textDisabled,
   },
 });

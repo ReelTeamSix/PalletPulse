@@ -6,3 +6,5 @@ export * from './Card';
 export * from './Badge';
 export * from './SectionHeader';
 export * from './ConfirmationModal';
+export * from './ThumbnailImage';
+export * from './ProgressBar';
