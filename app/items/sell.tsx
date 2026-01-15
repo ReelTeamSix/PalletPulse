@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { colors } from '@/src/constants/colors';
@@ -201,7 +201,7 @@ export default function SellItemScreen() {
         <Stack.Screen options={{ title: 'Not Found' }} />
         <View style={styles.container}>
           <View style={styles.errorContainer}>
-            <FontAwesome name="exclamation-circle" size={48} color={colors.loss} />
+            <Ionicons name="alert-circle" size={48} color={colors.loss} />
             <Text style={styles.errorTitle}>Item Not Found</Text>
             <Text style={styles.errorText}>
               This item may have been deleted or doesn't exist.
@@ -221,7 +221,7 @@ export default function SellItemScreen() {
         <Stack.Screen options={{ title: 'Already Sold' }} />
         <View style={styles.container}>
           <View style={styles.errorContainer}>
-            <FontAwesome name="check-circle" size={48} color={colors.profit} />
+            <Ionicons name="checkmark-circle" size={48} color={colors.profit} />
             <Text style={styles.errorTitle}>Already Sold</Text>
             <Text style={styles.errorText}>
               This item has already been marked as sold.
@@ -311,7 +311,7 @@ export default function SellItemScreen() {
                   )}
                   {priceWarning && (
                     <View style={styles.warningContainer}>
-                      <FontAwesome name="exclamation-triangle" size={14} color={colors.warning} />
+                      <Ionicons name="warning" size={14} color={colors.warning} />
                       <Text style={styles.warningText}>{priceWarning}</Text>
                     </View>
                   )}

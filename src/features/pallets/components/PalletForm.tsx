@@ -366,8 +366,10 @@ export function PalletForm({
         )}
       />
 
-      {/* Buttons */}
-      <View style={styles.buttonRow}>
+      </ScrollView>
+
+      {/* Fixed Footer Buttons */}
+      <View style={styles.footer}>
         <Button
           title="Cancel"
           onPress={onCancel}
@@ -382,7 +384,6 @@ export function PalletForm({
           loading={isLoading}
         />
       </View>
-      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -506,10 +507,13 @@ const styles = StyleSheet.create({
     color: colors.loss,
     marginTop: spacing.xs,
   },
-  buttonRow: {
+  footer: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.lg,
+    padding: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.background,
   },
   cancelButton: {
     flex: 1,
