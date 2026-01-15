@@ -14,12 +14,12 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
-import { Button } from '@/src/components/ui';
+import { Button, ConfirmationModal } from '@/src/components/ui';
 import {
   formatCondition,
   formatStatus,
@@ -43,6 +43,7 @@ export default function ItemDetailScreen() {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [photoViewerVisible, setPhotoViewerVisible] = useState(false);
   const [viewerPhotoIndex, setViewerPhotoIndex] = useState(0);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   // Fetch items if not loaded
   useEffect(() => {
@@ -82,26 +83,18 @@ export default function ItemDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Item',
-      `Are you sure you want to delete "${item?.name}"? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            if (!id) return;
-            const result = await deleteItem(id);
-            if (result.success) {
-              router.back();
-            } else {
-              Alert.alert('Error', result.error || 'Failed to delete item');
-            }
-          },
-        },
-      ]
-    );
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!id) return;
+    setDeleteModalVisible(false);
+    const result = await deleteItem(id);
+    if (result.success) {
+      router.back();
+    } else {
+      Alert.alert('Error', result.error || 'Failed to delete item');
+    }
   };
 
   const handlePalletPress = () => {
@@ -170,7 +163,7 @@ export default function ItemDetailScreen() {
         <Stack.Screen options={{ title: 'Not Found' }} />
         <View style={styles.container}>
           <View style={styles.errorContainer}>
-            <FontAwesome name="exclamation-circle" size={48} color={colors.loss} />
+            <Ionicons name="alert-circle" size={48} color={colors.loss} />
             <Text style={styles.errorTitle}>Item Not Found</Text>
             <Text style={styles.errorText}>
               This item may have been deleted or doesn't exist.
@@ -221,10 +214,10 @@ export default function ItemDetailScreen() {
           headerRight: () => (
             <View style={styles.headerButtons}>
               <Pressable style={styles.headerButton} onPress={handleEdit}>
-                <FontAwesome name="pencil" size={18} color={colors.primary} />
+                <Ionicons name="create-outline" size={18} color={colors.primary} />
               </Pressable>
               <Pressable style={styles.headerButton} onPress={handleDelete}>
-                <FontAwesome name="trash" size={18} color={colors.loss} />
+                <Ionicons name="trash-outline" size={18} color={colors.loss} />
               </Pressable>
             </View>
           ),
@@ -271,7 +264,7 @@ export default function ItemDetailScreen() {
               </View>
             ) : (
               <View style={styles.photoPlaceholder}>
-                <FontAwesome name="camera" size={48} color={colors.neutral} />
+                <Ionicons name="camera-outline" size={48} color={colors.neutral} />
                 <Text style={styles.photoPlaceholderText}>No photos</Text>
               </View>
             )}
@@ -307,7 +300,7 @@ export default function ItemDetailScreen() {
                   <View style={styles.priceLabelRow}>
                     <Text style={styles.priceLabel}>{isEstimatedCost ? 'Est. Cost' : 'Cost'}</Text>
                     {isEstimatedCost && (
-                      <FontAwesome name="info-circle" size={12} color={colors.textSecondary} />
+                      <Ionicons name="information-circle" size={12} color={colors.textSecondary} />
                     )}
                   </View>
                   <Text style={styles.priceValue}>{formatCurrency(effectiveCost)}</Text>
@@ -329,7 +322,7 @@ export default function ItemDetailScreen() {
                   <View style={styles.priceLabelRow}>
                     <Text style={styles.priceLabel}>{isEstimatedCost ? 'Est. Cost' : 'Cost'}</Text>
                     {isEstimatedCost && (
-                      <FontAwesome name="info-circle" size={12} color={colors.textSecondary} />
+                      <Ionicons name="information-circle" size={12} color={colors.textSecondary} />
                     )}
                   </View>
                   <Text style={styles.priceValue}>{formatCurrency(effectiveCost)}</Text>
@@ -347,7 +340,7 @@ export default function ItemDetailScreen() {
           {/* Cost Allocation Info for Pallet Items */}
           {isEstimatedCost && pallet && (
             <View style={styles.costAllocationInfo}>
-              <FontAwesome name="info-circle" size={14} color={colors.textSecondary} />
+              <Ionicons name="information-circle" size={14} color={colors.textSecondary} />
               <Text style={styles.costAllocationText}>
                 Cost allocated from pallet: {formatCurrency(pallet.purchase_cost + (pallet.sales_tax || 0))} ÷ {palletItemCount} items
               </Text>
@@ -409,9 +402,9 @@ export default function ItemDetailScreen() {
 
           {pallet && (
             <Pressable style={styles.palletLink} onPress={handlePalletPress}>
-              <FontAwesome name="archive" size={16} color={colors.primary} />
+              <Ionicons name="cube-outline" size={16} color={colors.primary} />
               <Text style={styles.palletLinkText}>From pallet: {pallet.name}</Text>
-              <FontAwesome name="chevron-right" size={14} color={colors.textSecondary} />
+              <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} />
             </Pressable>
           )}
 
@@ -519,7 +512,7 @@ export default function ItemDetailScreen() {
               style={styles.photoViewerCloseButton}
               onPress={() => setPhotoViewerVisible(false)}
             >
-              <FontAwesome name="close" size={24} color={colors.background} />
+              <Ionicons name="close" size={24} color={colors.background} />
             </Pressable>
             <ScrollView
               horizontal
@@ -555,6 +548,18 @@ export default function ItemDetailScreen() {
             )}
           </View>
         </Modal>
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          visible={deleteModalVisible}
+          type="delete"
+          title={`Delete ${item.name}?`}
+          message="This action is permanent and cannot be undone."
+          primaryLabel="Delete Item"
+          secondaryLabel="Cancel"
+          onPrimary={confirmDelete}
+          onClose={() => setDeleteModalVisible(false)}
+        />
       </View>
     </>
   );

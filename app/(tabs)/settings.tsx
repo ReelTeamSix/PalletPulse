@@ -19,7 +19,7 @@ import { typography } from '@/src/constants/typography';
 import { shadows } from '@/src/constants/shadows';
 import { Card } from '@/src/components/ui/Card';
 import { SectionHeader } from '@/src/components/ui/SectionHeader';
-import { Button } from '@/src/components/ui';
+import { Button, ConfirmationModal } from '@/src/components/ui';
 import { useAuthStore } from '@/src/stores/auth-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { UserType } from '@/src/types/database';
@@ -152,6 +152,8 @@ export default function SettingsScreen() {
   } = useUserSettingsStore();
 
   const [showUserTypePicker, setShowUserTypePicker] = useState(false);
+  const [signOutModalVisible, setSignOutModalVisible] = useState(false);
+  const [expenseModalVisible, setExpenseModalVisible] = useState(false);
 
   // Fetch settings on mount and focus
   useFocusEffect(
@@ -161,40 +163,25 @@ export default function SettingsScreen() {
   );
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            await signOut();
-          },
-        },
-      ]
-    );
+    setSignOutModalVisible(true);
+  };
+
+  const confirmSignOut = async () => {
+    setSignOutModalVisible(false);
+    await signOut();
   };
 
   const handleToggleExpenseTracking = async (enabled: boolean) => {
     if (enabled) {
-      Alert.alert(
-        'Enable Expense Tracking',
-        'PalletPulse is an inventory tracking tool, not tax software. Expense tracking features are provided for your convenience. Always consult a tax professional for tax advice.\n\nDo you want to enable expense tracking?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Enable',
-            onPress: async () => {
-              await toggleExpenseTracking(true);
-            },
-          },
-        ]
-      );
+      setExpenseModalVisible(true);
     } else {
       await toggleExpenseTracking(false);
     }
+  };
+
+  const confirmEnableExpenseTracking = async () => {
+    setExpenseModalVisible(false);
+    await toggleExpenseTracking(true);
   };
 
   const handleUserTypeChange = async (userType: UserType) => {
@@ -390,6 +377,31 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.bottomPadding} />
+
+      {/* Sign Out Confirmation Modal */}
+      <ConfirmationModal
+        visible={signOutModalVisible}
+        type="warning"
+        title="Sign Out?"
+        message="Are you sure you want to sign out of your account?"
+        primaryLabel="Sign Out"
+        secondaryLabel="Cancel"
+        onPrimary={confirmSignOut}
+        onClose={() => setSignOutModalVisible(false)}
+      />
+
+      {/* Enable Expense Tracking Modal */}
+      <ConfirmationModal
+        visible={expenseModalVisible}
+        type="info"
+        title="Enable Expense Tracking"
+        message="PalletPulse is an inventory tracking tool, not tax software. Expense tracking features are provided for your convenience. Always consult a tax professional for tax advice."
+        infoText="Do you want to enable expense tracking?"
+        primaryLabel="Enable"
+        secondaryLabel="Cancel"
+        onPrimary={confirmEnableExpenseTracking}
+        onClose={() => setExpenseModalVisible(false)}
+      />
     </ScrollView>
   );
 }

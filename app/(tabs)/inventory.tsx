@@ -52,7 +52,7 @@ export default function InventoryScreen() {
 
   // Stores
   const { pallets, isLoading: palletsLoading, error: palletsError, fetchPallets } = usePalletsStore();
-  const { items, isLoading: itemsLoading, error: itemsError, fetchItems, markAsSold, deleteItem } = useItemsStore();
+  const { items, isLoading: itemsLoading, error: itemsError, fetchItems, markAsSold, deleteItem, fetchThumbnails } = useItemsStore();
   const { expenses, fetchExpenses, isLoading: expensesLoading } = useExpensesStore();
   const { getPalletById } = usePalletsStore();
 
@@ -76,6 +76,9 @@ export default function InventoryScreen() {
 
   // Delete confirmation modal state
   const [deleteModalItem, setDeleteModalItem] = useState<Item | null>(null);
+
+  // Thumbnail state for item images
+  const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
 
   // Load saved segment from AsyncStorage
   useEffect(() => {
@@ -111,6 +114,18 @@ export default function InventoryScreen() {
       fetchExpenses();
     }, [])
   );
+
+  // Fetch thumbnails when items change
+  useEffect(() => {
+    const loadThumbnails = async () => {
+      if (items.length > 0) {
+        const itemIds = items.map(item => item.id);
+        const thumbs = await fetchThumbnails(itemIds);
+        setThumbnails(thumbs);
+      }
+    };
+    loadThumbnails();
+  }, [items, fetchThumbnails]);
 
   // Calculate pallet metrics
   const palletMetrics = useMemo(() => {
@@ -281,6 +296,7 @@ export default function InventoryScreen() {
 
   const renderItemCard = ({ item }: { item: Item }) => {
     const pallet = item.pallet_id ? getPalletById(item.pallet_id) : null;
+    const thumbnailUri = thumbnails[item.id];
     return (
       <Swipeable
         ref={(ref) => { if (ref) swipeableRefs.current.set(item.id, ref); }}
@@ -296,6 +312,7 @@ export default function InventoryScreen() {
           onPress={() => handleItemPress(item)}
           showPalletBadge={!!pallet}
           palletName={pallet?.name}
+          thumbnailUri={thumbnailUri}
         />
       </Swipeable>
     );

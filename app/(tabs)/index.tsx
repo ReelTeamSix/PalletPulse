@@ -69,29 +69,10 @@ export default function DashboardScreen() {
       return sum + (item.listing_price ?? item.purchase_cost ?? 0);
     }, 0);
 
-    // Calculate average ROI for sold items
-    let avgROI = 0;
-    if (soldItems.length > 0) {
-      const roiSum = soldItems.reduce((sum, item) => {
-        const cost = item.allocated_cost ?? item.purchase_cost ?? 0;
-        if (cost > 0) {
-          const profit = (item.sale_price ?? 0) - cost;
-          return sum + (profit / cost) * 100;
-        }
-        return sum;
-      }, 0);
-      avgROI = roiSum / soldItems.length;
-    }
-
-    // Active pallets (not fully processed)
-    const activePallets = pallets.filter(p => p.status !== 'completed').length;
-
     return {
       totalProfit,
       soldCount: soldItems.length,
       activeValue,
-      avgROI,
-      activePallets,
       isProfitable: totalProfit >= 0,
     };
   }, [pallets, items, expenses, expenseTrackingEnabled]);
@@ -203,20 +184,6 @@ export default function DashboardScreen() {
           value={formatCurrency(metrics.activeValue)}
           label="Active Value"
           color={colors.primary}
-          onPress={() => router.push('/(tabs)/inventory')}
-        />
-        <MetricCard
-          icon="trending-up"
-          value={`${metrics.avgROI.toFixed(0)}%`}
-          label="Avg ROI"
-          color={colors.warning}
-          onPress={() => router.push('/(tabs)/analytics')}
-        />
-        <MetricCard
-          icon="cube-outline"
-          value={metrics.activePallets}
-          label="Active Pallets"
-          color={colors.statusListed}
           onPress={() => router.push('/(tabs)/inventory')}
         />
       </MetricGrid>

@@ -10,15 +10,11 @@ import { formatCurrency } from '@/src/lib/profit-utils';
 interface HeroCardProps {
   totalProfit: number;
   soldCount: number;
-  trendPercentage?: number;
-  periodLabel?: string;
 }
 
 export function HeroCard({
   totalProfit,
   soldCount,
-  trendPercentage,
-  periodLabel = 'all time',
 }: HeroCardProps) {
   const isProfitable = totalProfit >= 0;
   const displayValue = Math.abs(totalProfit);
@@ -27,24 +23,16 @@ export function HeroCard({
     <Card shadow="lg" padding="lg" style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.label}>TOTAL PROFIT</Text>
-        {trendPercentage !== undefined && (
-          <View style={[
-            styles.trendBadge,
-            { backgroundColor: trendPercentage >= 0 ? colors.profit + '20' : colors.loss + '20' }
-          ]}>
-            <Ionicons
-              name={trendPercentage >= 0 ? 'trending-up' : 'trending-down'}
-              size={14}
-              color={trendPercentage >= 0 ? colors.profit : colors.loss}
-            />
-            <Text style={[
-              styles.trendText,
-              { color: trendPercentage >= 0 ? colors.profit : colors.loss }
-            ]}>
-              {trendPercentage >= 0 ? '+' : ''}{trendPercentage.toFixed(1)}%
-            </Text>
-          </View>
-        )}
+        <View style={[
+          styles.statusBadge,
+          { backgroundColor: isProfitable ? colors.profit + '15' : colors.loss + '15' }
+        ]}>
+          <Ionicons
+            name={isProfitable ? 'trending-up' : 'trending-down'}
+            size={16}
+            color={isProfitable ? colors.profit : colors.loss}
+          />
+        </View>
       </View>
 
       <Text style={[styles.value, { color: isProfitable ? colors.profit : colors.loss }]}>
@@ -52,85 +40,39 @@ export function HeroCard({
       </Text>
 
       <Text style={styles.subtitle}>
-        Net profit from {soldCount} sold item{soldCount !== 1 ? 's' : ''}
+        Net profit calculated from {soldCount} sold item{soldCount !== 1 ? 's' : ''}
       </Text>
-
-      <View style={styles.chartContainer}>
-        <MiniBarChart />
-      </View>
     </Card>
-  );
-}
-
-function MiniBarChart() {
-  const bars = [0.3, 0.5, 0.7, 0.85, 1.0, 0.9];
-
-  return (
-    <View style={styles.barChart}>
-      {bars.map((height, index) => (
-        <View
-          key={index}
-          style={[
-            styles.bar,
-            {
-              height: 40 * height,
-              backgroundColor: index === bars.length - 1 ? colors.profit : colors.profit + '60',
-            }
-          ]}
-        />
-      ))}
-    </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   label: {
     ...typography.sectionHeader,
     color: colors.textSecondary,
   },
-  trendBadge: {
-    flexDirection: 'row',
+  statusBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
-    gap: 4,
-  },
-  trendText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
+    justifyContent: 'center',
   },
   value: {
     ...typography.heroValue,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.md,
     color: colors.textSecondary,
-    marginBottom: spacing.md,
-  },
-  chartContainer: {
-    marginTop: spacing.sm,
-  },
-  barChart: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    height: 40,
-    gap: spacing.sm,
-  },
-  bar: {
-    flex: 1,
-    borderRadius: borderRadius.sm,
-    minWidth: 24,
   },
 });

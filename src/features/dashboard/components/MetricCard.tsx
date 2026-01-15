@@ -60,16 +60,16 @@ export function MetricGrid({ children }: MetricGridProps) {
 
 const styles = StyleSheet.create({
   card: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flex: 1,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.md,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   value: {
     ...typography.metricValue,
@@ -79,12 +79,10 @@ const styles = StyleSheet.create({
   label: {
     ...typography.metricLabel,
     color: colors.textSecondary,
-    textAlign: 'center',
   },
   grid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
+    gap: spacing.md,
+    marginBottom: spacing.lg,
   },
 });

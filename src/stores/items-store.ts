@@ -81,6 +81,8 @@ export interface ItemsState {
   uploadItemPhotos: (itemId: string, photos: PhotoItem[]) => Promise<{ success: boolean; photos?: ItemPhoto[]; error?: string }>;
   fetchItemPhotos: (itemId: string) => Promise<ItemPhoto[]>;
   deleteItemPhoto: (photoId: string, storagePath: string) => Promise<{ success: boolean; error?: string }>;
+  // Thumbnail support for lists
+  fetchThumbnails: (itemIds: string[]) => Promise<Record<string, string>>;
 }
 
 export const useItemsStore = create<ItemsState>()(
@@ -486,6 +488,33 @@ export const useItemsStore = create<ItemsState>()(
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to delete photo';
           return { success: false, error: message };
+        }
+      },
+
+      fetchThumbnails: async (itemIds: string[]) => {
+        if (itemIds.length === 0) return {};
+
+        try {
+          // Fetch first photo for each item (ordered by display_order)
+          const { data, error } = await supabase
+            .from('item_photos')
+            .select('item_id, storage_path')
+            .in('item_id', itemIds)
+            .order('display_order', { ascending: true });
+
+          if (error || !data) return {};
+
+          // Create a map of item_id -> thumbnail URL (first photo only)
+          const thumbnails: Record<string, string> = {};
+          for (const photo of data) {
+            if (!thumbnails[photo.item_id]) {
+              thumbnails[photo.item_id] = getPhotoUrl(photo.storage_path);
+            }
+          }
+          return thumbnails;
+        } catch (error) {
+          console.error('Failed to fetch thumbnails:', error);
+          return {};
         }
       },
     }),
