@@ -366,17 +366,12 @@ describe('MileageStore', () => {
 
   describe('fetchCurrentMileageRate', () => {
     it('should fetch rate from app_settings', async () => {
-      const mockSelect = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({ data: { value: 0.67 }, error: null }),
-        }),
-      });
-      (supabase.from as jest.Mock).mockReturnValue({ select: mockSelect });
-
+      // Note: fetchCurrentMileageRate now uses useAppSettingsStore (mocked at top of file)
+      // which returns 0.725 (current IRS rate for 2025)
       const rate = await useMileageStore.getState().fetchCurrentMileageRate();
 
-      expect(rate).toBe(0.67);
-      expect(useMileageStore.getState().currentMileageRate).toBe(0.67);
+      expect(rate).toBe(0.725);
+      expect(useMileageStore.getState().currentMileageRate).toBe(0.725);
     });
 
     it('should return default rate on error', async () => {
