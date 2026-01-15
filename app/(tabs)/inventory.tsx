@@ -18,9 +18,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { typography } from '@/src/constants/typography';
+import { ConfirmationModal } from '@/src/components/ui';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
 import { useExpensesStore } from '@/src/stores/expenses-store';
@@ -71,6 +73,9 @@ export default function InventoryScreen() {
   const [quickSellPlatform, setQuickSellPlatform] = useState<SalesPlatform | null>(null);
   const [isQuickSelling, setIsQuickSelling] = useState(false);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
+
+  // Delete confirmation modal state
+  const [deleteModalItem, setDeleteModalItem] = useState<Item | null>(null);
 
   // Load saved segment from AsyncStorage
   useEffect(() => {
@@ -199,26 +204,20 @@ export default function InventoryScreen() {
     }
   };
 
-  // Delete handler
+  // Delete handler - opens confirmation modal
   const handleDelete = (item: Item) => {
     swipeableRefs.current.get(item.id)?.close();
-    Alert.alert(
-      'Delete Item',
-      `Are you sure you want to permanently delete "${item.name}"? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const result = await deleteItem(item.id);
-            if (!result.success) {
-              Alert.alert('Error', result.error || 'Failed to delete item');
-            }
-          },
-        },
-      ]
-    );
+    setDeleteModalItem(item);
+  };
+
+  // Confirm delete action
+  const handleConfirmDelete = async () => {
+    if (!deleteModalItem) return;
+    const result = await deleteItem(deleteModalItem.id);
+    if (!result.success) {
+      Alert.alert('Error', result.error || 'Failed to delete item');
+    }
+    setDeleteModalItem(null);
   };
 
   // Get item cost for profit calculation
@@ -245,7 +244,7 @@ export default function InventoryScreen() {
     return (
       <Animated.View style={[styles.swipeAction, { transform: [{ translateX }] }]}>
         <Pressable style={styles.sellButton} onPress={() => handleQuickSell(item)}>
-          <FontAwesome name="dollar" size={20} color={colors.background} />
+          <Ionicons name="cash-outline" size={22} color={colors.background} />
           <Text style={styles.sellButtonText}>SELL</Text>
         </Pressable>
       </Animated.View>
@@ -260,7 +259,7 @@ export default function InventoryScreen() {
     return (
       <Animated.View style={[styles.swipeActionLeft, { transform: [{ translateX }] }]}>
         <Pressable style={styles.deleteButton} onPress={() => handleDelete(item)}>
-          <FontAwesome name="trash" size={20} color={colors.background} />
+          <Ionicons name="trash-outline" size={22} color={colors.background} />
           <Text style={styles.deleteButtonText}>DELETE</Text>
         </Pressable>
       </Animated.View>
@@ -304,7 +303,7 @@ export default function InventoryScreen() {
 
   const renderEmptyPallets = () => (
     <View style={styles.placeholder}>
-      <FontAwesome name="archive" size={48} color={colors.neutral} />
+      <Ionicons name="cube-outline" size={48} color={colors.neutral} />
       <Text style={styles.placeholderTitle}>No pallets yet</Text>
       <Text style={styles.placeholderText}>
         Tap the + button to add your first pallet and start tracking your inventory.
@@ -314,7 +313,7 @@ export default function InventoryScreen() {
 
   const renderEmptyItems = () => (
     <View style={styles.placeholder}>
-      <FontAwesome name="cube" size={48} color={colors.neutral} />
+      <Ionicons name="pricetag-outline" size={48} color={colors.neutral} />
       <Text style={styles.placeholderTitle}>No items yet</Text>
       <Text style={styles.placeholderText}>
         Tap the + button to add your first item. Items from pallets and individual finds will appear here.
@@ -324,7 +323,7 @@ export default function InventoryScreen() {
 
   const renderErrorState = () => (
     <View style={styles.placeholder}>
-      <FontAwesome name="exclamation-circle" size={48} color={colors.loss} />
+      <Ionicons name="alert-circle-outline" size={48} color={colors.loss} />
       <Text style={styles.placeholderTitle}>Something went wrong</Text>
       <Text style={styles.placeholderText}>{error}</Text>
       <Pressable style={styles.retryButton} onPress={handleRefresh}>
@@ -389,9 +388,9 @@ export default function InventoryScreen() {
             ]}
             onPress={() => handleSegmentChange('pallets')}
           >
-            <FontAwesome
-              name="archive"
-              size={16}
+            <Ionicons
+              name="cube-outline"
+              size={18}
               color={activeSegment === 'pallets' ? colors.background : colors.textSecondary}
               style={styles.segmentIcon}
             />
@@ -411,9 +410,9 @@ export default function InventoryScreen() {
             ]}
             onPress={() => handleSegmentChange('items')}
           >
-            <FontAwesome
-              name="cube"
-              size={16}
+            <Ionicons
+              name="pricetag-outline"
+              size={18}
               color={activeSegment === 'items' ? colors.background : colors.textSecondary}
               style={styles.segmentIcon}
             />
@@ -432,7 +431,7 @@ export default function InventoryScreen() {
         {activeSegment === 'items' && items.length > 0 && (
           <>
             <View style={styles.searchContainer}>
-              <FontAwesome name="search" size={16} color={colors.textSecondary} />
+              <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
               <TextInput
                 style={styles.searchInput}
                 placeholder="Search by name, barcode, notes..."
@@ -444,7 +443,7 @@ export default function InventoryScreen() {
               />
               {searchQuery.length > 0 && (
                 <Pressable onPress={() => setSearchQuery('')}>
-                  <FontAwesome name="times-circle" size={18} color={colors.textSecondary} />
+                  <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
                 </Pressable>
               )}
             </View>
@@ -516,7 +515,7 @@ export default function InventoryScreen() {
         renderEmptyItems()
       ) : filteredItems.length === 0 ? (
         <View style={styles.noResults}>
-          <FontAwesome name="search" size={32} color={colors.neutral} />
+          <Ionicons name="search-outline" size={32} color={colors.neutral} />
           <Text style={styles.noResultsTitle}>No items found</Text>
           <Text style={styles.noResultsText}>
             {searchQuery ? `No items match "${searchQuery}"` : `No ${activeFilter} items`}
@@ -554,7 +553,7 @@ export default function InventoryScreen() {
         style={[styles.fab, { bottom: Math.max(insets.bottom, spacing.lg) }]}
         onPress={activeSegment === 'pallets' ? handleAddPallet : handleAddItem}
       >
-        <FontAwesome name="plus" size={24} color={colors.background} />
+        <Ionicons name="add" size={28} color={colors.background} />
       </Pressable>
 
       {/* Quick Sell Modal */}
@@ -659,7 +658,7 @@ export default function InventoryScreen() {
                   onPress={handleConfirmQuickSell}
                   disabled={isQuickSelling}
                 >
-                  <FontAwesome name="check" size={18} color={colors.background} />
+                  <Ionicons name="checkmark" size={20} color={colors.background} />
                   <Text style={styles.quickSellButtonText}>
                     {isQuickSelling ? 'Saving...' : 'Confirm Sale'}
                   </Text>
@@ -669,6 +668,19 @@ export default function InventoryScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        visible={deleteModalItem !== null}
+        type="delete"
+        title={`Delete ${deleteModalItem?.name || 'Item'}?`}
+        message="This action is permanent and cannot be undone."
+        infoText="All data including photos will be removed."
+        primaryLabel="Delete Item"
+        secondaryLabel="Cancel"
+        onPrimary={handleConfirmDelete}
+        onClose={() => setDeleteModalItem(null)}
+      />
     </GestureHandlerRootView>
   );
 }
@@ -676,7 +688,7 @@ export default function InventoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundSecondary,
   },
   header: {
     paddingHorizontal: spacing.lg,
@@ -689,8 +701,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   title: {
-    fontSize: fontSize.xxxl,
-    fontWeight: 'bold',
+    ...typography.screenTitle,
     color: colors.textPrimary,
   },
   swipeHint: {
