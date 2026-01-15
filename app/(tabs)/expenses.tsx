@@ -237,8 +237,8 @@ export default function ExpensesScreen() {
         ]}
         onPress={() => handleMileagePress(trip)}
       >
-        <View style={[styles.activityIcon, { backgroundColor: colors.profit + '15' }]}>
-          <Ionicons name="car-outline" size={18} color={colors.profit} />
+        <View style={[styles.activityIcon, { backgroundColor: colors.primary + '15' }]}>
+          <Ionicons name="car-outline" size={18} color={colors.primary} />
         </View>
         <View style={styles.activityContent}>
           <Text style={styles.activityTitle} numberOfLines={1}>
@@ -249,12 +249,9 @@ export default function ExpensesScreen() {
             {palletNames.length > 0 ? ` - ${palletNames[0]}` : ''}
           </Text>
         </View>
-        <View style={styles.activityValueContainer}>
-          <Text style={[styles.activityValue, { color: colors.profit }]}>
-            +{formatCurrency(deduction)}
-          </Text>
-          <Text style={styles.activityValueLabel}>Deduction</Text>
-        </View>
+        <Text style={[styles.activityValue, { color: colors.textPrimary }]}>
+          {formatCurrency(deduction)}
+        </Text>
       </Pressable>
     );
   };
@@ -296,11 +293,13 @@ export default function ExpensesScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.subtitle}>Track overheads & mileage</Text>
           <Text style={styles.title}>Expenses</Text>
+          <Text style={styles.subtitle}>Track overheads & mileage</Text>
         </View>
-        <DateRangeFilter value={dateRange} onChange={setDateRange} compact />
       </View>
+
+      {/* Date Filter */}
+      <DateRangeFilter value={dateRange} onChange={setDateRange} />
 
       {isLoadingData && !hasData ? (
         <View style={styles.loadingContainer}>
@@ -320,15 +319,12 @@ export default function ExpensesScreen() {
               label="Overhead"
               value={totalOverhead}
               subtitle={`${filteredExpenses.length} expense${filteredExpenses.length !== 1 ? 's' : ''}`}
-              valueColor={colors.loss}
             />
             <SummaryCard
               icon="car-outline"
               label="Mileage"
               value={mileageSummary.totalDeduction}
               subtitle={`${mileageSummary.totalMiles.toFixed(0)} mi logged`}
-              valueColor={colors.profit}
-              valuePrefix="+"
             />
           </SummaryCardRow>
 
@@ -373,12 +369,12 @@ export default function ExpensesScreen() {
             </View>
           )}
 
-          {/* Mileage Disclaimer */}
-          {filteredTrips.length > 0 && (
+          {/* Tax Disclaimer */}
+          {(filteredExpenses.length > 0 || filteredTrips.length > 0) && (
             <View style={styles.disclaimer}>
-              <Ionicons name="information-circle" size={14} color={colors.warning} />
+              <Ionicons name="information-circle" size={14} color={colors.textSecondary} />
               <Text style={styles.disclaimerText}>
-                Mileage shown as deductions (green). Consult a tax professional - PalletPulse is not tax advice.
+                Business expenses may be tax deductible. Consult a tax professional - PalletPulse is not tax advice.
               </Text>
             </View>
           )}
@@ -398,15 +394,11 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   subtitle: {
     fontSize: fontSize.md,
     color: colors.textSecondary,
-    marginBottom: spacing.xs,
   },
   title: {
     ...typography.screenTitle,
