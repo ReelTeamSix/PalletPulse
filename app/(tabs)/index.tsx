@@ -1,16 +1,25 @@
-import { useEffect, useMemo, useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
+import { useMemo, useCallback } from 'react';
+import { StyleSheet, View, Text, ScrollView, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { spacing, fontSize } from '@/src/constants/spacing';
+import { typography } from '@/src/constants/typography';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
 import { useExpensesStore } from '@/src/stores/expenses-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
-import { formatCurrency, calculateItemProfit } from '@/src/lib/profit-utils';
+import { formatCurrency } from '@/src/lib/profit-utils';
+import {
+  HeroCard,
+  MetricCard,
+  MetricGrid,
+  ActionButtonPair,
+  RecentActivityFeed,
+  Activity,
+} from '@/src/features/dashboard/components';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -21,12 +30,10 @@ export default function DashboardScreen() {
   const { isExpenseTrackingEnabled } = useUserSettingsStore();
   const expenseTrackingEnabled = isExpenseTrackingEnabled();
 
-  // Fetch data on mount and when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       fetchPallets();
       fetchItems();
-      // Only fetch expenses if expense tracking is enabled
       if (expenseTrackingEnabled) {
         fetchExpenses();
       }
@@ -35,42 +42,112 @@ export default function DashboardScreen() {
 
   const isLoading = palletsLoading || itemsLoading || (expenseTrackingEnabled && expensesLoading);
 
-  // Calculate dashboard metrics
   const metrics = useMemo(() => {
     const soldItems = items.filter(item => item.status === 'sold');
+    const listedItems = items.filter(item => item.status === 'listed');
 
-    // Calculate total revenue from sold items
     const totalRevenue = soldItems.reduce((sum, item) => {
       return sum + (item.sale_price ?? 0);
     }, 0);
 
-    // Calculate total costs:
-    // 1. All pallet costs (purchase_cost + sales_tax)
     const totalPalletCosts = pallets.reduce((sum, pallet) => {
       return sum + pallet.purchase_cost + (pallet.sales_tax || 0);
     }, 0);
 
-    // 2. Individual item costs (items without pallet_id)
     const individualItemsCost = items
       .filter(item => !item.pallet_id && item.purchase_cost)
       .reduce((sum, item) => sum + (item.purchase_cost ?? 0), 0);
 
-    // 3. Expenses - only include if expense tracking is enabled
     const totalExpenses = expenseTrackingEnabled
       ? expenses.reduce((sum, e) => sum + e.amount, 0)
       : 0;
 
-    // Total profit = Revenue - All Costs - All Expenses (if enabled)
     const totalProfit = totalRevenue - totalPalletCosts - individualItemsCost - totalExpenses;
+
+    // Calculate active inventory value (listed items at listing price)
+    const activeValue = listedItems.reduce((sum, item) => {
+      return sum + (item.listing_price ?? item.purchase_cost ?? 0);
+    }, 0);
+
+    // Calculate average ROI for sold items
+    let avgROI = 0;
+    if (soldItems.length > 0) {
+      const roiSum = soldItems.reduce((sum, item) => {
+        const cost = item.allocated_cost ?? item.purchase_cost ?? 0;
+        if (cost > 0) {
+          const profit = (item.sale_price ?? 0) - cost;
+          return sum + (profit / cost) * 100;
+        }
+        return sum;
+      }, 0);
+      avgROI = roiSum / soldItems.length;
+    }
+
+    // Active pallets (not fully processed)
+    const activePallets = pallets.filter(p => p.status !== 'completed').length;
 
     return {
       totalProfit,
-      palletsCount: pallets.length,
-      itemsCount: items.length,
       soldCount: soldItems.length,
+      activeValue,
+      avgROI,
+      activePallets,
       isProfitable: totalProfit >= 0,
     };
   }, [pallets, items, expenses, expenseTrackingEnabled]);
+
+  // Build recent activity from sales, listings, and new pallets
+  const recentActivity: Activity[] = useMemo(() => {
+    const activities: Activity[] = [];
+
+    // Add sold items
+    items
+      .filter(item => item.status === 'sold' && item.sale_date)
+      .slice(0, 5)
+      .forEach(item => {
+        const profit = (item.sale_price ?? 0) - (item.allocated_cost ?? item.purchase_cost ?? 0);
+        activities.push({
+          id: `sale-${item.id}`,
+          type: 'sale',
+          title: item.name,
+          subtitle: item.sales_channel ? `Sold on ${item.sales_channel}` : 'Sold',
+          value: profit,
+          timestamp: new Date(item.sale_date!),
+        });
+      });
+
+    // Add recently listed items
+    items
+      .filter(item => item.status === 'listed' && item.listing_date)
+      .slice(0, 3)
+      .forEach(item => {
+        activities.push({
+          id: `listed-${item.id}`,
+          type: 'listed',
+          title: item.name,
+          subtitle: 'Listed for sale',
+          timestamp: new Date(item.listing_date!),
+        });
+      });
+
+    // Add recent pallets
+    pallets
+      .slice(0, 2)
+      .forEach(pallet => {
+        activities.push({
+          id: `pallet-${pallet.id}`,
+          type: 'pallet',
+          title: pallet.name,
+          subtitle: pallet.supplier || 'New pallet',
+          timestamp: new Date(pallet.created_at),
+        });
+      });
+
+    // Sort by timestamp and take top 5
+    return activities
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, 5);
+  }, [items, pallets]);
 
   const handleRefresh = useCallback(async () => {
     const promises = [fetchPallets(), fetchItems()];
@@ -80,6 +157,16 @@ export default function DashboardScreen() {
     await Promise.all(promises);
   }, [expenseTrackingEnabled]);
 
+  const handleActivityPress = (activity: Activity) => {
+    if (activity.type === 'sale' || activity.type === 'listed') {
+      const itemId = activity.id.replace('sale-', '').replace('listed-', '');
+      router.push(`/items/${itemId}`);
+    } else if (activity.type === 'pallet') {
+      const palletId = activity.id.replace('pallet-', '');
+      router.push(`/pallets/${palletId}`);
+    }
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -88,102 +175,66 @@ export default function DashboardScreen() {
         <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
       }
     >
-      <Text style={styles.title}>Dashboard</Text>
-      <Text style={styles.subtitle}>Your PalletPulse overview</Text>
-
-      <View style={[styles.heroCard, { backgroundColor: metrics.isProfitable ? colors.profit : colors.loss + 'B0' }]}>
-        <Text style={styles.heroLabel}>Total Profit</Text>
-        <Text style={styles.heroValue}>
-          {metrics.isProfitable ? '' : '-'}{formatCurrency(Math.abs(metrics.totalProfit))}
-        </Text>
-      </View>
-
-      <View style={styles.statsRow}>
-        <Pressable
-          style={styles.statCard}
-          onPress={() => router.push('/(tabs)/inventory')}
-        >
-          <FontAwesome name="archive" size={24} color={colors.primary} />
-          <Text style={styles.statValue}>{metrics.palletsCount}</Text>
-          <Text style={styles.statLabel}>Pallets</Text>
-        </Pressable>
-        <Pressable
-          style={styles.statCard}
-          onPress={() => router.push('/(tabs)/inventory')}
-        >
-          <FontAwesome name="cube" size={24} color={colors.primary} />
-          <Text style={styles.statValue}>{metrics.itemsCount}</Text>
-          <Text style={styles.statLabel}>Items</Text>
-        </Pressable>
-        <View style={styles.statCard}>
-          <FontAwesome name="check-circle" size={24} color={colors.profit} />
-          <Text style={styles.statValue}>{metrics.soldCount}</Text>
-          <Text style={styles.statLabel}>Sold</Text>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.welcomeText}>Welcome back,</Text>
+          <Text style={styles.title}>Dashboard</Text>
+        </View>
+        <View style={styles.notificationButton}>
+          <Ionicons name="notifications-outline" size={24} color={colors.textSecondary} />
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Quick Actions</Text>
-      <View style={styles.actionsGrid}>
-        <Pressable
-          style={styles.actionCard}
-          onPress={() => router.push('/pallets/new')}
-        >
-          <View style={[styles.actionIcon, { backgroundColor: colors.primary + '15' }]}>
-            <FontAwesome name="plus" size={20} color={colors.primary} />
-          </View>
-          <Text style={styles.actionTitle}>Add Pallet</Text>
-          <Text style={styles.actionSubtitle}>Start tracking a new pallet</Text>
-        </Pressable>
+      <HeroCard
+        totalProfit={metrics.totalProfit}
+        soldCount={metrics.soldCount}
+      />
 
-        <Pressable
-          style={styles.actionCard}
-          onPress={() => router.push('/items/new')}
-        >
-          <View style={[styles.actionIcon, { backgroundColor: colors.profit + '15' }]}>
-            <FontAwesome name="cube" size={20} color={colors.profit} />
-          </View>
-          <Text style={styles.actionTitle}>Add Item</Text>
-          <Text style={styles.actionSubtitle}>Log an individual find</Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.actionCard}
+      <MetricGrid>
+        <MetricCard
+          icon="checkmark-done"
+          value={metrics.soldCount}
+          label="Items Sold"
+          color={colors.profit}
           onPress={() => router.push('/(tabs)/inventory')}
-        >
-          <View style={[styles.actionIcon, { backgroundColor: colors.warning + '15' }]}>
-            <FontAwesome name="list" size={20} color={colors.warning} />
-          </View>
-          <Text style={styles.actionTitle}>Inventory</Text>
-          <Text style={styles.actionSubtitle}>View pallets & items</Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.actionCard}
+        />
+        <MetricCard
+          icon="wallet-outline"
+          value={formatCurrency(metrics.activeValue)}
+          label="Active Value"
+          color={colors.primary}
+          onPress={() => router.push('/(tabs)/inventory')}
+        />
+        <MetricCard
+          icon="trending-up"
+          value={`${metrics.avgROI.toFixed(0)}%`}
+          label="Avg ROI"
+          color={colors.warning}
           onPress={() => router.push('/(tabs)/analytics')}
-        >
-          <View style={[styles.actionIcon, { backgroundColor: colors.statusListed + '15' }]}>
-            <FontAwesome name="bar-chart" size={20} color={colors.statusListed} />
-          </View>
-          <Text style={styles.actionTitle}>Analytics</Text>
-          <Text style={styles.actionSubtitle}>View your performance</Text>
-        </Pressable>
-      </View>
+        />
+        <MetricCard
+          icon="cube-outline"
+          value={metrics.activePallets}
+          label="Active Pallets"
+          color={colors.statusListed}
+          onPress={() => router.push('/(tabs)/inventory')}
+        />
+      </MetricGrid>
 
-      {items.length === 0 && pallets.length === 0 ? (
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>
-            Get started by adding your first pallet or item!
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>
-            {metrics.soldCount > 0
-              ? `You've sold ${metrics.soldCount} item${metrics.soldCount === 1 ? '' : 's'}. Keep it up!`
-              : 'Mark items as sold to see your profit grow!'}
-          </Text>
-        </View>
-      )}
+      <ActionButtonPair
+        primaryLabel="Add Pallet"
+        primaryIcon="add"
+        primaryOnPress={() => router.push('/pallets/new')}
+        secondaryLabel="Process Items"
+        secondaryIcon="scan-outline"
+        secondaryOnPress={() => router.push('/(tabs)/inventory')}
+      />
+
+      <RecentActivityFeed
+        activities={recentActivity}
+        onActivityPress={handleActivityPress}
+        onViewAll={() => router.push('/(tabs)/inventory')}
+      />
     </ScrollView>
   );
 }
@@ -191,108 +242,32 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundSecondary,
   },
   scrollContent: {
     padding: spacing.lg,
   },
-  title: {
-    fontSize: fontSize.xxxl,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    fontSize: fontSize.lg,
-    color: colors.textSecondary,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: spacing.lg,
   },
-  heroCard: {
-    backgroundColor: colors.profit,
-    borderRadius: borderRadius.lg,
-    padding: spacing.xl,
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  heroLabel: {
+  welcomeText: {
     fontSize: fontSize.md,
-    color: colors.background,
-    opacity: 0.9,
-    marginBottom: spacing.xs,
-  },
-  heroValue: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: colors.background,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: fontSize.xxl,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
-    marginTop: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  statLabel: {
-    fontSize: fontSize.sm,
     color: colors.textSecondary,
+    marginBottom: spacing.xs,
   },
-  sectionTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
+  title: {
+    ...typography.screenTitle,
     color: colors.textPrimary,
-    marginBottom: spacing.md,
   },
-  actionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  actionCard: {
-    width: '48%',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-  },
-  actionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.md,
+  notificationButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
-  actionTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
-  actionSubtitle: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-  },
-  placeholder: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    alignItems: 'center',
-  },
-  placeholderText: {
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-    textAlign: 'center',
   },
 });
