@@ -28,3 +28,5 @@ export {
 // Components
 export { ExpenseForm } from './components/ExpenseForm';
 export { ExpenseCard, ExpenseCardCompact } from './components/ExpenseCard';
+export { SummaryCard, SummaryCardRow } from './components/SummaryCard';
+export { TopCategoriesScroll } from './components/TopCategoriesScroll';
