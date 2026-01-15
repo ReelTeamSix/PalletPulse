@@ -4,7 +4,7 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize } from '@/src/constants/spacing';
+import { fontSize } from '@/src/constants/spacing';
 import { useExpensesStore } from '@/src/stores/expenses-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { ExpenseForm, ExpenseFormData } from '@/src/features/expenses';
@@ -23,12 +23,12 @@ export default function EditExpenseScreen() {
     if (expenses.length === 0) {
       fetchExpenses();
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- Only run on mount
 
   const expense = useMemo(() => {
     if (!id) return null;
     return getExpenseById(id);
-  }, [id, expenses]);
+  }, [id, expenses]); // eslint-disable-line react-hooks/exhaustive-deps -- getExpenseById is stable
 
   // Initialize receipt photo from expense
   useEffect(() => {
@@ -37,10 +37,11 @@ export default function EditExpenseScreen() {
     }
   }, [expense]);
 
-  const pallet = useMemo(() => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Will be used for display
+  const _pallet = useMemo(() => {
     if (!expense?.pallet_id) return null;
     return getPalletById(expense.pallet_id);
-  }, [expense]);
+  }, [expense, getPalletById]);
 
   const handleCancel = () => {
     router.back();

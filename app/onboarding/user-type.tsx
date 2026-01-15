@@ -135,7 +135,7 @@ export default function UserTypeScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>How serious is your flipping?</Text>
           <Text style={styles.subtitle}>
-            We'll unlock the right features for you
+            {"We'll unlock the right features for you"}
           </Text>
         </View>
 

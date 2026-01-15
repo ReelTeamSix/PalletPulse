@@ -319,7 +319,7 @@ export default function PalletDetailScreen() {
             <FontAwesome name="exclamation-circle" size={48} color={colors.loss} />
             <Text style={styles.errorTitle}>Pallet Not Found</Text>
             <Text style={styles.errorText}>
-              This pallet may have been deleted or doesn't exist.
+              {"This pallet may have been deleted or doesn't exist."}
             </Text>
             <Pressable style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backButtonText}>Go Back</Text>

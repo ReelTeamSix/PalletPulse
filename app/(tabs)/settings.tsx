@@ -16,7 +16,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
-import { shadows } from '@/src/constants/shadows';
 import { Card } from '@/src/components/ui/Card';
 import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Button, ConfirmationModal } from '@/src/components/ui';
@@ -159,7 +158,7 @@ export default function SettingsScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchSettings();
-    }, [])
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Store function is stable reference
   );
 
   const handleSignOut = () => {

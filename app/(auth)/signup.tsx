@@ -55,7 +55,7 @@ export default function SignupScreen() {
           </View>
           <Text style={styles.verificationTitle}>Check Your Email</Text>
           <Text style={styles.verificationText}>
-            We've sent a verification link to your email address. Please click the link to verify your account.
+            {"We've sent a verification link to your email address. Please click the link to verify your account."}
           </Text>
           <Button
             title="Back to Login"

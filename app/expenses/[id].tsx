@@ -38,12 +38,12 @@ export default function ExpenseDetailScreen() {
     if (expenses.length === 0) {
       fetchExpenses();
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- Only run on mount
 
   const expense = useMemo(() => {
     if (!id) return null;
     return getExpenseById(id);
-  }, [id, expenses]);
+  }, [id, expenses]); // eslint-disable-line react-hooks/exhaustive-deps -- getExpenseById is stable
 
   // Get all linked pallets from pallet_ids array (Phase 8D multi-pallet support)
   const linkedPallets = useMemo(() => {
@@ -55,7 +55,7 @@ export default function ExpenseDetailScreen() {
     return palletIds
       .map(id => getPalletById(id))
       .filter((p): p is NonNullable<typeof p> => p !== undefined);
-  }, [expense]);
+  }, [expense]); // eslint-disable-line react-hooks/exhaustive-deps -- getPalletById is stable
 
   const handleEdit = () => {
     router.push({ pathname: '/expenses/edit', params: { id } });

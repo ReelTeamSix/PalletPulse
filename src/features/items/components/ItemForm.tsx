@@ -698,7 +698,7 @@ export function ItemForm({
                 )}
               />
               <Text style={styles.statusHint}>
-                Change to "Listed" to undo the sale
+                {'Change to "Listed" to undo the sale'}
               </Text>
             </View>
 

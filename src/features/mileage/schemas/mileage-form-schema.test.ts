@@ -11,6 +11,7 @@ jest.mock('@/src/stores/admin-store', () => ({
   },
 }));
 
+// eslint-disable-next-line import/first -- Jest mocks must be before imports
 import {
   mileageFormSchema,
   MileageFormData,

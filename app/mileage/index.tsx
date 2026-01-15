@@ -29,7 +29,6 @@ export default function MileageLogScreen() {
     trips,
     isLoading,
     fetchTrips,
-    getYTDSummary,
     fetchCurrentMileageRate,
     currentMileageRate,
   } = useMileageStore();
@@ -38,7 +37,7 @@ export default function MileageLogScreen() {
   const [dateRange, setDateRange] = useState<DateRange>({
     start: null,
     end: null,
-    preset: 'all',
+    preset: 'this_year',
   });
 
   // Fetch data on mount and focus
@@ -52,7 +51,7 @@ export default function MileageLogScreen() {
 
   // Filter trips by date range
   const filteredTrips = useMemo(() => {
-    return trips.filter(trip => isWithinDateRange(trip.date, dateRange));
+    return trips.filter(trip => isWithinDateRange(trip.trip_date, dateRange));
   }, [trips, dateRange]);
 
   // Calculate summary based on filtered trips
@@ -65,10 +64,8 @@ export default function MileageLogScreen() {
     return { totalMiles, totalDeduction };
   }, [filteredTrips]);
 
-  // Get YTD summary (for "All Time" preset only, otherwise use filtered)
-  const displaySummary = dateRange.preset === 'all'
-    ? getYTDSummary()
-    : filteredSummary;
+  // Use filtered summary for display (matches selected date range)
+  const displaySummary = filteredSummary;
 
   // Get pallet names for display
   const getPalletNames = useCallback(
@@ -89,7 +86,7 @@ export default function MileageLogScreen() {
   };
 
   const handleClearFilters = () => {
-    setDateRange({ start: null, end: null, preset: 'all' });
+    setDateRange({ start: null, end: null, preset: 'this_year' });
   };
 
   // True empty state - no trips at all
@@ -133,26 +130,14 @@ export default function MileageLogScreen() {
 
   // Get dynamic title based on date range
   const getSummaryTitle = () => {
-    if (dateRange.preset === 'all') {
-      return `${new Date().getFullYear()} Year-to-Date`;
-    }
     if (dateRange.preset === 'this_month') {
       return new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     }
-    if (dateRange.preset === 'this_quarter') {
-      const month = new Date().getMonth();
-      const quarter = month <= 2 ? 1 : month <= 5 ? 2 : month <= 8 ? 3 : 4;
-      return `Q${quarter} ${new Date().getFullYear()}`;
-    }
-    if (dateRange.preset === 'last_quarter') {
-      const month = new Date().getMonth();
-      const currentQ = month <= 2 ? 1 : month <= 5 ? 2 : month <= 8 ? 3 : 4;
-      const lastQ = currentQ === 1 ? 4 : currentQ - 1;
-      const year = currentQ === 1 ? new Date().getFullYear() - 1 : new Date().getFullYear();
-      return `Q${lastQ} ${year}`;
-    }
     if (dateRange.preset === 'this_year') {
       return `${new Date().getFullYear()} Full Year`;
+    }
+    if (dateRange.preset === 'last_year') {
+      return `${new Date().getFullYear() - 1} Full Year`;
     }
     return 'Custom Period';
   };

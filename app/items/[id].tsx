@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   StyleSheet,
   View,
@@ -13,6 +13,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
@@ -166,7 +167,7 @@ export default function ItemDetailScreen() {
             <Ionicons name="alert-circle" size={48} color={colors.loss} />
             <Text style={styles.errorTitle}>Item Not Found</Text>
             <Text style={styles.errorText}>
-              This item may have been deleted or doesn't exist.
+              {"This item may have been deleted or doesn't exist."}
             </Text>
             <Pressable style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backButtonText}>Go Back</Text>

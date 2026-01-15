@@ -45,13 +45,12 @@ export default function ExpensesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { expenses, isLoading, error, fetchExpenses } = useExpensesStore();
-  const { pallets, getPalletById, fetchPallets } = usePalletsStore();
-  const { items, fetchItems } = useItemsStore();
+  const { getPalletById, fetchPallets } = usePalletsStore();
+  const { fetchItems } = useItemsStore();
   const {
     trips,
     isLoading: mileageLoading,
     fetchTrips,
-    currentMileageRate,
     fetchCurrentMileageRate,
   } = useMileageStore();
 
@@ -69,7 +68,7 @@ export default function ExpensesScreen() {
       fetchItems();
       fetchTrips();
       fetchCurrentMileageRate();
-    }, [])
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
   );
 
   // Filter expenses by date range
@@ -155,7 +154,7 @@ export default function ExpensesScreen() {
       fetchTrips(),
       fetchCurrentMileageRate(),
     ]);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
 
   const handleAddExpense = () => router.push('/expenses/new');
   const handleAddMileage = () => router.push('/mileage/new');

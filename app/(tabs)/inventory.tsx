@@ -88,7 +88,7 @@ export default function InventoryScreen() {
         if (saved === 'pallets' || saved === 'items') {
           setActiveSegment(saved);
         }
-      } catch (e) {
+      } catch {
         // Ignore errors, use default
       }
       setSegmentLoaded(true);
@@ -101,7 +101,7 @@ export default function InventoryScreen() {
     setActiveSegment(segment);
     try {
       await AsyncStorage.setItem(SEGMENT_STORAGE_KEY, segment);
-    } catch (e) {
+    } catch {
       // Ignore errors
     }
   };
@@ -112,7 +112,7 @@ export default function InventoryScreen() {
       fetchPallets();
       fetchItems();
       fetchExpenses();
-    }, [])
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
   );
 
   // Fetch thumbnails when items change
@@ -179,7 +179,7 @@ export default function InventoryScreen() {
 
   const handleRefresh = useCallback(async () => {
     await Promise.all([fetchPallets(), fetchItems(), fetchExpenses()]);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
 
   // Quick sell handlers
   const handleQuickSell = (item: Item) => {
@@ -247,7 +247,7 @@ export default function InventoryScreen() {
       }
     }
     return item.purchase_cost ?? 0;
-  }, [items, pallets, getPalletById]);
+  }, [items, getPalletById]); // eslint-disable-line react-hooks/exhaustive-deps -- getPalletById is stable
 
   // Render swipe actions for items
   const renderRightActions = (item: Item, progress: Animated.AnimatedInterpolation<number>) => {

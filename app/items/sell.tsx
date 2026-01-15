@@ -204,7 +204,7 @@ export default function SellItemScreen() {
             <Ionicons name="alert-circle" size={48} color={colors.loss} />
             <Text style={styles.errorTitle}>Item Not Found</Text>
             <Text style={styles.errorText}>
-              This item may have been deleted or doesn't exist.
+              {"This item may have been deleted or doesn't exist."}
             </Text>
             <Pressable style={styles.backButton} onPress={() => router.back()}>
               <Text style={styles.backButtonText}>Go Back</Text>

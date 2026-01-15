@@ -155,7 +155,7 @@ export default function EditItemScreen() {
             <FontAwesome name="exclamation-circle" size={48} color={colors.loss} />
             <Text style={styles.errorTitle}>Item Not Found</Text>
             <Text style={styles.errorText}>
-              This item may have been deleted or doesn't exist.
+              {"This item may have been deleted or doesn't exist."}
             </Text>
           </View>
         </View>
@@ -181,7 +181,7 @@ export default function EditItemScreen() {
             </View>
             <Text style={styles.confirmTitle}>Edit Sold Item?</Text>
             <Text style={styles.confirmText}>
-              This item has already been marked as sold. You can edit sale details (price, fees, platform) directly, or change the status back to "Listed" to undo the sale.
+              {'This item has already been marked as sold. You can edit sale details (price, fees, platform) directly, or change the status back to "Listed" to undo the sale.'}
             </Text>
             <View style={styles.warningBox}>
               <FontAwesome name="info-circle" size={16} color={colors.textSecondary} />

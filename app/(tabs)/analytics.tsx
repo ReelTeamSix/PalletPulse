@@ -20,7 +20,7 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
 import { shadows } from '@/src/constants/shadows';
-import { Card } from '@/src/components/ui';
+// UI components from analytics feature
 import { SubscriptionTier, TIER_LIMITS } from '@/src/constants/tier-limits';
 
 // Stores
@@ -102,7 +102,7 @@ export default function AnalyticsScreen() {
       fetchPallets();
       fetchItems();
       fetchExpenses();
-    }, [])
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
   );
 
   // Refresh handler
@@ -160,7 +160,7 @@ export default function AnalyticsScreen() {
     : staleItems.slice(0, FREE_TIER_LIMITS.staleItems);
 
   // Check if there's hidden data
-  const hasMoreLeaderboard = !isPaidTier && leaderboard.length > FREE_TIER_LIMITS.leaderboard;
+  const _hasMoreLeaderboard = !isPaidTier && leaderboard.length > FREE_TIER_LIMITS.leaderboard;
   const hasMoreTypeComparison = !isPaidTier && typeComparison.length > FREE_TIER_LIMITS.typeComparison;
   const hasMoreStaleItems = !isPaidTier && staleItems.length > FREE_TIER_LIMITS.staleItems;
   const hiddenLeaderboardCount = Math.max(0, leaderboard.length - FREE_TIER_LIMITS.leaderboard);

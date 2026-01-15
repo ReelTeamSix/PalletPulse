@@ -37,7 +37,7 @@ export default function DashboardScreen() {
       if (expenseTrackingEnabled) {
         fetchExpenses();
       }
-    }, [expenseTrackingEnabled])
+    }, [expenseTrackingEnabled]) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
   );
 
   const isLoading = palletsLoading || itemsLoading || (expenseTrackingEnabled && expensesLoading);
@@ -136,7 +136,7 @@ export default function DashboardScreen() {
       promises.push(fetchExpenses());
     }
     await Promise.all(promises);
-  }, [expenseTrackingEnabled]);
+  }, [expenseTrackingEnabled]); // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
 
   const handleActivityPress = (activity: Activity) => {
     if (activity.type === 'sale' || activity.type === 'listed') {
