@@ -20,11 +20,16 @@ import { useOnboardingStore } from '@/src/stores/onboarding-store';
 import { UserType } from '@/src/types/database';
 import { TIER_PRICING } from '@/src/constants/tier-limits';
 
+// Ionicons names for tier icons (using keyof typeof Ionicons.glyphMap)
+import { Ionicons } from '@expo/vector-icons';
+
+type IoniconsName = keyof typeof Ionicons.glyphMap;
+
 // Tier configuration based on PALLETPULSE_ONESHOT_CONTEXT.md
 const TIER_CONFIG: Record<TierType, {
   title: string;
   subtitle: string;
-  icon: string;
+  icon: IoniconsName;
   userType: UserType;
   features: TierFeature[];
   badge: 'most_popular' | 'best_value' | null;
@@ -32,7 +37,7 @@ const TIER_CONFIG: Record<TierType, {
   free: {
     title: 'Just for Fun',
     subtitle: 'Track profits simply',
-    icon: '🎯',
+    icon: 'happy-outline',
     userType: 'hobby',
     badge: null,
     features: [
@@ -46,7 +51,7 @@ const TIER_CONFIG: Record<TierType, {
   starter: {
     title: 'Side Income',
     subtitle: 'Track fees & know your true profit',
-    icon: '💰',
+    icon: 'wallet-outline',
     userType: 'side_hustle',
     badge: 'most_popular',
     features: [
@@ -60,7 +65,7 @@ const TIER_CONFIG: Record<TierType, {
   pro: {
     title: 'Serious Business',
     subtitle: 'Full tax-ready expense tracking',
-    icon: '📊',
+    icon: 'analytics-outline',
     userType: 'business',
     badge: 'best_value',
     features: [
@@ -196,7 +201,7 @@ export default function UserTypeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.backgroundSecondary,
   },
   scrollView: {
     flex: 1,

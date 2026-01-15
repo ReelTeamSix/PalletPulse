@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   ViewStyle,
 } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
 
@@ -23,7 +23,7 @@ export interface TierCardProps {
   tier: TierType;
   title: string;
   subtitle: string;
-  icon: string;
+  icon: keyof typeof Ionicons.glyphMap;
   features: TierFeature[];
   monthlyPrice: number | null;
   annualPrice: number | null;
@@ -81,7 +81,9 @@ export function TierCard({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.icon}>{icon}</Text>
+          <View style={styles.iconContainer}>
+            <Ionicons name={icon} size={20} color={colors.primary} />
+          </View>
           <Text style={styles.title}>{title}</Text>
         </View>
         <Text style={styles.subtitle}>{subtitle}</Text>
@@ -92,7 +94,7 @@ export function TierCard({
         {features.map((feature, index) => (
           <View key={index} style={styles.featureRow}>
             {feature.included ? (
-              <FontAwesome name="check" size={14} color={colors.profit} style={styles.featureIcon} />
+              <Ionicons name="checkmark" size={16} color={colors.profit} style={styles.featureIcon} />
             ) : (
               <View style={styles.emptyCircle} />
             )}
@@ -140,7 +142,7 @@ export function TierCard({
       {/* Selection indicator */}
       <View style={[styles.selectionIndicator, isSelected && styles.selectionIndicatorActive]}>
         {isSelected && (
-          <FontAwesome name="check" size={12} color={colors.background} />
+          <Ionicons name="checkmark" size={14} color={colors.background} />
         )}
       </View>
     </TouchableOpacity>
@@ -192,8 +194,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xs,
   },
-  icon: {
-    fontSize: fontSize.xl,
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: spacing.sm,
   },
   title: {
@@ -206,7 +213,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
-    marginLeft: spacing.xl + spacing.sm,
+    marginLeft: 36 + spacing.sm, // iconContainer width + margin
   },
   features: {
     marginBottom: spacing.md,

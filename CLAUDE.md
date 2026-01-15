@@ -848,35 +848,188 @@ export PATH="/c/Program Files/nodejs:$PATH" && npm test
 
 ## 🎨 UI & Styling
 
-### Design Tokens (Use These, Don't Hardcode)
+### Design System Overview
+
+PalletPulse uses a modern design system with elevated white cards on light gray backgrounds, consistent shadows, and a polished professional feel.
+
+**Key Principles:**
+- Light gray backgrounds (`#F8FAFC`) with white elevated cards
+- Consistent shadow system for depth
+- **NO EMOJIS** - Ionicons throughout the entire app
+- Bold typography with clear hierarchy
+
+---
+
+### Icons - MANDATORY
+
+**ALWAYS use Ionicons. NEVER use emojis or other icon libraries.**
+
+```tsx
+// ✅ CORRECT - Use Ionicons
+import { Ionicons } from '@expo/vector-icons';
+<Ionicons name="wallet-outline" size={24} color={colors.primary} />
+
+// ❌ WRONG - Never use emojis
+<Text>💰</Text>
+
+// ❌ WRONG - Never use FontAwesome or other libraries
+import { FontAwesome } from '@expo/vector-icons';
+```
+
+**Icon Container Pattern:**
+```tsx
+// Wrap icons in styled containers for consistency
+<View style={styles.iconContainer}>
+  <Ionicons name="analytics-outline" size={20} color={colors.primary} />
+</View>
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+```
+
+---
+
+### Color System (Updated)
+
 ```typescript
-// src/constants/colors.ts
+// src/constants/colors.ts - CURRENT VALUES
 export const colors = {
-  // Semantic
-  profit: '#2E7D32',      // Money green
-  loss: '#D32F2F',        // Red
-  warning: '#FFA000',     // Orange/gold
-  neutral: '#9E9E9E',     // Grey
-  
-  // Status
-  statusUnprocessed: '#9E9E9E',
-  statusListed: '#1976D2',
-  statusSold: '#2E7D32',
-  statusStale: '#FFA000',
-  
-  // Background
-  background: '#FFFFFF',
-  backgroundDark: '#121212',
-  surface: '#F5F5F5',
-  surfaceDark: '#1E1E1E',
-  
+  // Semantic - Business Metrics
+  profit: '#22C55E',      // Modern green - positive profit, success
+  loss: '#EF4444',        // Modern red - negative profit, errors
+  warning: '#F59E0B',     // Amber - actionable items, stale inventory
+  neutral: '#9E9E9E',     // Grey - inactive, unsold
+
+  // Primary Brand
+  primary: '#2563EB',
+  primaryLight: '#DBEAFE',
+  primaryDark: '#1D4ED8',
+
+  // Backgrounds
+  background: '#FFFFFF',           // Cards, modals
+  backgroundSecondary: '#F8FAFC',  // Screen backgrounds (light gray)
+  surface: '#F5F5F5',              // Input fields, secondary containers
+  card: '#FFFFFF',                 // White cards on gray background
+
   // Text
-  textPrimary: '#212121',
-  textSecondary: '#757575',
-  textPrimaryDark: '#FFFFFF',
-  textSecondaryDark: '#B0B0B0',
+  textPrimary: '#1E293B',   // Dark slate for readability
+  textSecondary: '#64748B', // Slate gray
+  textDisabled: '#9E9E9E',
+
+  // Borders
+  border: '#E2E8F0',  // Light border
+
+  // Status Colors
+  statusUnprocessed: '#9E9E9E',
+  statusListed: '#2563EB',
+  statusSold: '#22C55E',
+  statusStale: '#F59E0B',
+};
+```
+
+---
+
+### Background Usage
+
+| Context | Color | Hex |
+|---------|-------|-----|
+| Screen backgrounds | `colors.backgroundSecondary` | `#F8FAFC` |
+| Cards & Modals | `colors.background` | `#FFFFFF` |
+| Input fields | `colors.surface` | `#F5F5F5` |
+
+```tsx
+// ✅ Screen container
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.backgroundSecondary,
+  },
+});
+
+// ✅ Card on screen
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.lg,
+    ...shadows.md,
+  },
+});
+```
+
+---
+
+### Shadow System
+
+```typescript
+// src/constants/shadows.ts
+export const shadows = {
+  sm: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
+  md: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
+  lg: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.10, shadowRadius: 8, elevation: 4 },
 };
 
+// Usage
+import { shadows } from '@/src/constants/shadows';
+const styles = StyleSheet.create({
+  card: {
+    ...shadows.md,
+    backgroundColor: colors.background,
+  },
+});
+```
+
+---
+
+### Button Placement - Fixed Footer Pattern
+
+**All form screens MUST have buttons in a fixed footer outside the ScrollView.**
+
+```tsx
+// ✅ CORRECT - Fixed footer buttons
+export function MyForm() {
+  return (
+    <KeyboardAvoidingView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content}>
+        {/* Form fields here */}
+      </ScrollView>
+
+      {/* Fixed Footer - OUTSIDE ScrollView */}
+      <View style={styles.footer}>
+        <Button title="Cancel" variant="outline" style={styles.button} />
+        <Button title="Save" style={styles.button} />
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl * 2 },
+  footer: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  button: { flex: 1 },
+});
+```
+
+---
+
+### Spacing Constants
+
+```typescript
 // src/constants/spacing.ts
 export const spacing = {
   xs: 4,
@@ -886,20 +1039,91 @@ export const spacing = {
   xl: 32,
   xxl: 48,
 };
+
+export const borderRadius = {
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
+  full: 9999,
+};
 ```
 
-### Use Spacing Constants
+**Always use constants, never magic numbers:**
 ```tsx
 // ✅ Good
-import { spacing } from '@/constants/spacing';
 const styles = StyleSheet.create({
   container: { padding: spacing.md },
+  card: { borderRadius: borderRadius.lg },
 });
 
 // ❌ Bad - magic numbers
 const styles = StyleSheet.create({
   container: { padding: 16 },
+  card: { borderRadius: 12 },
 });
+```
+
+---
+
+### Typography
+
+```typescript
+// src/constants/typography.ts
+export const typography = {
+  screenTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
+  sectionHeader: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+};
+```
+
+| Element | Style |
+|---------|-------|
+| Screen titles | `typography.screenTitle` or `fontSize.xxl` + `fontWeight.bold` |
+| Section headers | `typography.sectionHeader` (uppercase, small) |
+| Body text | `fontSize.md` + `colors.textPrimary` |
+| Subtitles | `fontSize.md` + `colors.textSecondary` |
+| Labels | `fontSize.sm` + `colors.textSecondary` |
+
+---
+
+### Semantic Color Usage
+
+| Purpose | Color | Example |
+|---------|-------|---------|
+| Profit / Success | `colors.profit` | Sale price, positive ROI |
+| Loss / Error | `colors.loss` | Negative profit, validation errors |
+| Warning | `colors.warning` | Stale inventory |
+| Primary actions | `colors.primary` | Buttons, links |
+| Neutral / Inactive | `colors.neutral` | Disabled states |
+
+---
+
+### Modals
+
+Use `ConfirmationModal` instead of `Alert.alert` for all confirmations:
+
+```tsx
+import { ConfirmationModal } from '@/src/components/ui';
+
+<ConfirmationModal
+  visible={visible}
+  type="delete"  // 'delete' | 'warning' | 'success' | 'info'
+  title="Delete Item?"
+  message="This action cannot be undone."
+  primaryLabel="Delete"
+  secondaryLabel="Cancel"
+  onPrimary={handleDelete}
+  onClose={() => setVisible(false)}
+/>
 ```
 
 ---
