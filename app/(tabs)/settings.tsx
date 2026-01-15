@@ -1,5 +1,5 @@
-// Settings Screen - Phase 8E: User preferences and expense tracking opt-in
-import React, { useEffect, useState, useCallback } from 'react';
+// Settings Screen - User preferences and account management
+import React, { useCallback, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -12,9 +12,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
-import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { typography } from '@/src/constants/typography';
+import { shadows } from '@/src/constants/shadows';
+import { Card } from '@/src/components/ui/Card';
+import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Button } from '@/src/components/ui';
 import { useAuthStore } from '@/src/stores/auth-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
@@ -39,32 +43,31 @@ const USER_TYPE_OPTIONS: { value: UserType; label: string; description: string }
   },
 ];
 
-// Section header component
-function SectionHeader({ title, icon }: { title: string; icon: string }) {
-  return (
-    <View style={styles.sectionHeader}>
-      <FontAwesome name={icon as any} size={16} color={colors.textSecondary} />
-      <Text style={styles.sectionTitle}>{title}</Text>
-    </View>
-  );
-}
-
 // Setting row component
 function SettingRow({
+  icon,
   label,
   value,
   onPress,
   rightElement,
   hint,
+  isLast = false,
 }: {
+  icon?: keyof typeof Ionicons.glyphMap;
   label: string;
   value?: string;
   onPress?: () => void;
   rightElement?: React.ReactNode;
   hint?: string;
+  isLast?: boolean;
 }) {
   const content = (
-    <View style={styles.settingRow}>
+    <View style={[styles.settingRow, !isLast && styles.settingRowBorder]}>
+      {icon && (
+        <View style={styles.settingIcon}>
+          <Ionicons name={icon} size={20} color={colors.textSecondary} />
+        </View>
+      )}
       <View style={styles.settingContent}>
         <Text style={styles.settingLabel}>{label}</Text>
         {hint && <Text style={styles.settingHint}>{hint}</Text>}
@@ -73,7 +76,7 @@ function SettingRow({
         <View style={styles.settingValueContainer}>
           {value && <Text style={styles.settingValue}>{value}</Text>}
           {onPress && (
-            <FontAwesome name="chevron-right" size={14} color={colors.textSecondary} />
+            <Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />
           )}
         </View>
       )}
@@ -82,7 +85,10 @@ function SettingRow({
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={styles.settingPressable}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => pressed && styles.settingPressed}
+      >
         {content}
       </Pressable>
     );
@@ -92,20 +98,29 @@ function SettingRow({
 
 // Toggle row component
 function ToggleRow({
+  icon,
   label,
   value,
   onValueChange,
   hint,
   disabled,
+  isLast = false,
 }: {
+  icon?: keyof typeof Ionicons.glyphMap;
   label: string;
   value: boolean;
   onValueChange: (value: boolean) => void;
   hint?: string;
   disabled?: boolean;
+  isLast?: boolean;
 }) {
   return (
-    <View style={[styles.settingRow, disabled && styles.settingRowDisabled]}>
+    <View style={[styles.settingRow, !isLast && styles.settingRowBorder, disabled && styles.settingRowDisabled]}>
+      {icon && (
+        <View style={styles.settingIcon}>
+          <Ionicons name={icon} size={20} color={disabled ? colors.textDisabled : colors.textSecondary} />
+        </View>
+      )}
       <View style={styles.settingContent}>
         <Text style={[styles.settingLabel, disabled && styles.settingLabelDisabled]}>
           {label}
@@ -164,7 +179,6 @@ export default function SettingsScreen() {
 
   const handleToggleExpenseTracking = async (enabled: boolean) => {
     if (enabled) {
-      // Show disclaimer when enabling
       Alert.alert(
         'Enable Expense Tracking',
         'PalletPulse is an inventory tracking tool, not tax software. Expense tracking features are provided for your convenience. Always consult a tax professional for tax advice.\n\nDo you want to enable expense tracking?',
@@ -214,6 +228,11 @@ export default function SettingsScreen() {
     return option?.label || 'Hobby Flipper';
   };
 
+  const getInitials = (email: string | null) => {
+    if (!email) return '?';
+    return email.charAt(0).toUpperCase();
+  };
+
   if (isLoading && !settings) {
     return (
       <View style={[styles.container, styles.loadingContainer, { paddingTop: insets.top }]}>
@@ -225,136 +244,133 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { paddingTop: insets.top + spacing.md }]}
-      contentContainerStyle={styles.scrollContent}
+      style={styles.container}
+      contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + spacing.md }]}
       showsVerticalScrollIndicator={false}
     >
+      {/* Header */}
       <Text style={styles.title}>Settings</Text>
-      <Text style={styles.subtitle}>Customize your experience</Text>
 
-      {/* Account Section */}
-      <View style={styles.section}>
-        <SectionHeader title="Account" icon="user" />
-        <View style={styles.sectionContent}>
-          {user && (
-            <SettingRow label="Email" value={user.email || 'Not set'} />
-          )}
-          <SettingRow
-            label="User Type"
-            value={getUserTypeLabel()}
-            onPress={() => setShowUserTypePicker(!showUserTypePicker)}
-          />
-          {showUserTypePicker && (
-            <View style={styles.userTypePicker}>
-              {USER_TYPE_OPTIONS.map((option) => (
-                <Pressable
-                  key={option.value}
-                  style={[
-                    styles.userTypeOption,
-                    settings?.user_type === option.value && styles.userTypeOptionSelected,
-                  ]}
-                  onPress={() => handleUserTypeChange(option.value)}
-                >
-                  <View style={styles.userTypeRadio}>
-                    {settings?.user_type === option.value && (
-                      <View style={styles.userTypeRadioInner} />
-                    )}
-                  </View>
-                  <View style={styles.userTypeContent}>
-                    <Text
-                      style={[
-                        styles.userTypeLabel,
-                        settings?.user_type === option.value && styles.userTypeLabelSelected,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                    <Text style={styles.userTypeDescription}>{option.description}</Text>
-                  </View>
-                </Pressable>
-              ))}
-              <Text style={styles.userTypeHint}>
-                Business users get full expense tracking enabled automatically.
-              </Text>
+      {/* Profile Card */}
+      <Card shadow="md" padding="md" style={styles.profileCard}>
+        <View style={styles.profileRow}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{getInitials(user?.email ?? null)}</Text>
+          </View>
+          <View style={styles.profileContent}>
+            <Text style={styles.profileName}>{user?.email || 'User'}</Text>
+            <View style={styles.tierBadge}>
+              <Ionicons name="star" size={12} color={colors.warning} />
+              <Text style={styles.tierText}>Free Plan</Text>
             </View>
-          )}
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.textDisabled} />
         </View>
-      </View>
+      </Card>
+
+      {/* App Settings Section */}
+      <SectionHeader title="App Settings" />
+      <Card shadow="sm" padding={0} style={styles.sectionCard}>
+        <SettingRow
+          icon="time-outline"
+          label="Stale Inventory Threshold"
+          value={`${settings?.stale_threshold_days ?? 30} days`}
+          onPress={handleStaleThresholdChange}
+        />
+        <ToggleRow
+          icon="calculator-outline"
+          label="Include Unsellable in Cost"
+          value={settings?.include_unsellable_in_cost ?? false}
+          onValueChange={setIncludeUnsellableInCost}
+          hint="Allocate pallet cost to unsellable items"
+          isLast
+        />
+      </Card>
 
       {/* Expense Tracking Section */}
-      <View style={styles.section}>
-        <SectionHeader title="Expense Tracking" icon="calculator" />
-        <View style={styles.sectionContent}>
-          <ToggleRow
-            label="Enable Expense Tracking"
-            value={settings?.expense_tracking_enabled ?? false}
-            onValueChange={handleToggleExpenseTracking}
-            hint="Track mileage, overhead expenses, and more"
-          />
-          {settings?.expense_tracking_enabled && (
-            <>
-              <View style={styles.divider} />
-              <View style={styles.expenseSubOptions}>
-                <Text style={styles.subOptionsLabel}>Tracking Features:</Text>
-                <View style={styles.featureRow}>
-                  <FontAwesome name="check" size={12} color={colors.profit} />
-                  <Text style={styles.featureText}>Mileage Tracking (IRS standard rate)</Text>
-                </View>
-                <View style={styles.featureRow}>
-                  <FontAwesome name="check" size={12} color={colors.profit} />
-                  <Text style={styles.featureText}>Overhead Expenses</Text>
-                </View>
-                <View style={styles.featureRow}>
-                  <FontAwesome name="check" size={12} color={colors.profit} />
-                  <Text style={styles.featureText}>Multi-Pallet Cost Allocation</Text>
-                </View>
-                <View style={styles.featureRow}>
-                  <FontAwesome name="check" size={12} color={colors.profit} />
-                  <Text style={styles.featureText}>Receipt Photo Storage</Text>
-                </View>
-              </View>
-              <View style={styles.disclaimer}>
-                <FontAwesome name="info-circle" size={14} color={colors.textSecondary} />
-                <Text style={styles.disclaimerText}>
-                  PalletPulse is not tax software. Always consult a tax professional.
-                </Text>
-              </View>
-            </>
-          )}
-        </View>
-      </View>
+      <SectionHeader title="Expense Tracking" />
+      <Card shadow="sm" padding={0} style={styles.sectionCard}>
+        <ToggleRow
+          icon="wallet-outline"
+          label="Enable Expense Tracking"
+          value={settings?.expense_tracking_enabled ?? false}
+          onValueChange={handleToggleExpenseTracking}
+          hint="Track mileage and overhead expenses"
+          isLast={!settings?.expense_tracking_enabled}
+        />
+        {settings?.expense_tracking_enabled && (
+          <View style={styles.featuresContainer}>
+            <View style={styles.featureRow}>
+              <Ionicons name="checkmark-circle" size={16} color={colors.profit} />
+              <Text style={styles.featureText}>Mileage Tracking (IRS standard rate)</Text>
+            </View>
+            <View style={styles.featureRow}>
+              <Ionicons name="checkmark-circle" size={16} color={colors.profit} />
+              <Text style={styles.featureText}>Overhead Expenses</Text>
+            </View>
+            <View style={styles.featureRow}>
+              <Ionicons name="checkmark-circle" size={16} color={colors.profit} />
+              <Text style={styles.featureText}>Multi-Pallet Cost Allocation</Text>
+            </View>
+            <View style={styles.featureRow}>
+              <Ionicons name="checkmark-circle" size={16} color={colors.profit} />
+              <Text style={styles.featureText}>Receipt Photo Storage</Text>
+            </View>
+          </View>
+        )}
+      </Card>
 
-      {/* Preferences Section */}
-      <View style={styles.section}>
-        <SectionHeader title="Preferences" icon="sliders" />
-        <View style={styles.sectionContent}>
-          <SettingRow
-            label="Stale Inventory Threshold"
-            value={`${settings?.stale_threshold_days ?? 30} days`}
-            onPress={handleStaleThresholdChange}
-            hint="Items listed longer will be flagged"
-          />
-          <View style={styles.divider} />
-          <ToggleRow
-            label="Include Unsellable in Cost"
-            value={settings?.include_unsellable_in_cost ?? false}
-            onValueChange={setIncludeUnsellableInCost}
-            hint="Allocate pallet cost to unsellable items"
-          />
-        </View>
-      </View>
+      {/* User Type Section */}
+      <SectionHeader title="Business Type" />
+      <Card shadow="sm" padding={0} style={styles.sectionCard}>
+        <SettingRow
+          icon="briefcase-outline"
+          label="User Type"
+          value={getUserTypeLabel()}
+          onPress={() => setShowUserTypePicker(!showUserTypePicker)}
+          isLast={!showUserTypePicker}
+        />
+        {showUserTypePicker && (
+          <View style={styles.userTypePicker}>
+            {USER_TYPE_OPTIONS.map((option, index) => (
+              <Pressable
+                key={option.value}
+                style={[
+                  styles.userTypeOption,
+                  settings?.user_type === option.value && styles.userTypeOptionSelected,
+                ]}
+                onPress={() => handleUserTypeChange(option.value)}
+              >
+                <View style={[
+                  styles.userTypeRadio,
+                  settings?.user_type === option.value && styles.userTypeRadioSelected,
+                ]}>
+                  {settings?.user_type === option.value && (
+                    <View style={styles.userTypeRadioInner} />
+                  )}
+                </View>
+                <View style={styles.userTypeContent}>
+                  <Text style={[
+                    styles.userTypeLabel,
+                    settings?.user_type === option.value && styles.userTypeLabelSelected,
+                  ]}>
+                    {option.label}
+                  </Text>
+                  <Text style={styles.userTypeDescription}>{option.description}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </Card>
 
       {/* About Section */}
-      <View style={styles.section}>
-        <SectionHeader title="About" icon="info-circle" />
-        <View style={styles.sectionContent}>
-          <SettingRow label="Version" value="1.0.0" />
-          <View style={styles.divider} />
-          <SettingRow label="Terms of Service" onPress={() => {}} />
-          <View style={styles.divider} />
-          <SettingRow label="Privacy Policy" onPress={() => {}} />
-        </View>
-      </View>
+      <SectionHeader title="About" />
+      <Card shadow="sm" padding={0} style={styles.sectionCard}>
+        <SettingRow icon="information-circle-outline" label="Version" value="1.0.0" />
+        <SettingRow icon="document-text-outline" label="Terms of Service" onPress={() => {}} />
+        <SettingRow icon="shield-outline" label="Privacy Policy" onPress={() => {}} isLast />
+      </Card>
 
       {/* Sign Out */}
       <Button
@@ -365,6 +381,14 @@ export default function SettingsScreen() {
         style={styles.signOutButton}
       />
 
+      {/* Disclaimer */}
+      <View style={styles.disclaimer}>
+        <Ionicons name="information-circle" size={14} color={colors.textDisabled} />
+        <Text style={styles.disclaimerText}>
+          PalletPulse is an inventory tracking tool, not tax software.
+        </Text>
+      </View>
+
       <View style={styles.bottomPadding} />
     </ScrollView>
   );
@@ -373,7 +397,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundSecondary,
   },
   scrollContent: {
     padding: spacing.lg,
@@ -388,60 +412,88 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   title: {
-    fontSize: fontSize.xxxl,
-    fontWeight: 'bold',
+    ...typography.screenTitle,
     color: colors.textPrimary,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    fontSize: fontSize.lg,
-    color: colors.textSecondary,
-    marginBottom: spacing.xl,
-  },
-  section: {
     marginBottom: spacing.lg,
   },
-  sectionHeader: {
+  profileCard: {
+    marginBottom: spacing.lg,
+  },
+  profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
   },
-  sectionTitle: {
-    fontSize: fontSize.sm,
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: fontSize.lg,
     fontWeight: '600',
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: colors.background,
   },
-  sectionContent: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    overflow: 'hidden',
+  profileContent: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  profileName: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  tierBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tierText: {
+    fontSize: fontSize.xs,
+    color: colors.warning,
+    fontWeight: '500',
+  },
+  sectionCard: {
+    marginBottom: spacing.md,
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     padding: spacing.md,
     minHeight: 56,
+  },
+  settingRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   settingRowDisabled: {
     opacity: 0.5,
   },
-  settingPressable: {
-    backgroundColor: 'transparent',
+  settingPressed: {
+    backgroundColor: colors.surface,
+  },
+  settingIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
   },
   settingContent: {
     flex: 1,
-    marginRight: spacing.md,
+    marginRight: spacing.sm,
   },
   settingLabel: {
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
   settingLabelDisabled: {
-    color: colors.textSecondary,
+    color: colors.textDisabled,
   },
   settingHint: {
     fontSize: fontSize.xs,
@@ -451,32 +503,45 @@ const styles = StyleSheet.create({
   settingValueContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   settingValue: {
     fontSize: fontSize.md,
     color: colors.textSecondary,
   },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginHorizontal: spacing.md,
+  featuresContainer: {
+    padding: spacing.md,
+    paddingTop: spacing.sm,
+    gap: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  featureText: {
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
   },
   userTypePicker: {
     padding: spacing.md,
-    paddingTop: 0,
+    paddingTop: spacing.sm,
     gap: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   userTypeOption: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     padding: spacing.md,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     gap: spacing.md,
   },
   userTypeOptionSelected: {
-    backgroundColor: colors.primaryLight || '#E3F2FD',
+    backgroundColor: colors.primaryLight,
     borderWidth: 1,
     borderColor: colors.primary,
   },
@@ -489,6 +554,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 2,
+  },
+  userTypeRadioSelected: {
+    borderColor: colors.primary,
   },
   userTypeRadioInner: {
     width: 10,
@@ -512,49 +580,19 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
-  userTypeHint: {
-    fontSize: fontSize.xs,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: spacing.xs,
-  },
-  expenseSubOptions: {
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  subOptionsLabel: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  featureText: {
-    fontSize: fontSize.sm,
-    color: colors.textPrimary,
+  signOutButton: {
+    marginTop: spacing.lg,
   },
   disclaimer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-    padding: spacing.md,
-    backgroundColor: colors.background,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.lg,
   },
   disclaimerText: {
-    flex: 1,
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
-  },
-  signOutButton: {
-    marginTop: spacing.md,
+    color: colors.textDisabled,
   },
   bottomPadding: {
     height: spacing.xxl,

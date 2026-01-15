@@ -12,10 +12,11 @@ import {
 import { router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Button, Input } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize } from '@/src/constants/spacing';
+import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { typography } from '@/src/constants/typography';
 import { useAuthStore } from '@/src/stores/auth-store';
 import { forgotPasswordSchema, ForgotPasswordFormData } from '@/src/features/auth/schemas/auth-schemas';
 
@@ -48,7 +49,7 @@ export default function ForgotPasswordScreen() {
       <View style={styles.container}>
         <View style={styles.successContainer}>
           <View style={styles.iconContainer}>
-            <FontAwesome name="envelope" size={48} color={colors.primary} />
+            <Ionicons name="mail" size={48} color={colors.primary} />
           </View>
           <Text style={styles.successTitle}>Check Your Email</Text>
           <Text style={styles.successText}>
@@ -87,10 +88,13 @@ export default function ForgotPasswordScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <FontAwesome name="arrow-left" size={20} color={colors.textPrimary} />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
 
         <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Ionicons name="lock-closed" size={40} color={colors.primary} />
+          </View>
           <Text style={styles.title}>Forgot Password?</Text>
           <Text style={styles.subtitle}>
             Enter your email address and we'll send you a link to reset your password.
@@ -100,6 +104,7 @@ export default function ForgotPasswordScreen() {
         <View style={styles.form}>
           {error && (
             <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle" size={18} color={colors.loss} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -145,7 +150,7 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundSecondary,
   },
   scrollContent: {
     flexGrow: 1,
@@ -153,33 +158,53 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginBottom: spacing.lg,
-    padding: spacing.sm,
-    alignSelf: 'flex-start',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
+    alignItems: 'center',
     marginBottom: spacing.xl,
   },
+  logoContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+  },
   title: {
-    fontSize: fontSize.xxxl,
-    fontWeight: 'bold',
+    ...typography.screenTitle,
     color: colors.textPrimary,
     marginBottom: spacing.sm,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: fontSize.md,
     color: colors.textSecondary,
     lineHeight: 22,
+    textAlign: 'center',
+    maxWidth: 300,
   },
   form: {
     marginBottom: spacing.xl,
   },
   errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     backgroundColor: colors.loss + '15',
     padding: spacing.md,
-    borderRadius: 8,
+    borderRadius: borderRadius.md,
     marginBottom: spacing.md,
   },
   errorText: {
+    flex: 1,
     color: colors.loss,
     fontSize: fontSize.sm,
   },
@@ -210,14 +235,13 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: colors.primary + '15',
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,
   },
   successTitle: {
-    fontSize: fontSize.xxl,
-    fontWeight: 'bold',
+    ...typography.screenTitle,
     color: colors.textPrimary,
     marginBottom: spacing.md,
     textAlign: 'center',
@@ -238,6 +262,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.xl,
     lineHeight: 20,
+    maxWidth: 280,
   },
   resendButton: {
     marginTop: spacing.md,
@@ -246,5 +271,6 @@ const styles = StyleSheet.create({
   resendText: {
     color: colors.primary,
     fontSize: fontSize.sm,
+    fontWeight: '500',
   },
 });

@@ -12,9 +12,11 @@ import {
 import { Link, router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Ionicons } from '@expo/vector-icons';
 import { Button, Input } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize } from '@/src/constants/spacing';
+import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { typography } from '@/src/constants/typography';
 import { useAuthStore } from '@/src/stores/auth-store';
 import { loginSchema, LoginFormData } from '@/src/features/auth/schemas/auth-schemas';
 
@@ -51,13 +53,19 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Ionicons name="cube" size={40} color={colors.primary} />
+          </View>
           <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue to PalletPulse</Text>
+          <Text style={styles.subtitle}>
+            Sign in to continue to <Text style={styles.brandText}>PalletPulse</Text>
+          </Text>
         </View>
 
         <View style={styles.form}>
           {error && (
             <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle" size={18} color={colors.loss} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -130,7 +138,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundSecondary,
   },
   scrollContent: {
     flexGrow: 1,
@@ -138,28 +146,47 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   header: {
+    alignItems: 'center',
     marginBottom: spacing.xl,
   },
+  logoContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+  },
   title: {
-    fontSize: fontSize.xxxl,
-    fontWeight: 'bold',
+    ...typography.screenTitle,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
     color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  brandText: {
+    color: colors.primary,
+    fontWeight: '600',
   },
   form: {
     marginBottom: spacing.xl,
   },
   errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     backgroundColor: colors.loss + '15',
     padding: spacing.md,
-    borderRadius: 8,
+    borderRadius: borderRadius.md,
     marginBottom: spacing.md,
   },
   errorText: {
+    flex: 1,
     color: colors.loss,
     fontSize: fontSize.sm,
   },
@@ -170,6 +197,7 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     color: colors.primary,
     fontSize: fontSize.sm,
+    fontWeight: '500',
   },
   button: {
     marginTop: spacing.sm,

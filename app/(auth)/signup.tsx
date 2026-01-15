@@ -12,9 +12,11 @@ import {
 import { Link, router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Ionicons } from '@expo/vector-icons';
 import { Button, Input } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize } from '@/src/constants/spacing';
+import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { typography } from '@/src/constants/typography';
 import { useAuthStore } from '@/src/stores/auth-store';
 import { signupSchema, SignupFormData } from '@/src/features/auth/schemas/auth-schemas';
 
@@ -40,7 +42,6 @@ export default function SignupScreen() {
     clearError();
     const result = await signUp(data.email, data.password, data.affiliateCode);
     if (result.success) {
-      // Show verification message - Supabase requires email confirmation
       setShowVerificationMessage(true);
     }
   };
@@ -49,6 +50,9 @@ export default function SignupScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.verificationContainer}>
+          <View style={styles.successIcon}>
+            <Ionicons name="mail" size={40} color={colors.primary} />
+          </View>
           <Text style={styles.verificationTitle}>Check Your Email</Text>
           <Text style={styles.verificationText}>
             We've sent a verification link to your email address. Please click the link to verify your account.
@@ -73,13 +77,19 @@ export default function SignupScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Ionicons name="cube" size={40} color={colors.primary} />
+          </View>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Start tracking your reselling profits</Text>
+          <Text style={styles.subtitle}>
+            Start tracking your profits with <Text style={styles.brandText}>PalletPulse</Text>
+          </Text>
         </View>
 
         <View style={styles.form}>
           {error && (
             <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle" size={18} color={colors.loss} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -182,7 +192,7 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundSecondary,
   },
   scrollContent: {
     flexGrow: 1,
@@ -190,28 +200,47 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   header: {
+    alignItems: 'center',
     marginBottom: spacing.xl,
   },
+  logoContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+  },
   title: {
-    fontSize: fontSize.xxxl,
-    fontWeight: 'bold',
+    ...typography.screenTitle,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
     color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  brandText: {
+    color: colors.primary,
+    fontWeight: '600',
   },
   form: {
     marginBottom: spacing.xl,
   },
   errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     backgroundColor: colors.loss + '15',
     padding: spacing.md,
-    borderRadius: 8,
+    borderRadius: borderRadius.md,
     marginBottom: spacing.md,
   },
   errorText: {
+    flex: 1,
     color: colors.loss,
     fontSize: fontSize.sm,
   },
@@ -238,9 +267,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.lg,
   },
+  successIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.lg,
+  },
   verificationTitle: {
-    fontSize: fontSize.xxl,
-    fontWeight: 'bold',
+    ...typography.screenTitle,
     color: colors.textPrimary,
     marginBottom: spacing.md,
     textAlign: 'center',
@@ -251,5 +288,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.xl,
     lineHeight: 24,
+    maxWidth: 280,
   },
 });
