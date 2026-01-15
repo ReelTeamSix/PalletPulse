@@ -1,6 +1,6 @@
 // CSV Export Utilities - Phase 9E
 // Export analytics data to CSV format for paid tier users
-import { cacheDirectory, writeAsStringAsync } from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { isAvailableAsync, shareAsync } from 'expo-sharing';
 import type { Item, Pallet, SourceType, ItemCondition, ItemStatus, ExpenseCategory, SalesPlatform } from '@/src/types/database';
 import type { ExpenseWithPallets } from '@/src/stores/expenses-store';
@@ -242,7 +242,7 @@ export async function saveAndShareCSV(csvContent: string, filename: string): Pro
     }
 
     // Get cache directory (may be null on some platforms)
-    if (!cacheDirectory) {
+    if (!FileSystem.cacheDirectory) {
       return {
         success: false,
         error: 'Cache directory not available',
@@ -250,10 +250,10 @@ export async function saveAndShareCSV(csvContent: string, filename: string): Pro
     }
 
     // Create file path in cache directory
-    const filePath = `${cacheDirectory}${filename}`;
+    const filePath = `${FileSystem.cacheDirectory}${filename}`;
 
     // Write CSV content to file
-    await writeAsStringAsync(filePath, csvContent);
+    await FileSystem.writeAsStringAsync(filePath, csvContent);
 
     // Share the file
     await shareAsync(filePath, {

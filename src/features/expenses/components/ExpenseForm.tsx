@@ -395,23 +395,24 @@ export function ExpenseForm({
           </View>
         )}
 
-        {/* Buttons */}
-        <View style={styles.buttonRow}>
-          <Button
-            title="Cancel"
-            onPress={onCancel}
-            variant="outline"
-            style={styles.cancelButton}
-            disabled={isLoading}
-          />
-          <Button
-            title={submitLabel}
-            onPress={handleSubmit((data) => onSubmit(data as ExpenseFormData))}
-            style={styles.submitButton}
-            loading={isLoading}
-          />
-        </View>
       </ScrollView>
+
+      {/* Fixed Footer Buttons */}
+      <View style={styles.footer}>
+        <Button
+          title="Cancel"
+          onPress={onCancel}
+          variant="outline"
+          style={styles.cancelButton}
+          disabled={isLoading}
+        />
+        <Button
+          title={submitLabel}
+          onPress={handleSubmit((data) => onSubmit(data as ExpenseFormData))}
+          style={styles.submitButton}
+          loading={isLoading}
+        />
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -675,10 +676,13 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: spacing.xs,
   },
-  buttonRow: {
+  footer: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.lg,
+    padding: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.background,
   },
   cancelButton: {
     flex: 1,
