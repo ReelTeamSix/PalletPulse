@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize } from '@/src/constants/spacing';
@@ -12,7 +11,6 @@ import { ConfirmationModal } from '@/src/components/ui';
 export default function EditPalletScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const insets = useSafeAreaInsets();
   const { pallets, getPalletById, updatePallet, isLoading, fetchPallets } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
@@ -110,7 +108,7 @@ export default function EditPalletScreen() {
           headerBackTitle: 'Cancel',
         }}
       />
-      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <View style={styles.container}>
         <PalletForm
           pallet={pallet}
           onSubmit={handleSubmit}

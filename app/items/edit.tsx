@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
@@ -15,7 +14,6 @@ import { Button, ConfirmationModal } from '@/src/components/ui';
 export default function EditItemScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const insets = useSafeAreaInsets();
   const {
     items,
     getItemById,
@@ -188,7 +186,7 @@ export default function EditItemScreen() {
             headerBackTitle: 'Cancel',
           }}
         />
-        <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+        <View style={styles.container}>
           <View style={styles.confirmContainer}>
             <View style={styles.warningIconContainer}>
               <FontAwesome name="exclamation-triangle" size={48} color={colors.warning} />
@@ -230,7 +228,7 @@ export default function EditItemScreen() {
           headerBackTitle: 'Cancel',
         }}
       />
-      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <View style={styles.container}>
         <ItemForm
           item={item}
           onSubmit={handleSubmit}

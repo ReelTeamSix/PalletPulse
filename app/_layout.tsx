@@ -93,7 +93,19 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerTintColor: colors.primary,
+          headerTitleStyle: {
+            fontWeight: '600',
+          },
+          headerShadowVisible: false,
+        }}
+      >
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
@@ -125,6 +137,50 @@ function RootLayoutNav() {
             headerShown: true,
             headerTitle: 'Add Item',
             presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="items/edit"
+          options={{
+            headerShown: true,
+            headerTitle: 'Edit Item',
+          }}
+        />
+        <Stack.Screen
+          name="items/sell"
+          options={{
+            headerShown: true,
+            headerTitle: 'Sell Item',
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="pallets/edit"
+          options={{
+            headerShown: true,
+            headerTitle: 'Edit Pallet',
+          }}
+        />
+        <Stack.Screen
+          name="expenses/[id]"
+          options={{
+            headerShown: true,
+            headerTitle: 'Expense Details',
+          }}
+        />
+        <Stack.Screen
+          name="expenses/new"
+          options={{
+            headerShown: true,
+            headerTitle: 'Add Expense',
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="expenses/edit"
+          options={{
+            headerShown: true,
+            headerTitle: 'Edit Expense',
           }}
         />
         <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: true }} />

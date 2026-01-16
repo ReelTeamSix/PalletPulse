@@ -1,5 +1,5 @@
 // MileageForm Component - Form for creating and editing mileage trips
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,9 @@ import {
   Pressable,
   Platform,
   KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -51,6 +53,17 @@ export function MileageForm({
   trip,
   currentMileageRate = DEFAULT_IRS_MILEAGE_RATE,
 }: MileageFormProps) {
+  const insets = useSafeAreaInsets();
+  const [keyboardKey, setKeyboardKey] = useState(0);
+
+  // Force KeyboardAvoidingView to reset when keyboard closes
+  useEffect(() => {
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardKey(prev => prev + 1);
+    });
+    return () => hideSubscription.remove();
+  }, []);
+
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showPurposePicker, setShowPurposePicker] = useState(false);
   const [showPalletPicker, setShowPalletPicker] = useState(false);
@@ -138,9 +151,10 @@ export function MileageForm({
 
   return (
     <KeyboardAvoidingView
+      key={keyboardKey}
       style={styles.container}
       behavior="padding"
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 90}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 80}
     >
       <ScrollView
         contentContainerStyle={styles.content}
@@ -454,7 +468,7 @@ export function MileageForm({
       </ScrollView>
 
       {/* Fixed Footer Buttons */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
         <Button
           title="Cancel"
           onPress={onCancel}

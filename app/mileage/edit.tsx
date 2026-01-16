@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
 import { fontSize } from '@/src/constants/spacing';
 import { useMileageStore } from '@/src/stores/mileage-store';
@@ -11,7 +10,6 @@ import { ConfirmationModal } from '@/src/components/ui';
 export default function EditMileageTripScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const insets = useSafeAreaInsets();
   const {
     trips,
     getTripById,
@@ -101,7 +99,7 @@ export default function EditMileageTripScreen() {
           headerBackTitle: 'Cancel',
         }}
       />
-      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <View style={styles.container}>
         <MileageForm
           trip={trip}
           onSubmit={handleSubmit}

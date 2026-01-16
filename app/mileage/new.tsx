@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
 import { useMileageStore } from '@/src/stores/mileage-store';
 import { MileageForm, MileageFormData } from '@/src/features/mileage';
@@ -10,7 +9,6 @@ import { ConfirmationModal } from '@/src/components/ui';
 export default function NewMileageTripScreen() {
   const { palletId } = useLocalSearchParams<{ palletId?: string }>();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { addTrip, isLoading, fetchCurrentMileageRate, currentMileageRate } = useMileageStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
@@ -74,7 +72,7 @@ export default function NewMileageTripScreen() {
           headerBackTitle: 'Cancel',
         }}
       />
-      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <View style={styles.container}>
         <MileageForm
           initialValues={{
             pallet_ids: palletId ? [palletId] : [],

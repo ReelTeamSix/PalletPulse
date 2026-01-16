@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import {
@@ -13,7 +12,6 @@ import { ConfirmationModal } from '@/src/components/ui';
 
 export default function NewPalletScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { pallets, addPallet, isLoading } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
@@ -78,7 +76,7 @@ export default function NewPalletScreen() {
           headerBackTitle: 'Cancel',
         }}
       />
-      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <View style={styles.container}>
         <PalletForm
           initialValues={{ name: suggestedName }}
           onSubmit={handleSubmit}

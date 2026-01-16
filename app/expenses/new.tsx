@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '@/src/constants/colors';
 import { useExpensesStore } from '@/src/stores/expenses-store';
@@ -12,7 +11,6 @@ import { ConfirmationModal } from '@/src/components/ui';
 export default function NewExpenseScreen() {
   const { palletId } = useLocalSearchParams<{ palletId?: string }>();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { addExpense, isLoading } = useExpensesStore();
   const { getPalletById } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -113,7 +111,7 @@ export default function NewExpenseScreen() {
           headerBackTitle: 'Cancel',
         }}
       />
-      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+      <View style={styles.container}>
         <ExpenseForm
           palletIds={palletId ? [palletId] : undefined}
           onSubmit={handleSubmit}

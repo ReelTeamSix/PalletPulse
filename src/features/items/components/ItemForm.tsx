@@ -6,10 +6,12 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Platform,
   KeyboardAvoidingView,
+  Platform,
+  Keyboard,
   LayoutChangeEvent,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input, Button, PhotoPicker, PhotoItem } from '@/src/components/ui';
@@ -54,6 +56,17 @@ export function ItemForm({
   onPhotosChange,
   maxPhotos = 5,
 }: ItemFormProps) {
+  const insets = useSafeAreaInsets();
+  const [keyboardKey, setKeyboardKey] = useState(0);
+
+  // Force KeyboardAvoidingView to reset when keyboard closes
+  useEffect(() => {
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardKey(prev => prev + 1);
+    });
+    return () => hideSubscription.remove();
+  }, []);
+
   const [showStorageSuggestions, setShowStorageSuggestions] = useState(false);
   const [showSourceSuggestions, setShowSourceSuggestions] = useState(false);
   const [showPalletPicker, setShowPalletPicker] = useState(false);
@@ -223,9 +236,10 @@ export function ItemForm({
 
   return (
     <KeyboardAvoidingView
+      key={keyboardKey}
       style={styles.container}
       behavior="padding"
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 90}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 80}
     >
       <ScrollView
         ref={scrollViewRef}
@@ -867,7 +881,7 @@ export function ItemForm({
       </ScrollView>
 
       {/* Fixed Footer Buttons */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
         <Button
           title="Cancel"
           onPress={onCancel}
