@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "PalletPulse",
-    "slug": "PalletPulse",
+    "name": "Pallet Pro",
+    "slug": "pallet-pro",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "palletpulse",
+    "scheme": "palletpro",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -35,13 +35,13 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow PalletPulse to access your camera for taking photos of items and receipts."
+          "cameraPermission": "Allow Pallet Pro to access your camera for taking photos of items and receipts."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow PalletPulse to access your photos for uploading item images."
+          "photosPermission": "Allow Pallet Pro to access your photos for uploading item images."
         }
       ],
       [

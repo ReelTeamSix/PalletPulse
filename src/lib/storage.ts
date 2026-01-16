@@ -8,11 +8,11 @@ const log = logger.createLogger({ screen: 'storage' });
 
 // Storage keys used throughout the app
 export const STORAGE_KEYS = {
-  USER_SETTINGS: '@palletpulse/user-settings',
-  OFFLINE_QUEUE: '@palletpulse/offline-queue',
-  LAST_SYNC: '@palletpulse/last-sync',
-  DRAFT_PALLET: '@palletpulse/draft-pallet',
-  DRAFT_ITEM: '@palletpulse/draft-item',
+  USER_SETTINGS: '@palletpro/user-settings',
+  OFFLINE_QUEUE: '@palletpro/offline-queue',
+  LAST_SYNC: '@palletpro/last-sync',
+  DRAFT_PALLET: '@palletpro/draft-pallet',
+  DRAFT_ITEM: '@palletpro/draft-item',
 } as const;
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];
@@ -60,7 +60,7 @@ export async function removeStorageItem(key: StorageKey): Promise<boolean> {
 }
 
 /**
- * Clear all PalletPulse data from AsyncStorage
+ * Clear all Pallet Pro data from AsyncStorage
  */
 export async function clearAllStorage(): Promise<boolean> {
   try {

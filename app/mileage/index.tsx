@@ -192,7 +192,7 @@ export default function MileageLogScreen() {
       <View style={styles.disclaimer}>
         <FontAwesome name="info-circle" size={14} color={colors.warning} />
         <Text style={styles.disclaimerText}>
-          Consult a tax professional. PalletPulse is not tax advice.
+          Consult a tax professional. Pallet Pro is not tax advice.
         </Text>
       </View>
     </View>

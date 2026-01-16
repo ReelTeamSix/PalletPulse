@@ -196,7 +196,7 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true, error: null });
 
           const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: 'palletpulse://reset-password',
+            redirectTo: 'palletpro://reset-password',
           });
 
           if (error) {

@@ -1,4 +1,4 @@
-# PalletPulse Development Progress
+# Pallet Pro Development Progress
 
 ## Current Phase: Phase 11 - Polish
 **Status:** In Progress (Logging & Diagnostics Complete)
@@ -138,7 +138,7 @@ ALTER TABLE user_settings ADD COLUMN user_type text DEFAULT 'hobby'; -- hobby, s
 **Legal Disclaimers Added:**
 - Added comprehensive liability disclaimer section to PALLETPULSE_ONESHOT_CONTEXT.md
 - Disclaimers required at: first expense tracking enable, onboarding, settings, mileage log, tax export, ToS
-- Key message: "PalletPulse is an inventory tracking tool, not tax software"
+- Key message: "Pallet Pro is an inventory tracking tool, not tax software"
 - Users responsible for consulting tax professionals
 
 ---

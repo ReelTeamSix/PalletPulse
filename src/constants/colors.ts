@@ -1,4 +1,4 @@
-// PalletPulse Color System
+// Pallet Pro Color System
 // Modern design with elevated cards on light gray backgrounds
 
 export const colors = {

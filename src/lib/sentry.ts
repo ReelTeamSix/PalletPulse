@@ -1,7 +1,7 @@
 /**
  * Sentry Configuration and Initialization
  *
- * Provides error tracking and performance monitoring for PalletPulse.
+ * Provides error tracking and performance monitoring for Pallet Pro.
  * Sentry captures uncaught exceptions, unhandled promise rejections,
  * and manually reported errors via the logger utility.
  */
@@ -52,7 +52,7 @@ export function initializeSentry(): void {
     environment: ENVIRONMENT,
 
     // Release version for tracking issues across versions
-    release: `palletpulse@${APP_VERSION}`,
+    release: `pallet-pro@${APP_VERSION}`,
 
     // Only send errors in production (debug logs only in dev)
     enabled: !__DEV__,

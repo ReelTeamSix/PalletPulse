@@ -282,7 +282,7 @@ describe('useAuthStore', () => {
       expect(resetResult).toEqual({ success: true });
       expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
         'test@example.com',
-        { redirectTo: 'palletpulse://reset-password' }
+        { redirectTo: 'palletpro://reset-password' }
       );
     });
 

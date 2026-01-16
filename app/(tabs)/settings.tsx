@@ -411,7 +411,7 @@ export default function SettingsScreen() {
       <View style={styles.disclaimer}>
         <Ionicons name="information-circle" size={14} color={colors.textDisabled} />
         <Text style={styles.disclaimerText}>
-          PalletPulse is an inventory tracking tool, not tax software.
+          Pallet Pro is an inventory tracking tool, not tax software.
         </Text>
       </View>
 
@@ -434,7 +434,7 @@ export default function SettingsScreen() {
         visible={expenseModalVisible}
         type="info"
         title="Enable Expense Tracking"
-        message="PalletPulse is an inventory tracking tool, not tax software. Expense tracking features are provided for your convenience. Always consult a tax professional for tax advice."
+        message="Pallet Pro is an inventory tracking tool, not tax software. Expense tracking features are provided for your convenience. Always consult a tax professional for tax advice."
         infoText="Do you want to enable expense tracking?"
         primaryLabel="Enable"
         secondaryLabel="Cancel"

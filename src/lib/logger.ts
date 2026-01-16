@@ -1,5 +1,5 @@
 /**
- * Centralized logging utility for PalletPulse
+ * Centralized logging utility for Pallet Pro
  *
  * Features:
  * - Log levels (debug, info, warn, error)

@@ -1,4 +1,4 @@
-// RevenueCat Integration for PalletPulse Subscriptions
+// RevenueCat Integration for Pallet Pro Subscriptions
 import Purchases, {
   CustomerInfo,
   PurchasesOffering,

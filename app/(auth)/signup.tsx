@@ -82,7 +82,7 @@ export default function SignupScreen() {
           </View>
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>
-            Start tracking your profits with <Text style={styles.brandText}>PalletPulse</Text>
+            Start tracking your profits with <Text style={styles.brandText}>Pallet Pro</Text>
           </Text>
         </View>
 

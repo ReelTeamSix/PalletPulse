@@ -1,4 +1,4 @@
-# PalletPulse Development Rules
+# Pallet Pro Development Rules
 
 > **For AI Assistants:** Read this file before making any changes. These rules are mandatory.
 
@@ -851,7 +851,7 @@ export PATH="/c/Program Files/nodejs:$PATH" && npm test
 
 ### Design System Overview
 
-PalletPulse uses a modern design system with elevated white cards on light gray backgrounds, consistent shadows, and a polished professional feel.
+Pallet Pro uses a modern design system with elevated white cards on light gray backgrounds, consistent shadows, and a polished professional feel.
 
 **Key Principles:**
 - Light gray backgrounds (`#F8FAFC`) with white elevated cards
@@ -1299,7 +1299,7 @@ Refer to the **🔬 Detailed Phase Test Plans** section for complete test requir
 **Create and maintain `PROGRESS.md`** in the project root:
 
 ```markdown
-# PalletPulse Development Progress
+# Pallet Pro Development Progress
 
 ## Current Phase: [Phase Name]
 **Status:** [In Progress / Awaiting Review / Approved]

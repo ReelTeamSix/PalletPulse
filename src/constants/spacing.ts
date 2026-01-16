@@ -1,4 +1,4 @@
-// PalletPulse Spacing System
+// Pallet Pro Spacing System
 // Consistent spacing values used throughout the app
 
 export const spacing = {

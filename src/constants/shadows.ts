@@ -1,4 +1,4 @@
-// PalletPulse Shadow System
+// Pallet Pro Shadow System
 // Consistent elevation for cards and interactive elements
 
 import { ViewStyle } from 'react-native';
