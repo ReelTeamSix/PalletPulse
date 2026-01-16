@@ -1,8 +1,8 @@
 # PalletPulse Development Progress
 
-## Current Phase: Phase 10 - Subscription
-**Status:** In Progress (10A-10E Complete, 10F Pending)
-**Branch:** feature/subscription
+## Current Phase: Phase 11 - Polish
+**Status:** In Progress (Logging & Diagnostics Complete)
+**Branch:** feature/polish
 
 ---
 
@@ -16,8 +16,8 @@
 - [x] Phase 7: Sales & Profit (approved)
 - [x] Phase 8: Expense System Redesign (approved)
 - [x] Phase 9: Analytics (approved)
-- [ ] Phase 10: Subscription ← **IN PROGRESS**
-- [ ] Phase 11: Polish
+- [x] Phase 10: Subscription (approved)
+- [ ] Phase 11: Polish ← **IN PROGRESS**
 
 ---
 
@@ -1286,10 +1286,72 @@ Phase 8 will include:
 
 ---
 
+## Phase 11: Polish - IN PROGRESS
+
+### 11A: Logging & Diagnostics ✅
+**Completed:** Jan 16, 2026
+
+**Overview:**
+Implemented centralized logging utility with Sentry integration for production error tracking.
+
+**Files Created:**
+- `src/lib/logger.ts` - Centralized logging utility
+  - Log levels: debug, info, warn, error
+  - Sentry integration for breadcrumbs and error tracking
+  - `createLogger()` factory for scoped loggers
+  - `setGlobalContext()` / `clearGlobalContext()` for user context
+  - `getBreadcrumbs()` / `clearBreadcrumbs()` for diagnostics export
+  - Dev-only console output for debug/info levels
+
+- `src/lib/sentry.ts` - Sentry configuration
+  - `initializeSentry()` - Initialize with environment-specific settings
+  - `isSentryConfigured()` - Check if DSN is set
+  - `setSentryUser()` / `clearSentryUser()` - User context management
+  - `captureException()` - Manual error capture
+  - Filters sensitive data (auth tokens, passwords) from breadcrumbs
+  - Ignores expected errors (network failures, user cancellations)
+
+- `src/components/ui/ErrorFallback.tsx` - Error boundary fallback
+  - User-friendly error display
+  - Retry button
+  - Error details in dev mode
+
+**Files Modified:**
+- `app/_layout.tsx` - Initialize Sentry on app start, set user context on auth
+- `src/lib/supabase.ts` - Replaced console.* with logger
+- `src/lib/storage.ts` - Replaced console.* with scoped logger
+- `src/lib/revenuecat.ts` - Replaced console.* with scoped logger
+- `src/stores/auth-store.ts` - Replaced console.* with scoped logger
+- `src/stores/admin-store.ts` - Replaced console.* with scoped logger
+- `src/stores/subscription-store.ts` - Replaced console.* with scoped logger
+- `src/components/subscription/PaywallModal.tsx` - Replaced console.* with scoped logger
+- `src/components/ui/index.ts` - Export ErrorFallback
+- `src/constants/colors.ts` - Added error state colors
+- `jest.setup.js` - Added Sentry mock for tests
+
+**Features:**
+- Scoped loggers with preset context (screen, action)
+- Automatic breadcrumb trail for debugging
+- Sentry error tracking in production
+- Error boundaries with user-friendly fallback UI
+- Filtered sensitive data in error reports
+- Console output only in development
+
+**Test Results:**
+```
+Test Suites: 20 passed, 20 total
+Tests:       783 passed, 783 total
+```
+
+**Commits:**
+- `feat(diagnostics): add centralized logging and Sentry error tracking`
+
+---
+
 ## Phase 11 Backlog (Polish)
 
 ### Must Have
-- [ ] Logging & diagnostics system
+- [x] Logging & diagnostics system ✅
 
 ### Should Add
 - [ ] Dashboard time period slider (Week/Month/All-Time profit)
