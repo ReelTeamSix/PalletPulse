@@ -9,6 +9,9 @@ import Purchases, {
 } from 'react-native-purchases';
 import { Platform } from 'react-native';
 import { SubscriptionTier } from '@/src/constants/tier-limits';
+import logger from './logger';
+
+const log = logger.createLogger({ screen: 'RevenueCat' });
 
 // RevenueCat API Keys from environment
 const REVENUECAT_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || '';
@@ -39,7 +42,7 @@ export async function initializeRevenueCat(userId?: string): Promise<void> {
   });
 
   if (!apiKey) {
-    console.warn('RevenueCat: No API key configured for this platform');
+    log.warn('No API key configured for this platform');
     return;
   }
 
@@ -54,9 +57,9 @@ export async function initializeRevenueCat(userId?: string): Promise<void> {
       appUserID: userId || undefined,
     });
 
-    console.log('RevenueCat: Initialized successfully');
+    log.info('Initialized successfully', { action: 'initialize' });
   } catch (error) {
-    console.error('RevenueCat: Failed to initialize', error);
+    log.error('Failed to initialize', error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }
@@ -70,7 +73,7 @@ export async function identifyUser(userId: string): Promise<CustomerInfo> {
     const result = await Purchases.logIn(userId);
     return result.customerInfo;
   } catch (error) {
-    console.error('RevenueCat: Failed to identify user', error);
+    log.error('Failed to identify user', { action: 'identifyUser', userId }, error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }
@@ -84,7 +87,7 @@ export async function logOutUser(): Promise<CustomerInfo> {
     const customerInfo = await Purchases.logOut();
     return customerInfo;
   } catch (error) {
-    console.error('RevenueCat: Failed to log out', error);
+    log.error('Failed to log out', { action: 'logOut' }, error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }
@@ -96,7 +99,7 @@ export async function getCustomerInfo(): Promise<CustomerInfo> {
   try {
     return await Purchases.getCustomerInfo();
   } catch (error) {
-    console.error('RevenueCat: Failed to get customer info', error);
+    log.error('Failed to get customer info', { action: 'getCustomerInfo' }, error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }
@@ -109,7 +112,7 @@ export async function getOfferings(): Promise<PurchasesOffering | null> {
     const offerings = await Purchases.getOfferings();
     return offerings.current;
   } catch (error) {
-    console.error('RevenueCat: Failed to get offerings', error);
+    log.error('Failed to get offerings', { action: 'getOfferings' }, error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }
@@ -128,12 +131,12 @@ export async function purchasePackage(
 
     // User cancelled - not an error
     if (purchaseError.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
-      console.log('RevenueCat: Purchase cancelled by user');
+      log.info('Purchase cancelled by user', { action: 'purchasePackage' });
       const customerInfo = await getCustomerInfo();
       return { customerInfo, success: false };
     }
 
-    console.error('RevenueCat: Purchase failed', error);
+    log.error('Purchase failed', { action: 'purchasePackage' }, error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }
@@ -144,10 +147,10 @@ export async function purchasePackage(
 export async function restorePurchases(): Promise<CustomerInfo> {
   try {
     const customerInfo = await Purchases.restorePurchases();
-    console.log('RevenueCat: Purchases restored successfully');
+    log.info('Purchases restored successfully', { action: 'restorePurchases' });
     return customerInfo;
   } catch (error) {
-    console.error('RevenueCat: Failed to restore purchases', error);
+    log.error('Failed to restore purchases', { action: 'restorePurchases' }, error instanceof Error ? error : new Error(String(error)));
     throw error;
   }
 }

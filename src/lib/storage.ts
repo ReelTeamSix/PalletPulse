@@ -2,6 +2,9 @@
 // Typed wrappers for AsyncStorage operations
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from './logger';
+
+const log = logger.createLogger({ screen: 'storage' });
 
 // Storage keys used throughout the app
 export const STORAGE_KEYS = {
@@ -25,8 +28,7 @@ export async function getStorageItem<T>(key: StorageKey): Promise<T | null> {
     }
     return JSON.parse(value) as T;
   } catch (err) {
-    // eslint-disable-next-line no-console -- intentional error logging
-    console.error(`Error reading ${key} from storage:`, err);
+    log.error(`Error reading ${key} from storage`, err instanceof Error ? err : new Error(String(err)));
     return null;
   }
 }
@@ -39,8 +41,7 @@ export async function setStorageItem<T>(key: StorageKey, value: T): Promise<bool
     await AsyncStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (err) {
-    // eslint-disable-next-line no-console -- intentional error logging
-    console.error(`Error writing ${key} to storage:`, err);
+    log.error(`Error writing ${key} to storage`, err instanceof Error ? err : new Error(String(err)));
     return false;
   }
 }
@@ -53,8 +54,7 @@ export async function removeStorageItem(key: StorageKey): Promise<boolean> {
     await AsyncStorage.removeItem(key);
     return true;
   } catch (err) {
-    // eslint-disable-next-line no-console -- intentional error logging
-    console.error(`Error removing ${key} from storage:`, err);
+    log.error(`Error removing ${key} from storage`, err instanceof Error ? err : new Error(String(err)));
     return false;
   }
 }
@@ -68,8 +68,7 @@ export async function clearAllStorage(): Promise<boolean> {
     await AsyncStorage.multiRemove(keys);
     return true;
   } catch (err) {
-    // eslint-disable-next-line no-console -- intentional error logging
-    console.error('Error clearing all storage:', err);
+    log.error('Error clearing all storage', err instanceof Error ? err : new Error(String(err)));
     return false;
   }
 }

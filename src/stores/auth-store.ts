@@ -4,6 +4,9 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/src/lib/supabase';
+import logger from '@/src/lib/logger';
+
+const log = logger.createLogger({ screen: 'AuthStore' });
 
 export interface AuthState {
   // State
@@ -58,8 +61,7 @@ export const useAuthStore = create<AuthState>()(
           const { data: { session }, error } = await supabase.auth.getSession();
 
           if (error) {
-            // eslint-disable-next-line no-console -- intentional error logging
-            console.error('Error getting session:', error);
+            log.error('Error getting session', { action: 'initialize' }, error);
             set({ isLoading: false, isInitialized: true, error: formatAuthError(error) });
             return;
           }
@@ -79,8 +81,7 @@ export const useAuthStore = create<AuthState>()(
             });
           });
         } catch (err) {
-          // eslint-disable-next-line no-console -- intentional error logging
-          console.error('Error initializing auth:', err);
+          log.error('Error initializing auth', { action: 'initialize' }, err instanceof Error ? err : new Error(String(err)));
           set({
             isLoading: false,
             isInitialized: true,
@@ -171,8 +172,7 @@ export const useAuthStore = create<AuthState>()(
           const { error } = await supabase.auth.signOut();
 
           if (error) {
-            // eslint-disable-next-line no-console -- intentional error logging
-            console.error('Error signing out:', error);
+            log.error('Error signing out', { action: 'signOut' }, error);
           }
 
           set({
@@ -181,8 +181,7 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
           });
         } catch (err) {
-          // eslint-disable-next-line no-console -- intentional error logging
-          console.error('Error signing out:', err);
+          log.error('Error signing out', { action: 'signOut' }, err instanceof Error ? err : new Error(String(err)));
           set({
             user: null,
             session: null,

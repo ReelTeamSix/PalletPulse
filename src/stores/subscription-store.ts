@@ -18,6 +18,9 @@ import {
 } from '@/src/lib/revenuecat';
 import { SubscriptionTier, TIER_LIMITS, TierLimits, canPerformAction } from '@/src/constants/tier-limits';
 import { useOnboardingStore } from './onboarding-store';
+import logger from '@/src/lib/logger';
+
+const log = logger.createLogger({ screen: 'SubscriptionStore' });
 
 // Dev mode tier override - set via environment variable for testing
 // Usage: Add EXPO_PUBLIC_DEV_TIER=pro to .env.local to test pro features
@@ -75,7 +78,7 @@ export const useSubscriptionStore = create<SubscriptionState>()((set, get) => ({
   initialize: async (userId?: string) => {
     // Skip if not configured
     if (!isConfigured()) {
-      console.log('RevenueCat: Not configured, using free tier');
+      log.debug('Not configured, using free tier', { action: 'initialize' });
       set({ isInitialized: true });
       return;
     }
@@ -107,7 +110,7 @@ export const useSubscriptionStore = create<SubscriptionState>()((set, get) => ({
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to initialize subscriptions';
-      console.error('Subscription initialization error:', error);
+      log.error('Initialization failed', { action: 'initialize' }, error instanceof Error ? error : new Error(message));
       set({ isLoading: false, error: message, isInitialized: true });
     }
   },
@@ -154,7 +157,7 @@ export const useSubscriptionStore = create<SubscriptionState>()((set, get) => ({
         willRenew: false,
       });
     } catch (error) {
-      console.error('Failed to log out from RevenueCat:', error);
+      log.error('Logout failed', { action: 'logout' }, error instanceof Error ? error : new Error(String(error)));
     }
   },
 
@@ -396,9 +399,9 @@ export function useRequiredTier(limitType: keyof TierLimits, currentCount: numbe
 export function setDevTier(tier: SubscriptionTier | null): void {
   if (__DEV__) {
     runtimeDevTier = tier;
-    console.log(`[DEV] Subscription tier set to: ${tier || 'real tier (override cleared)'}`);
+    log.debug(`Tier set to: ${tier || 'real tier (override cleared)'}`, { action: 'setDevTier' });
   } else {
-    console.warn('setDevTier is only available in development mode');
+    log.warn('setDevTier is only available in development mode', { action: 'setDevTier' });
   }
 }
 

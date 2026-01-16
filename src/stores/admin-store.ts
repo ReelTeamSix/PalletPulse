@@ -11,6 +11,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/src/lib/supabase';
+import logger from '@/src/lib/logger';
 import {
   AppSetting,
   AppSettingKey,
@@ -19,6 +20,8 @@ import {
   SalesPlatform,
   PLATFORM_FEE_KEYS,
 } from '@/src/types/database';
+
+const log = logger.createLogger({ screen: 'AppSettingsStore' });
 
 export interface AppSettingsState {
   // Settings (read-only from mobile app perspective)
@@ -73,8 +76,7 @@ export const useAppSettingsStore = create<AppSettingsState>()(
 
           if (error) {
             // If table doesn't exist or RLS blocks, use defaults silently
-            // eslint-disable-next-line no-console -- intentional warning logging
-            console.warn('App settings fetch warning:', error.message);
+            log.warn('Settings fetch warning', { action: 'fetchSettings', errorMessage: error.message });
             set({ settingsLoaded: true, isLoading: false, lastFetched: new Date().toISOString() });
             return;
           }
@@ -108,8 +110,7 @@ export const useAppSettingsStore = create<AppSettingsState>()(
           });
         } catch (err) {
           const message = err instanceof Error ? err.message : 'Failed to fetch settings';
-          // eslint-disable-next-line no-console -- intentional warning logging
-          console.warn('App settings fetch error:', message);
+          log.warn('Settings fetch error', { action: 'fetchSettings', errorMessage: message });
           // Use defaults on error - don't block app functionality
           set({
             settingsLoaded: true,

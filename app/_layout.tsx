@@ -2,7 +2,7 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, ErrorBoundary } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
@@ -13,10 +13,20 @@ import { useAuthStore } from '@/src/stores/auth-store';
 import { useOnboardingStore } from '@/src/stores/onboarding-store';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
 import { colors } from '@/src/constants/colors';
+import { initializeSentry } from '@/src/lib/sentry';
+import logger from '@/src/lib/logger';
+import { ErrorFallback } from '@/src/components/ui';
 
-export {
-  ErrorBoundary,
-} from 'expo-router';
+// Initialize Sentry as early as possible
+initializeSentry();
+
+// Re-export error boundary for expo-router to use
+export { ErrorBoundary };
+
+// Custom error boundary fallback component
+export function ErrorBoundaryFallback({ error, retry }: { error: Error; retry: () => void }) {
+  return <ErrorFallback error={error} resetError={retry} />;
+}
 
 export const unstable_settings = {
   initialRouteName: '(auth)',
@@ -46,6 +56,16 @@ export default function RootLayout() {
       initializeSubscription(session?.user?.id);
     }
   }, [isInitialized, session?.user?.id, initializeSubscription]);
+
+  // Set logger context when user changes
+  useEffect(() => {
+    if (session?.user?.id) {
+      logger.setGlobalContext({ userId: session.user.id });
+      logger.info('User session started', { action: 'auth' });
+    } else {
+      logger.clearGlobalContext();
+    }
+  }, [session?.user?.id]);
 
   // Handle font loading error
   useEffect(() => {

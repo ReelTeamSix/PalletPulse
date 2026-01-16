@@ -34,7 +34,9 @@ export const colors = {
   // Text - Light Mode
   textPrimary: '#1E293B',   // Darker for better contrast
   textSecondary: '#64748B', // Slate gray
+  textTertiary: '#94A3B8',  // Light slate for helper text
   textDisabled: '#9E9E9E',
+  textInverse: '#FFFFFF',   // White text on dark backgrounds
 
   // Text - Dark Mode
   textPrimaryDark: '#FFFFFF',
@@ -54,6 +56,11 @@ export const colors = {
   modalIconWarning: '#FEF3C7', // Light amber for warning icon background
   modalIconSuccess: '#DCFCE7', // Light green for success icon background
   modalIconInfo: '#DBEAFE',    // Light blue for info icon background
+
+  // Semantic backgrounds
+  warningBackground: '#FEF3C7', // Light amber for warning states
+  errorBackground: '#FEE2E2',   // Light red for error states
+  successBackground: '#DCFCE7', // Light green for success states
 } as const;
 
 export type ColorKey = keyof typeof colors;

@@ -5,6 +5,25 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
+// Mock Sentry
+jest.mock('@sentry/react-native', () => ({
+  init: jest.fn(),
+  setUser: jest.fn(),
+  addBreadcrumb: jest.fn(),
+  captureException: jest.fn(),
+  withScope: jest.fn((callback) => callback({
+    setExtra: jest.fn(),
+    setTag: jest.fn(),
+  })),
+  Severity: {
+    Debug: 'debug',
+    Info: 'info',
+    Warning: 'warning',
+    Error: 'error',
+    Fatal: 'fatal',
+  },
+}));
+
 // Mock Supabase
 jest.mock('@/src/lib/supabase', () => ({
   supabase: {
