@@ -1,8 +1,8 @@
 # PalletPulse Development Progress
 
 ## Current Phase: Phase 10 - Subscription
-**Status:** Ready to begin
-**Branch:** feature/ui-redesign
+**Status:** In Progress (10A-10E Complete, 10F Pending)
+**Branch:** feature/subscription
 
 ---
 
@@ -15,8 +15,8 @@
 - [x] Phase 6: Item Management (approved)
 - [x] Phase 7: Sales & Profit (approved)
 - [x] Phase 8: Expense System Redesign (approved)
-- [x] Phase 9: Analytics (approved) ← **COMPLETE**
-- [ ] Phase 10: Subscription ← **NEXT**
+- [x] Phase 9: Analytics (approved)
+- [ ] Phase 10: Subscription ← **IN PROGRESS**
 - [ ] Phase 11: Polish
 
 ---
@@ -880,6 +880,138 @@ The following files from initial Phase 8 implementation will be refactored:
 - `src/features/sales/schemas/sale-form-schema.ts` - Enhanced with platform/shipping
 - `app/mileage/` - Mileage screens
 - `app/admin/settings.tsx` - Admin IRS rate management
+
+---
+
+## Phase 10: Subscription - IN PROGRESS
+
+### Overview
+Implementing subscription tier gating and paywall components. RevenueCat SDK integration is ready but requires app store product setup before full functionality.
+
+### Phase 10A: Subscription Infrastructure ✅
+**Completed:** Jan 16, 2026
+
+**Files Created:**
+- `src/lib/revenuecat.ts` - RevenueCat SDK initialization and helpers
+- `src/stores/subscription-store.ts` - Subscription state management with tier gating
+
+**Features:**
+- RevenueCat SDK configuration for iOS/Android
+- `initializeRevenueCat()` - Initialize with optional user ID
+- `getCustomerInfo()` - Get current subscription status
+- `getOfferings()` - Get available packages
+- `getTierFromEntitlements()` - Map entitlements to tiers
+- Development tier override via `EXPO_PUBLIC_DEV_TIER` env var
+
+### Phase 10B: Subscription Store ✅
+**Completed:** Jan 16, 2026
+
+**Implementation:**
+- `useSubscriptionStore` with Zustand persist middleware
+- `getEffectiveTier()` - Returns tier considering trial status
+- `canPerform()` - Check if action allowed for current tier
+- `purchasePackage()` - Handle purchase flow
+- `restorePurchases()` - Restore previous purchases
+
+### Phase 10C: Paywall Components ✅
+**Completed:** Jan 16, 2026
+
+**Files Created:**
+- `src/components/subscription/PaywallModal.tsx` - Full paywall with tier cards
+- `src/components/subscription/UpgradePrompt.tsx` - Inline upgrade nudge
+- `src/components/subscription/index.ts` - Exports
+
+**Features:**
+- PaywallModal shows tier comparison with features
+- Monthly/Annual toggle with savings badge
+- "Most Popular" badge on Starter tier
+- Trial CTA for users not on trial
+- Restore Purchases link
+- UpgradePrompt inline component for contextual upgrades
+
+### Phase 10D: Tier Limit Enforcement ✅
+**Completed:** Jan 16, 2026
+
+**Files Modified:**
+- `src/stores/pallets-store.ts` - Pallet limit check before `addPallet()`
+- `src/stores/items-store.ts` - Item limit check before `addItem()`
+- `src/components/ui/PhotoPicker.tsx` - Photo limit check with `onUpgradePress` callback
+- `app/(tabs)/expenses.tsx` - Gate expense tracking by tier
+- `app/mileage/index.tsx` - Gate mileage tracking by tier
+
+**Enforcement Pattern:**
+```typescript
+// Returns { success: false, errorCode: 'TIER_LIMIT_REACHED', requiredTier: 'starter' }
+// when limit exceeded
+```
+
+**Screens Updated:**
+- `app/pallets/new.tsx` - Shows PaywallModal on limit reached
+- `app/items/new.tsx` - Shows PaywallModal on limit reached
+
+### Phase 10E: Settings Integration ✅
+**Completed:** Jan 16, 2026
+
+**Files Modified:**
+- `app/(tabs)/settings.tsx` - Added subscription management section
+
+**Features:**
+- Current plan display with badge
+- Tier description
+- Upgrade/Manage button
+- Restore Purchases link
+- Feature list for current tier
+
+**UI Cleanup (Jan 16):**
+- Removed Business Type section from settings (dead code)
+- Updated onboarding to remove user_type dependencies
+- Removed "Welcome back," text from dashboard header
+- Fixed analytics.tsx upgrade prompt to open PaywallModal (was broken navigation)
+- Standardized card shadows to `sm` for consistency
+
+### Phase 10F: Affiliate Code Support ⏳
+**Status:** Pending - Deferred to post-launch
+
+**Planned Features:**
+- Affiliate code input during signup
+- Discount application via RevenueCat promotional offers
+- Track in `profiles.affiliate_code`
+
+### Test Results
+```
+Test Suites: 19 passed, 19 total
+Tests:       783 passed, 783 total
+```
+
+### Commits
+- `feat(subscription): add RevenueCat SDK and subscription store`
+- `feat(subscription): add paywall modal and upgrade prompt components`
+- `feat(subscription): enforce tier limits on pallets, items, and photos`
+- `feat(subscription): add subscription management to settings`
+- `feat(subscription): improve tier gating UX and upgrade prompts`
+
+### Human Verification Checklist
+**Free Tier Limits:**
+- [ ] Create 1 pallet → success
+- [ ] Create 2nd pallet → upgrade prompt appears (PaywallModal)
+- [ ] Create 20 items → success
+- [ ] Create 21st item → upgrade prompt appears (PaywallModal)
+- [ ] Upload 1 photo → success
+- [ ] Upload 2nd photo to same item → upgrade prompt appears
+
+**Upgrade Flow:**
+- [ ] Tap upgrade → PaywallModal appears with tier cards
+- [ ] RevenueCat sandbox purchase works (requires app store setup)
+
+**Settings:**
+- [ ] Shows current tier with description
+- [ ] Upgrade button opens PaywallModal
+- [ ] Restore Purchases works
+
+**Feature Gates:**
+- [ ] Expenses tab hidden for Free tier
+- [ ] Mileage screen shows upgrade prompt for Free tier
+- [ ] Analytics export shows upgrade prompt for appropriate tiers
 
 ---
 

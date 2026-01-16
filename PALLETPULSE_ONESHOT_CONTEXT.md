@@ -213,18 +213,18 @@
 - Profit is tracked per item and rolled up to pallet level
 - Pallet profit = Sum of all item profits - pallet cost - expenses
 
-### Workflow 4: Expense Tracking (Opt-In Feature)
+### Workflow 4: Expense Tracking (Tier-Gated Feature)
 
-> **Design Philosophy:** Expense tracking is opt-in to keep the app simple for casual/hobby flippers while providing full tax-ready tracking for business users.
+> **Design Philosophy:** Expense tracking is gated by subscription tier. Free tier users get simple profit tracking, while Starter+ tiers unlock full expense and mileage tracking.
 
-**User Types & Expense Needs:**
-| User Type | Expense Tracking | What They Care About |
-|-----------|------------------|---------------------|
-| Casual hobbyist | OFF (default) | Simple profit: sale - purchase |
-| Side hustler | Optional | Basic profit + occasional big expenses |
-| Business operator | ON | Full tracking for Schedule C taxes |
+**Tier-Based Feature Access:**
+| Tier | Expense Tracking | What They Get |
+|------|------------------|---------------|
+| Free | Not available | Simple profit: sale - purchase cost |
+| Starter | Full access | Expenses, mileage, receipt photos, CSV export |
+| Pro | Full access | + Advanced reports, PDF export, saved routes |
 
-**Opt-In Trigger:** Settings → "Enable Expense Tracking" toggle
+**Access Control:** Subscription tier determines feature availability. Users on Starter+ can additionally toggle expense tracking on/off in Settings.
 
 **When Expense Tracking is OFF (Default):**
 - Simple profit calculation: Sale Price - Allocated Cost = Profit
@@ -396,29 +396,43 @@ See "### Future: Web Admin Dashboard" section below for planned secure web inter
 #### 4E: Onboarding Integration
 
 **Onboarding Screen (after signup):**
+The onboarding flow presents a tier selection screen with the option to start a 7-day Pro trial (reverse trial pattern). Users see tier cards comparing Free, Starter, and Pro features.
+
 ```
-How do you flip? (Screen 3 of 5)
+Choose Your Plan
 
-○ Just for fun
-  I want to track profits simply
+[FREE TIER CARD]
+Free - $0/month
+• 1 pallet, 20 items
+• Basic profit tracking
+• 1 photo per item
+[Start Free]
 
-○ Side income
-  I want basic tracking with occasional expenses
+[STARTER TIER CARD] ← "Most Popular" badge
+Starter - $9.99/month
+• 25 pallets, 500 items
+• Expense & mileage tracking
+• 3 photos per item
+• CSV export
+[Start with 7-Day Pro Trial]
 
-● Serious business
-  I need full tax-ready expense tracking
-
-[This affects which features you see. Change anytime in Settings.]
+[PRO TIER CARD]
+Pro - $24.99/month
+• Unlimited pallets/items
+• Advanced analytics
+• PDF export
+• 10 photos per item
+[Start with 7-Day Pro Trial]
 ```
 
-**Tier Alignment:**
+**Tier Features:**
 | Tier | Expense & Mileage Features |
 |------|----------------------------|
 | Free | No expense tracking, no mileage tracking |
 | Starter | Basic expense tracking, overhead expenses, **manual mileage tracking**, receipt photos, CSV export |
 | Pro | + **Advanced expense reports**, **PDF export**, **saved routes & quick-log mileage** |
 
-**Subscription CTA:** When Free user tries to access mileage/overhead features:
+**Subscription CTA:** When Free user tries to access mileage/overhead features, they see an UpgradePrompt component or PaywallModal:
 > "Track mileage and expenses for taxes? Upgrade to Starter for full expense tracking."
 
 ### Workflow 5: Analytics & Insights
@@ -564,8 +578,8 @@ user_settings
 ├── storage_locations (jsonb, array of strings, default: ["Garage", "Living Room", "Bedroom", "Storage Unit"])
 ├── default_sales_tax_rate (decimal, nullable, e.g., 0.06 for 6%)
 ├── include_unsellable_in_cost (boolean, default false)
-├── expense_tracking_enabled (boolean, default false, opt-in for business users)
-├── user_type (enum: hobby, side_hustle, business, default: hobby, set during onboarding)
+├── expense_tracking_enabled (boolean, default false, toggle in Settings for Starter+ users)
+├── user_type (enum: hobby, side_hustle, business, LEGACY - no longer set by app, subscription tier is authoritative)
 ├── notification_stale_inventory (boolean, default true)
 ├── notification_weekly_summary (boolean, default true)
 ├── notification_pallet_milestones (boolean, default true)
@@ -979,46 +993,58 @@ subscriptions (managed by RevenueCat, mirrored in DB)
 ### Key Screens
 
 **1. Dashboard (Home)**
-- Hero metric: Total Profit (large, centered)
-- Quick stats: Items sold this month, active inventory value
-- Action cards: "Add Pallet", "Process Items", "View Stale Inventory"
-- Recent activity feed
+- Header: "Dashboard" title with notification icon
+- Hero card: Total Profit (large, color-coded green/red) with items sold count
+- Metric cards: Items Sold, Active Inventory Value
+- Action buttons: "Add Pallet", "Process Items"
+- Recent activity feed with sales, listings, and new pallets
 
-**2. Pallets List**
-- Card-based layout
-- Each card shows: Name, supplier, cost, items count, profit, ROI %
-- Color-coded by profitability
-- Tap to view pallet details
+**2. Inventory Tab (Combined Pallets + Items)**
+- Segmented control: Pallets | Items (persisted selection)
+- **Pallets segment:**
+  - Card-based layout with profit metrics
+  - Each card shows: Name, supplier, cost, items count, profit, ROI %
+  - Color-coded by profitability
+  - Tap to view pallet details
+- **Items segment:**
+  - Search bar with filter chips (All, Listed, Sold, Unlisted)
+  - Swipe gestures: right to sell, left to delete
+  - Quick-sell modal with platform picker
+- Context-aware FAB: adds pallet or item based on active segment
 
 **3. Pallet Detail**
-- Header: Pallet name, supplier, cost, profit
-- Progress bar: Items processed / total items
-- List of items (grouped by status)
+- Header: Pallet name, supplier, cost, profit, ROI
+- Metric cards: Cost, Profit, ROI with color coding
+- Progress summary: Sold count, Unsold count, Revenue
+- List of items with swipe gestures (sell/delete)
 - "Add Item" FAB
 
 **4. Item Entry Form**
 - Smart defaults (quantity=1, condition=New)
+- Pallet dropdown for assigning to pallets
 - Auto-suggest storage locations
-- Photo upload (drag-drop or camera)
+- Photo picker with tier-based limits
 - "Generate Description" button (Starter+ tier)
 - Save as draft or publish
 
 **5. Analytics**
-- Tab navigation: Overview, Pallets, Items, Expenses
+- Header with date range filter
+- Tab segments: Overview, By Pallet, By Item, Performance
 - Interactive charts (profit trends, sales velocity)
 - Filterable by date range
 - Export button (CSV/PDF)
 
 **6. Settings**
-- Subscription management
-- Affiliate code entry (if not entered at signup)
-- Stale inventory threshold
-- Storage locations (customizable list)
-- Tax settings (sales tax rate, mileage rate)
+- **Subscription section:** Current plan with badge, tier description, feature list, Upgrade/Manage button, Restore Purchases
+- **App Settings:** Stale inventory threshold, include unsellable items toggle
+- **Expense Tracking toggle:** (Starter+ only) Enable/disable expense tracking with disclaimer
+- **About section:** App version, Terms of Service, Privacy Policy
+- Note: Business Type selection removed - subscription tier is now the authoritative feature gate
 
 ### Responsive Design
 
-- **Mobile:** Bottom tab navigation (Dashboard, Pallets, Items, Analytics, Settings)
+- **Mobile:** Bottom tab navigation (Dashboard, Inventory, Expenses*, Analytics, Settings)
+  - *Expenses tab conditionally visible based on subscription tier and expense_tracking_enabled setting
 - **Tablet:** Side drawer navigation
 - **Web:** Full sidebar + top nav
 
@@ -1306,13 +1332,22 @@ subscriptions (managed by RevenueCat, mirrored in DB)
 - ✅ CSV export (all data)
 
 **Subscription Management:**
-- ✅ Free tier (1 pallet, 20 items, 1 photo/item)
-- ✅ Starter tier ($9.99/mo or $99.99/yr)
-- ✅ Pro tier ($24.99/mo or $249.99/yr)
-- ✅ Upgrade/downgrade flow
-- ✅ Annual billing option (~17% savings)
-- ✅ Affiliate code entry at signup
-- ✅ Affiliate discount: Monthly = 50% off first month; Annual = 20% off first year
+- ✅ Free tier (1 pallet, 20 items, 1 photo/item) - **IMPLEMENTED: Tier limits enforced**
+- ✅ Starter tier ($9.99/mo or $99.99/yr) - **IMPLEMENTED: Tier defined, RevenueCat integration ready**
+- ✅ Pro tier ($24.99/mo or $249.99/yr) - **IMPLEMENTED: Tier defined, RevenueCat integration ready**
+- ✅ Upgrade/downgrade flow - **IMPLEMENTED: PaywallModal with tier cards, purchase flow ready**
+- ✅ Annual billing option (~17% savings) - **IMPLEMENTED: Monthly/Annual toggle in PaywallModal**
+- ⏳ Affiliate code entry at signup - *Deferred to post-launch*
+- ⏳ Affiliate discount: Monthly = 50% off first month; Annual = 20% off first year - *Deferred to post-launch*
+
+**Subscription Implementation Notes (Phase 10):**
+- RevenueCat SDK integrated and configured
+- Tier limits enforced at: pallet creation, item creation, photo upload
+- PaywallModal component shows tier comparison with features
+- UpgradePrompt component for contextual upgrade nudges
+- Settings screen shows subscription status and management options
+- Development tier override available via `EXPO_PUBLIC_DEV_TIER` env var
+- Requires App Store/Play Store product setup for actual purchases
 
 **Affiliate Tracking:**
 - ✅ Unique referral codes
