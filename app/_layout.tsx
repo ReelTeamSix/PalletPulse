@@ -11,6 +11,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useAuthStore } from '@/src/stores/auth-store';
 import { useOnboardingStore } from '@/src/stores/onboarding-store';
+import { useSubscriptionStore } from '@/src/stores/subscription-store';
 import { colors } from '@/src/constants/colors';
 
 export {
@@ -30,12 +31,21 @@ export default function RootLayout() {
     ...FontAwesome.font,
   });
 
-  const { initialize, isInitialized } = useAuthStore();
+  const { initialize, isInitialized, session } = useAuthStore();
+  const { initialize: initializeSubscription, isInitialized: subscriptionInitialized } = useSubscriptionStore();
 
   // Initialize auth on app start
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // Initialize subscription/RevenueCat after auth is ready
+  useEffect(() => {
+    if (isInitialized) {
+      // Pass user ID if logged in for RevenueCat user identification
+      initializeSubscription(session?.user?.id);
+    }
+  }, [isInitialized, session?.user?.id, initializeSubscription]);
 
   // Handle font loading error
   useEffect(() => {

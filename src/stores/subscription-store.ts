@@ -109,7 +109,7 @@ export const useSubscriptionStore = create<SubscriptionState>()((set, get) => ({
    * Identify user with RevenueCat (call after login)
    */
   identify: async (userId: string) => {
-    if (!isConfigured()) return;
+    if (!isConfigured() || !get().isInitialized) return;
 
     set({ isLoading: true, error: null });
 
@@ -135,7 +135,7 @@ export const useSubscriptionStore = create<SubscriptionState>()((set, get) => ({
    * Log out user from RevenueCat
    */
   logout: async () => {
-    if (!isConfigured()) return;
+    if (!isConfigured() || !get().isInitialized) return;
 
     try {
       await logOutUser();
@@ -155,7 +155,7 @@ export const useSubscriptionStore = create<SubscriptionState>()((set, get) => ({
    * Refresh subscription status from RevenueCat
    */
   refreshSubscription: async () => {
-    if (!isConfigured()) return;
+    if (!isConfigured() || !get().isInitialized) return;
 
     set({ isLoading: true, error: null });
 
@@ -181,7 +181,8 @@ export const useSubscriptionStore = create<SubscriptionState>()((set, get) => ({
    * Load available subscription offerings
    */
   loadOfferings: async () => {
-    if (!isConfigured()) return;
+    // Must be configured AND initialized before calling RevenueCat
+    if (!isConfigured() || !get().isInitialized) return;
 
     set({ isLoading: true, error: null });
 
@@ -198,7 +199,7 @@ export const useSubscriptionStore = create<SubscriptionState>()((set, get) => ({
    * Purchase a subscription package
    */
   purchasePackage: async (pkg: PurchasesPackage) => {
-    if (!isConfigured()) {
+    if (!isConfigured() || !get().isInitialized) {
       return { success: false, error: 'Subscriptions not configured' };
     }
 
@@ -240,7 +241,7 @@ export const useSubscriptionStore = create<SubscriptionState>()((set, get) => ({
    * Restore previous purchases
    */
   restorePurchases: async () => {
-    if (!isConfigured()) {
+    if (!isConfigured() || !get().isInitialized) {
       return { success: false, restored: false, error: 'Subscriptions not configured' };
     }
 
