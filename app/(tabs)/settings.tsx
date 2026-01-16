@@ -26,27 +26,6 @@ import { useAuthStore } from '@/src/stores/auth-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
 import { PaywallModal } from '@/src/components/subscription';
-import { UserType } from '@/src/types/database';
-
-// User type options with descriptions
-const USER_TYPE_OPTIONS: { value: UserType; label: string; description: string }[] = [
-  {
-    value: 'hobby',
-    label: 'Hobby Flipper',
-    description: 'Track profits simply - no expense tracking needed',
-  },
-  {
-    value: 'side_hustle',
-    label: 'Side Income',
-    description: 'Basic tracking with shipping and platform fees',
-  },
-  {
-    value: 'business',
-    label: 'Serious Business',
-    description: 'Full expense tracking for tax reporting',
-  },
-];
-
 // Setting row component
 function SettingRow({
   icon,
@@ -150,12 +129,12 @@ export default function SettingsScreen() {
     isLoading,
     fetchSettings,
     toggleExpenseTracking,
-    setUserType,
     setStaleThreshold,
     setIncludeUnsellableInCost,
   } = useUserSettingsStore();
   const {
     getEffectiveTier,
+    canPerform,
     expirationDate,
     billingCycle,
     willRenew,
@@ -163,13 +142,13 @@ export default function SettingsScreen() {
     refreshSubscription,
   } = useSubscriptionStore();
 
-  const [showUserTypePicker, setShowUserTypePicker] = useState(false);
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
   const [expenseModalVisible, setExpenseModalVisible] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
 
   const currentTier = getEffectiveTier();
+  const canAccessExpenseTracking = canPerform('expenseTracking', 0);
 
   // Fetch settings and refresh subscription on mount and focus
   useFocusEffect(
@@ -190,6 +169,11 @@ export default function SettingsScreen() {
 
   const handleToggleExpenseTracking = async (enabled: boolean) => {
     if (enabled) {
+      // If user doesn't have expense tracking access, show paywall
+      if (!canAccessExpenseTracking) {
+        setShowPaywall(true);
+        return;
+      }
       setExpenseModalVisible(true);
     } else {
       await toggleExpenseTracking(false);
@@ -199,11 +183,6 @@ export default function SettingsScreen() {
   const confirmEnableExpenseTracking = async () => {
     setExpenseModalVisible(false);
     await toggleExpenseTracking(true);
-  };
-
-  const handleUserTypeChange = async (userType: UserType) => {
-    await setUserType(userType);
-    setShowUserTypePicker(false);
   };
 
   const handleStaleThresholdChange = () => {
@@ -225,11 +204,6 @@ export default function SettingsScreen() {
       'plain-text',
       settings?.stale_threshold_days?.toString() || '30'
     );
-  };
-
-  const getUserTypeLabel = () => {
-    const option = USER_TYPE_OPTIONS.find((o) => o.value === settings?.user_type);
-    return option?.label || 'Hobby Flipper';
   };
 
   const handleSubscriptionPress = () => {
@@ -294,7 +268,6 @@ export default function SettingsScreen() {
       <UserProfileCard
         email={user?.email ?? null}
         tier={currentTier === 'enterprise' ? 'pro' : currentTier}
-        onSubscriptionPress={handleSubscriptionPress}
       />
 
       {/* Subscription Section */}
@@ -390,12 +363,12 @@ export default function SettingsScreen() {
         <ToggleRow
           icon="wallet-outline"
           label="Enable Expense Tracking"
-          value={settings?.expense_tracking_enabled ?? false}
+          value={canAccessExpenseTracking ? (settings?.expense_tracking_enabled ?? false) : false}
           onValueChange={handleToggleExpenseTracking}
-          hint="Track mileage and overhead expenses"
-          isLast={!settings?.expense_tracking_enabled}
+          hint={canAccessExpenseTracking ? "Track mileage and overhead expenses" : "Upgrade to Starter to unlock"}
+          isLast={!settings?.expense_tracking_enabled || !canAccessExpenseTracking}
         />
-        {settings?.expense_tracking_enabled && (
+        {canAccessExpenseTracking && settings?.expense_tracking_enabled && (
           <View style={styles.featuresContainer}>
             <View style={styles.featureRow}>
               <Ionicons name="checkmark-circle" size={16} color={colors.profit} />
@@ -413,50 +386,6 @@ export default function SettingsScreen() {
               <Ionicons name="checkmark-circle" size={16} color={colors.profit} />
               <Text style={styles.featureText}>Receipt Photo Storage</Text>
             </View>
-          </View>
-        )}
-      </Card>
-
-      {/* User Type Section */}
-      <SectionHeader title="Business Type" />
-      <Card shadow="sm" padding={0} style={styles.sectionCard}>
-        <SettingRow
-          icon="briefcase-outline"
-          label="User Type"
-          value={getUserTypeLabel()}
-          onPress={() => setShowUserTypePicker(!showUserTypePicker)}
-          isLast={!showUserTypePicker}
-        />
-        {showUserTypePicker && (
-          <View style={styles.userTypePicker}>
-            {USER_TYPE_OPTIONS.map((option, index) => (
-              <Pressable
-                key={option.value}
-                style={[
-                  styles.userTypeOption,
-                  settings?.user_type === option.value && styles.userTypeOptionSelected,
-                ]}
-                onPress={() => handleUserTypeChange(option.value)}
-              >
-                <View style={[
-                  styles.userTypeRadio,
-                  settings?.user_type === option.value && styles.userTypeRadioSelected,
-                ]}>
-                  {settings?.user_type === option.value && (
-                    <View style={styles.userTypeRadioInner} />
-                  )}
-                </View>
-                <View style={styles.userTypeContent}>
-                  <Text style={[
-                    styles.userTypeLabel,
-                    settings?.user_type === option.value && styles.userTypeLabelSelected,
-                  ]}>
-                    {option.label}
-                  </Text>
-                  <Text style={styles.userTypeDescription}>{option.description}</Text>
-                </View>
-              </Pressable>
-            ))}
           </View>
         )}
       </Card>
@@ -613,61 +542,6 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: fontSize.sm,
     color: colors.textPrimary,
-  },
-  userTypePicker: {
-    padding: spacing.md,
-    paddingTop: spacing.sm,
-    gap: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  userTypeOption: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.surface,
-    gap: spacing.md,
-  },
-  userTypeOptionSelected: {
-    backgroundColor: colors.primaryLight,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  userTypeRadio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  userTypeRadioSelected: {
-    borderColor: colors.primary,
-  },
-  userTypeRadioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.primary,
-  },
-  userTypeContent: {
-    flex: 1,
-  },
-  userTypeLabel: {
-    fontSize: fontSize.md,
-    fontWeight: '500',
-    color: colors.textPrimary,
-  },
-  userTypeLabelSelected: {
-    color: colors.primary,
-  },
-  userTypeDescription: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    marginTop: 2,
   },
   signOutButton: {
     marginTop: spacing.lg,

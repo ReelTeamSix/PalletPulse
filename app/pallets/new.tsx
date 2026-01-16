@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { colors } from '@/src/constants/colors';
-import { usePalletsStore } from '@/src/stores/pallets-store';
+import { usePalletsStore, PALLET_ERROR_CODES } from '@/src/stores/pallets-store';
 import {
   PalletForm,
   PalletFormData,
   generatePalletName,
 } from '@/src/features/pallets';
 import { ConfirmationModal } from '@/src/components/ui';
+import { PaywallModal } from '@/src/components/subscription';
+import { SubscriptionTier } from '@/src/constants/tier-limits';
 
 export default function NewPalletScreen() {
   const router = useRouter();
@@ -18,6 +20,10 @@ export default function NewPalletScreen() {
     visible: false,
     title: '',
     message: '',
+  });
+  const [paywallModal, setPaywallModal] = useState<{ visible: boolean; requiredTier: SubscriptionTier }>({
+    visible: false,
+    requiredTier: 'starter',
   });
 
   const handleCancel = () => {
@@ -47,6 +53,12 @@ export default function NewPalletScreen() {
             router.push(`/pallets/${result.data!.id}`);
           }, 100);
         }
+      } else if (result.errorCode === PALLET_ERROR_CODES.TIER_LIMIT_REACHED) {
+        // Show paywall for tier limit errors
+        setPaywallModal({
+          visible: true,
+          requiredTier: result.requiredTier || 'starter',
+        });
       } else {
         setErrorModal({
           visible: true,
@@ -94,6 +106,15 @@ export default function NewPalletScreen() {
           primaryLabel="OK"
           onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
           onClose={() => setErrorModal({ ...errorModal, visible: false })}
+        />
+
+        {/* Paywall Modal for Tier Limits */}
+        <PaywallModal
+          visible={paywallModal.visible}
+          onClose={() => setPaywallModal({ ...paywallModal, visible: false })}
+          requiredTier={paywallModal.requiredTier}
+          limitType="pallets"
+          currentCount={pallets.length}
         />
       </View>
     </>

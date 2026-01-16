@@ -35,6 +35,8 @@ import {
   DateRange,
   isWithinDateRange,
 } from '@/src/components/ui/DateRangeFilter';
+import { useSubscriptionStore } from '@/src/stores/subscription-store';
+import { UpgradePrompt } from '@/src/components/subscription';
 
 // Unified activity item type
 type ActivityItem =
@@ -44,6 +46,11 @@ type ActivityItem =
 export default function ExpensesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  // Check subscription tier for expense tracking access
+  const { canPerform } = useSubscriptionStore();
+  const canAccessExpenses = canPerform('expenseTracking', 0);
+
   const { expenses, isLoading, error, fetchExpenses } = useExpensesStore();
   const { getPalletById, fetchPallets } = usePalletsStore();
   const { fetchItems } = useItemsStore();
@@ -275,6 +282,46 @@ export default function ExpensesScreen() {
       </Pressable>
     </View>
   );
+
+  // Show upgrade prompt for free tier users
+  if (!canAccessExpenses) {
+    return (
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + spacing.md }]}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Expenses</Text>
+          <Text style={styles.subtitle}>Track overheads & mileage</Text>
+        </View>
+        <UpgradePrompt
+          limitType="expenseTracking"
+          currentCount={0}
+          requiredTier="starter"
+          variant="card"
+        />
+        <View style={styles.featurePreview}>
+          <Text style={styles.featurePreviewTitle}>What you get with Starter:</Text>
+          <View style={styles.featureItem}>
+            <Ionicons name="checkmark-circle" size={20} color={colors.profit} />
+            <Text style={styles.featureText}>Track business expenses by category</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <Ionicons name="checkmark-circle" size={20} color={colors.profit} />
+            <Text style={styles.featureText}>Log mileage trips for tax deductions</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <Ionicons name="checkmark-circle" size={20} color={colors.profit} />
+            <Text style={styles.featureText}>Attach receipt photos to expenses</Text>
+          </View>
+          <View style={styles.featureItem}>
+            <Ionicons name="checkmark-circle" size={20} color={colors.profit} />
+            <Text style={styles.featureText}>Calculate IRS mileage deductions</Text>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView
@@ -517,17 +564,9 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textSecondary,
   },
-  activityValueContainer: {
-    alignItems: 'flex-end',
-  },
   activityValue: {
     fontSize: fontSize.md,
     fontWeight: '600',
-  },
-  activityValueLabel: {
-    fontSize: fontSize.xs,
-    color: colors.textDisabled,
-    marginTop: 1,
   },
   disclaimer: {
     flexDirection: 'row',
@@ -543,5 +582,28 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     lineHeight: 18,
+  },
+  featurePreview: {
+    marginTop: spacing.md,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+  },
+  featurePreviewTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  featureText: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    flex: 1,
   },
 });

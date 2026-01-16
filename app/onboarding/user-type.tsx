@@ -15,9 +15,7 @@ import { useRouter } from 'expo-router';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
 import { TierCard, TierType, TierFeature } from '@/src/components/onboarding';
-import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { useOnboardingStore } from '@/src/stores/onboarding-store';
-import { UserType } from '@/src/types/database';
 import { TIER_PRICING } from '@/src/constants/tier-limits';
 
 // Ionicons names for tier icons (using keyof typeof Ionicons.glyphMap)
@@ -30,7 +28,6 @@ const TIER_CONFIG: Record<TierType, {
   title: string;
   subtitle: string;
   icon: IoniconsName;
-  userType: UserType;
   features: TierFeature[];
   badge: 'most_popular' | 'best_value' | null;
 }> = {
@@ -38,7 +35,6 @@ const TIER_CONFIG: Record<TierType, {
     title: 'Just for Fun',
     subtitle: 'Track profits simply',
     icon: 'happy-outline',
-    userType: 'hobby',
     badge: null,
     features: [
       { text: '1 pallet · 20 items', included: true },
@@ -52,7 +48,6 @@ const TIER_CONFIG: Record<TierType, {
     title: 'Side Income',
     subtitle: 'Track fees & know your true profit',
     icon: 'wallet-outline',
-    userType: 'side_hustle',
     badge: 'most_popular',
     features: [
       { text: '25 pallets · 500 items', included: true },
@@ -66,7 +61,6 @@ const TIER_CONFIG: Record<TierType, {
     title: 'Serious Business',
     subtitle: 'Full tax-ready expense tracking',
     icon: 'analytics-outline',
-    userType: 'business',
     badge: 'best_value',
     features: [
       { text: 'Unlimited pallets & items', included: true },
@@ -86,23 +80,12 @@ export default function UserTypeScreen() {
   const [selectedTier, setSelectedTier] = useState<TierType>('starter'); // Default to most popular
   const [isLoading, setIsLoading] = useState(false);
 
-  const { setUserType, toggleExpenseTracking } = useUserSettingsStore();
   const { completeOnboarding, startTrial } = useOnboardingStore();
 
   const handleContinue = async (skipTrial: boolean = false) => {
     setIsLoading(true);
 
     try {
-      const config = TIER_CONFIG[selectedTier];
-
-      // Set user type in settings
-      await setUserType(config.userType);
-
-      // Enable expense tracking for paid tiers
-      if (selectedTier !== 'free') {
-        await toggleExpenseTracking(true);
-      }
-
       if (skipTrial) {
         // User chose to skip - start on free tier
         await completeOnboarding('free', null);

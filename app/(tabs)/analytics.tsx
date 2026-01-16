@@ -20,7 +20,7 @@ import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
 import { shadows } from '@/src/constants/shadows';
 // UI components from analytics feature
-import { SubscriptionTier, TIER_LIMITS } from '@/src/constants/tier-limits';
+import { TIER_LIMITS } from '@/src/constants/tier-limits';
 
 // Stores
 import { usePalletsStore } from '@/src/stores/pallets-store';
@@ -61,20 +61,20 @@ import {
 import { DateRangeFilter, DateRange } from '@/src/components/ui/DateRangeFilter';
 import { ConfirmationModal } from '@/src/components/ui';
 
-// TODO: Replace with actual subscription hook when RevenueCat is integrated (Phase 10)
-function useSubscriptionTier(): SubscriptionTier {
-  // For now, default to 'free' to test tier gating
-  // In production, this will check RevenueCat subscription status
-  return 'free';
-}
+// Subscription store and paywall
+import { useSubscriptionStore } from '@/src/stores/subscription-store';
+import { PaywallModal } from '@/src/components/subscription';
 
 export default function AnalyticsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  // Get user's subscription tier
-  const tier = useSubscriptionTier();
+  // Get user's subscription tier from subscription store
+  const { getEffectiveTier, canPerform } = useSubscriptionStore();
+  const tier = getEffectiveTier();
   const isPaidTier = tier !== 'free';
+  const canExportCSV = canPerform('csvExport', 0);
+  // Note: canExportPDF will be used when PDF export is implemented
 
   // Stores
   const { pallets, fetchPallets, isLoading: palletsLoading } = usePalletsStore();
@@ -100,6 +100,9 @@ export default function AnalyticsScreen() {
     title: '',
     message: '',
   });
+
+  // Paywall state
+  const [showPaywall, setShowPaywall] = useState(false);
 
   // Fetch data on mount and focus
   useFocusEffect(
@@ -172,7 +175,7 @@ export default function AnalyticsScreen() {
 
   // Navigation handlers
   const handleUpgrade = () => {
-    router.push('/settings/subscription');
+    setShowPaywall(true);
   };
 
   const handlePalletPress = (palletId: string) => {
@@ -273,7 +276,7 @@ export default function AnalyticsScreen() {
             <Text style={styles.title}>Analytics</Text>
             <Text style={styles.subtitle}>Track your business performance</Text>
           </View>
-          {isPaidTier && (
+          {canExportCSV && (
             <Pressable
               style={styles.exportButton}
               onPress={() => setShowExportModal(true)}
@@ -405,6 +408,13 @@ export default function AnalyticsScreen() {
         primaryLabel="OK"
         onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
         onClose={() => setErrorModal({ ...errorModal, visible: false })}
+      />
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        requiredTier="starter"
       />
     </ScrollView>
   );

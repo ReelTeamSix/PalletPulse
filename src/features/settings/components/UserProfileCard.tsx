@@ -66,7 +66,7 @@ export function UserProfileCard({
   const name = getDisplayName(email, displayName);
 
   return (
-    <Card shadow="md" padding="md" style={styles.card}>
+    <Card shadow="sm" padding="md" style={styles.card}>
       {/* Main profile row */}
       <Pressable
         style={({ pressed }) => [styles.profileRow, pressed && styles.pressed]}

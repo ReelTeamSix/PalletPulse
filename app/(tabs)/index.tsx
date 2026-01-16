@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize } from '@/src/constants/spacing';
+import { spacing } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
@@ -157,10 +157,7 @@ export default function DashboardScreen() {
       }
     >
       <View style={styles.header}>
-        <View>
-          <Text style={styles.welcomeText}>Welcome back,</Text>
-          <Text style={styles.title}>Dashboard</Text>
-        </View>
+        <Text style={styles.title}>Dashboard</Text>
         <View style={styles.notificationButton}>
           <Ionicons name="notifications-outline" size={24} color={colors.textSecondary} />
         </View>
@@ -217,13 +214,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: spacing.lg,
-  },
-  welcomeText: {
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
   },
   title: {
     ...typography.screenTitle,

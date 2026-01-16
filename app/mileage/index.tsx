@@ -21,10 +21,17 @@ import {
   DateRange,
   isWithinDateRange,
 } from '@/src/components/ui/DateRangeFilter';
+import { useSubscriptionStore } from '@/src/stores/subscription-store';
+import { UpgradePrompt } from '@/src/components/subscription';
 
 export default function MileageLogScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  // Check subscription tier for mileage tracking access
+  const { canPerform } = useSubscriptionStore();
+  const canAccessMileage = canPerform('mileageTracking', 0);
+
   const {
     trips,
     isLoading,
@@ -198,6 +205,44 @@ export default function MileageLogScreen() {
       palletNames={getPalletNames(item.pallet_ids)}
     />
   );
+
+  // Show upgrade prompt for free tier users
+  if (!canAccessMileage) {
+    return (
+      <>
+        <Stack.Screen options={{ title: 'Mileage Log' }} />
+        <View style={[styles.container, { paddingBottom: insets.bottom }]}>
+          <View style={styles.upgradeContainer}>
+            <UpgradePrompt
+              limitType="mileageTracking"
+              currentCount={0}
+              requiredTier="starter"
+              variant="card"
+            />
+            <View style={styles.featurePreview}>
+              <Text style={styles.featurePreviewTitle}>What you get with Starter:</Text>
+              <View style={styles.featureItem}>
+                <FontAwesome name="check-circle" size={20} color={colors.profit} />
+                <Text style={styles.featureText}>Log unlimited mileage trips</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <FontAwesome name="check-circle" size={20} color={colors.profit} />
+                <Text style={styles.featureText}>Automatic IRS rate calculations</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <FontAwesome name="check-circle" size={20} color={colors.profit} />
+                <Text style={styles.featureText}>Link trips to pallets</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <FontAwesome name="check-circle" size={20} color={colors.profit} />
+                <Text style={styles.featureText}>Year-end tax deduction totals</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </>
+    );
+  }
 
   return (
     <>
@@ -385,5 +430,33 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+  },
+  upgradeContainer: {
+    flex: 1,
+    padding: spacing.lg,
+    justifyContent: 'center',
+  },
+  featurePreview: {
+    marginTop: spacing.lg,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+  },
+  featurePreviewTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  featureText: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    flex: 1,
   },
 });

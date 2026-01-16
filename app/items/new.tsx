@@ -2,16 +2,18 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { colors } from '@/src/constants/colors';
-import { useItemsStore } from '@/src/stores/items-store';
+import { useItemsStore, ITEM_ERROR_CODES } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { ItemForm, ItemFormData } from '@/src/features/items';
 import { PhotoItem } from '@/src/components/ui/PhotoPicker';
 import { ConfirmationModal } from '@/src/components/ui';
+import { PaywallModal } from '@/src/components/subscription';
+import { SubscriptionTier } from '@/src/constants/tier-limits';
 
 export default function NewItemScreen() {
   const { palletId } = useLocalSearchParams<{ palletId?: string }>();
   const router = useRouter();
-  const { addItem, uploadItemPhotos, isLoading } = useItemsStore();
+  const { items, addItem, uploadItemPhotos, isLoading } = useItemsStore();
   const { getPalletById } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -19,6 +21,10 @@ export default function NewItemScreen() {
     visible: false,
     title: '',
     message: '',
+  });
+  const [paywallModal, setPaywallModal] = useState<{ visible: boolean; requiredTier: SubscriptionTier }>({
+    visible: false,
+    requiredTier: 'starter',
   });
 
   // Get pallet name for display
@@ -62,6 +68,12 @@ export default function NewItemScreen() {
         setTimeout(() => {
           router.push(`/items/${result.data!.id}`);
         }, 100);
+      } else if (result.errorCode === ITEM_ERROR_CODES.TIER_LIMIT_REACHED) {
+        // Show paywall for tier limit errors
+        setPaywallModal({
+          visible: true,
+          requiredTier: result.requiredTier || 'starter',
+        });
       } else {
         setErrorModal({
           visible: true,
@@ -108,6 +120,15 @@ export default function NewItemScreen() {
           primaryLabel="OK"
           onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
           onClose={() => setErrorModal({ ...errorModal, visible: false })}
+        />
+
+        {/* Paywall Modal for Tier Limits */}
+        <PaywallModal
+          visible={paywallModal.visible}
+          onClose={() => setPaywallModal({ ...paywallModal, visible: false })}
+          requiredTier={paywallModal.requiredTier}
+          limitType="items"
+          currentCount={items.length}
         />
       </View>
     </>
