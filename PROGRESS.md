@@ -1354,14 +1354,8 @@ Tests:       783 passed, 783 total
 - [x] Logging & diagnostics system ✅
 
 ### Should Add
-- [ ] Dashboard time period slider (Week/Month/All-Time profit)
-  - Swipeable hero card showing profit for different periods
-  - Good fit with Analytics phase but adds dashboard value
-- [ ] Smart insights on dashboard (rules-based)
-  - "Your best ROI source is X - avg Y% ROI"
-  - "X items listed 30+ days - consider repricing"
-  - "Inventory at X% of normal level"
-  - No API cost, just well-crafted conditionals
+- [x] Dashboard time period selector (Week/Month/Year/All-Time profit) ✅
+- [x] Smart insights on dashboard (rules-based) ✅
 - [ ] AI-powered deep analysis (Premium feature)
   - LLM-generated insights on request
   - Analyze trends, suggest actions
@@ -1374,4 +1368,45 @@ Tests:       783 passed, 783 total
 
 ---
 
-**Reply "approved" to continue to Phase 8, or provide feedback.**
+### 11B: Dashboard Improvements ✅
+**Completed:** Jan 16, 2026
+
+**Overview:**
+Added time period filtering and smart insights to the dashboard for better profit tracking and actionable tips.
+
+**Files Created:**
+- `src/features/dashboard/utils/time-period-filter.ts` - Time period filtering utilities
+- `src/features/dashboard/utils/insights-engine.ts` - Rules-based insights generator
+- `src/features/dashboard/utils/index.ts` - Utility exports
+- `src/features/dashboard/components/InsightsCard.tsx` - Insights display component
+- `src/features/dashboard/utils/__tests__/time-period-filter.test.ts` - 26 tests
+- `src/features/dashboard/utils/__tests__/insights-engine.test.ts` - 20 tests
+
+**Files Modified:**
+- `app/(tabs)/index.tsx` - Added time period state, filtered metrics, insights generation
+- `src/features/dashboard/components/HeroCard.tsx` - Added time period selector pills
+- `src/features/dashboard/components/index.ts` - Export InsightsCard
+
+**Features:**
+- **Time Period Selector:** Week | Month | Year | All pill selector in HeroCard
+- **Filtered Metrics:** Profit, sold count filtered by selected period
+- **Smart Insights:** Rules-based tips including:
+  - Best performing source by ROI
+  - Stale inventory warnings (configurable threshold)
+  - Quick flip celebrations (items sold within 7 days)
+  - Unlisted items reminders (5+ items)
+  - First sale celebration
+  - Milestone celebrations (10, 25, 50, 100 sales)
+
+**Test Results:**
+```
+Test Suites: 22 passed, 22 total
+Tests:       829 passed, 829 total
+```
+
+**Commits:**
+- `feat(dashboard): add time period filter and smart insights`
+
+---
+
+**Reply "approved" to continue, or provide feedback.**
