@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -18,8 +18,14 @@ import {
   MetricGrid,
   ActionButtonPair,
   RecentActivityFeed,
+  InsightsCard,
   Activity,
 } from '@/src/features/dashboard/components';
+import {
+  TimePeriod,
+  isWithinTimePeriod,
+  generateInsights,
+} from '@/src/features/dashboard/utils';
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -29,6 +35,9 @@ export default function DashboardScreen() {
   const { expenses, fetchExpenses, isLoading: expensesLoading } = useExpensesStore();
   const { isExpenseTrackingEnabled } = useUserSettingsStore();
   const expenseTrackingEnabled = isExpenseTrackingEnabled();
+
+  // Time period filter for hero card
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
 
   useFocusEffect(
     useCallback(() => {
@@ -42,27 +51,48 @@ export default function DashboardScreen() {
 
   const isLoading = palletsLoading || itemsLoading || (expenseTrackingEnabled && expensesLoading);
 
-  const metrics = useMemo(() => {
-    const soldItems = items.filter(item => item.status === 'sold');
-    const listedItems = items.filter(item => item.status === 'listed');
+  // Metrics filtered by time period (for hero card)
+  const periodMetrics = useMemo(() => {
+    // Filter sold items by sale date within the time period
+    const soldItemsInPeriod = items.filter(
+      item => item.status === 'sold' && isWithinTimePeriod(item.sale_date, timePeriod)
+    );
 
-    const totalRevenue = soldItems.reduce((sum, item) => {
+    // Revenue from items sold in this period
+    const periodRevenue = soldItemsInPeriod.reduce((sum, item) => {
       return sum + (item.sale_price ?? 0);
     }, 0);
 
-    const totalPalletCosts = pallets.reduce((sum, pallet) => {
-      return sum + pallet.purchase_cost + (pallet.sales_tax || 0);
+    // For period profit, we calculate cost of goods sold for items sold in this period
+    const periodCOGS = soldItemsInPeriod.reduce((sum, item) => {
+      return sum + (item.allocated_cost ?? item.purchase_cost ?? 0);
     }, 0);
 
-    const individualItemsCost = items
-      .filter(item => !item.pallet_id && item.purchase_cost)
-      .reduce((sum, item) => sum + (item.purchase_cost ?? 0), 0);
+    // Platform fees and shipping for items sold in this period
+    const periodFees = soldItemsInPeriod.reduce((sum, item) => {
+      return sum + (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
+    }, 0);
 
-    const totalExpenses = expenseTrackingEnabled
-      ? expenses.reduce((sum, e) => sum + e.amount, 0)
+    // Expenses in this period (if expense tracking enabled)
+    const periodExpenses = expenseTrackingEnabled
+      ? expenses
+          .filter(e => isWithinTimePeriod(e.expense_date, timePeriod))
+          .reduce((sum, e) => sum + e.amount, 0)
       : 0;
 
-    const totalProfit = totalRevenue - totalPalletCosts - individualItemsCost - totalExpenses;
+    const periodProfit = periodRevenue - periodCOGS - periodFees - periodExpenses;
+
+    return {
+      profit: periodProfit,
+      soldCount: soldItemsInPeriod.length,
+      isProfitable: periodProfit >= 0,
+    };
+  }, [items, expenses, expenseTrackingEnabled, timePeriod]);
+
+  // All-time metrics (for metric cards - not filtered by period)
+  const allTimeMetrics = useMemo(() => {
+    const listedItems = items.filter(item => item.status === 'listed');
+    const soldItems = items.filter(item => item.status === 'sold');
 
     // Calculate active inventory value (listed items at listing price)
     const activeValue = listedItems.reduce((sum, item) => {
@@ -70,12 +100,23 @@ export default function DashboardScreen() {
     }, 0);
 
     return {
-      totalProfit,
       soldCount: soldItems.length,
       activeValue,
-      isProfitable: totalProfit >= 0,
     };
-  }, [pallets, items, expenses, expenseTrackingEnabled]);
+  }, [items]);
+
+  // Get stale threshold from user settings
+  const { settings } = useUserSettingsStore();
+  const staleThresholdDays = settings?.stale_threshold_days ?? 30;
+
+  // Generate smart insights
+  const insights = useMemo(() => {
+    return generateInsights({
+      pallets,
+      items,
+      staleThresholdDays,
+    });
+  }, [pallets, items, staleThresholdDays]);
 
   // Build recent activity from sales, listings, and new pallets
   const recentActivity: Activity[] = useMemo(() => {
@@ -164,26 +205,30 @@ export default function DashboardScreen() {
       </View>
 
       <HeroCard
-        totalProfit={metrics.totalProfit}
-        soldCount={metrics.soldCount}
+        totalProfit={periodMetrics.profit}
+        soldCount={periodMetrics.soldCount}
+        timePeriod={timePeriod}
+        onTimePeriodChange={setTimePeriod}
       />
 
       <MetricGrid>
         <MetricCard
           icon="checkmark-done"
-          value={metrics.soldCount}
+          value={allTimeMetrics.soldCount}
           label="Items Sold"
           color={colors.profit}
           onPress={() => router.push('/(tabs)/inventory')}
         />
         <MetricCard
           icon="wallet-outline"
-          value={formatCurrency(metrics.activeValue)}
+          value={formatCurrency(allTimeMetrics.activeValue)}
           label="Active Value"
           color={colors.primary}
           onPress={() => router.push('/(tabs)/inventory')}
         />
       </MetricGrid>
+
+      <InsightsCard insights={insights} />
 
       <ActionButtonPair
         primaryLabel="Add Pallet"

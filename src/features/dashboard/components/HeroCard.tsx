@@ -1,28 +1,64 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/src/components/ui/Card';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
+import { shadows } from '@/src/constants/shadows';
 import { formatCurrency } from '@/src/lib/profit-utils';
+import {
+  TimePeriod,
+  TIME_PERIOD_OPTIONS,
+  getTimePeriodLabel,
+} from '../utils/time-period-filter';
 
 interface HeroCardProps {
   totalProfit: number;
   soldCount: number;
+  timePeriod: TimePeriod;
+  onTimePeriodChange: (period: TimePeriod) => void;
 }
 
 export function HeroCard({
   totalProfit,
   soldCount,
+  timePeriod,
+  onTimePeriodChange,
 }: HeroCardProps) {
   const isProfitable = totalProfit >= 0;
   const displayValue = Math.abs(totalProfit);
 
   return (
     <Card shadow="lg" padding="lg" style={styles.card}>
+      {/* Time Period Selector */}
+      <View style={styles.periodSelector}>
+        {TIME_PERIOD_OPTIONS.map((option) => {
+          const isSelected = option.value === timePeriod;
+          return (
+            <Pressable
+              key={option.value}
+              style={[
+                styles.periodPill,
+                isSelected && styles.periodPillSelected,
+              ]}
+              onPress={() => onTimePeriodChange(option.value)}
+            >
+              <Text
+                style={[
+                  styles.periodPillText,
+                  isSelected && styles.periodPillTextSelected,
+                ]}
+              >
+                {option.shortLabel}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
       <View style={styles.header}>
-        <Text style={styles.label}>TOTAL PROFIT</Text>
+        <Text style={styles.label}>{getTimePeriodLabel(timePeriod).toUpperCase()} PROFIT</Text>
         <View style={[
           styles.statusBadge,
           { backgroundColor: isProfitable ? colors.profit + '15' : colors.loss + '15' }
@@ -40,7 +76,9 @@ export function HeroCard({
       </Text>
 
       <Text style={styles.subtitle}>
-        Net profit calculated from {soldCount} sold item{soldCount !== 1 ? 's' : ''}
+        {soldCount === 0
+          ? 'No items sold in this period'
+          : `From ${soldCount} sold item${soldCount !== 1 ? 's' : ''}`}
       </Text>
     </Card>
   );
@@ -49,6 +87,34 @@ export function HeroCard({
 const styles = StyleSheet.create({
   card: {
     marginBottom: spacing.lg,
+  },
+  periodSelector: {
+    flexDirection: 'row',
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: borderRadius.md,
+    padding: spacing.xs,
+    marginBottom: spacing.md,
+  },
+  periodPill: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    borderRadius: borderRadius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  periodPillSelected: {
+    backgroundColor: colors.card,
+    ...shadows.sm,
+  },
+  periodPillText: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+  periodPillTextSelected: {
+    color: colors.primary,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
