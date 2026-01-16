@@ -12,6 +12,7 @@ import {
   Modal,
 } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import {
@@ -34,6 +35,9 @@ interface PhotoPickerProps {
   maxPhotos?: number;
   disabled?: boolean;
   onPhotoPress?: (photo: PhotoItem, index: number) => void;
+  // Tier limit support - show upgrade prompt when at tier limit
+  onUpgradePress?: () => void;
+  tierLimitReached?: boolean; // True when current tier limit reached but higher tier allows more
 }
 
 export function PhotoPicker({
@@ -42,6 +46,8 @@ export function PhotoPicker({
   maxPhotos = 5,
   disabled = false,
   onPhotoPress,
+  onUpgradePress,
+  tierLimitReached = false,
 }: PhotoPickerProps) {
   const [showSourcePicker, setShowSourcePicker] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -178,13 +184,22 @@ export function PhotoPicker({
           </Pressable>
         )}
 
-        {!canAddMore && (
+        {!canAddMore && !tierLimitReached && (
           <View style={styles.limitReached}>
             <FontAwesome name="check-circle" size={20} color={colors.profit} />
             <Text style={styles.limitText}>
               Max {maxPhotos} photos
             </Text>
           </View>
+        )}
+
+        {/* Tier limit upgrade prompt */}
+        {!canAddMore && tierLimitReached && onUpgradePress && (
+          <Pressable style={styles.upgradeButton} onPress={onUpgradePress}>
+            <Ionicons name="arrow-up-circle" size={24} color={colors.primary} />
+            <Text style={styles.upgradeText}>Upgrade</Text>
+            <Text style={styles.upgradeSubtext}>for more photos</Text>
+          </Pressable>
         )}
       </ScrollView>
 
@@ -314,6 +329,25 @@ const styles = StyleSheet.create({
   limitText: {
     fontSize: fontSize.xs,
     color: colors.textSecondary,
+  },
+  upgradeButton: {
+    width: 100,
+    height: 100,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 2,
+  },
+  upgradeText: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  upgradeSubtext: {
+    fontSize: fontSize.xs,
+    color: colors.primary,
+    opacity: 0.8,
   },
   modalOverlay: {
     flex: 1,

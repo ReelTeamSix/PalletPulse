@@ -19,6 +19,16 @@ jest.mock('@/src/lib/photo-utils', () => ({
   getPhotoUrl: jest.fn((path) => `https://example.com/${path}`),
 }));
 
+// Mock subscription store to allow all operations in tests
+jest.mock('../subscription-store', () => ({
+  useSubscriptionStore: {
+    getState: () => ({
+      canPerform: () => true, // Allow all operations in tests
+      getRequiredTierForAction: () => null,
+    }),
+  },
+}));
+
 const mockItem = {
   id: 'item-1',
   user_id: 'user-123',

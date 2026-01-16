@@ -10,6 +10,16 @@ jest.mock('@/src/lib/supabase', () => ({
   },
 }));
 
+// Mock subscription store to allow all operations in tests
+jest.mock('../subscription-store', () => ({
+  useSubscriptionStore: {
+    getState: () => ({
+      canPerform: () => true, // Allow all operations in tests
+      getRequiredTierForAction: () => null,
+    }),
+  },
+}));
+
 const mockPallet = {
   id: 'pallet-1',
   user_id: 'user-123',

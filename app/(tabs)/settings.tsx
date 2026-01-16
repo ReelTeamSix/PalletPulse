@@ -9,6 +9,8 @@ import {
   Switch,
   Pressable,
   ActivityIndicator,
+  Linking,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
@@ -22,6 +24,8 @@ import { Button, ConfirmationModal } from '@/src/components/ui';
 import { UserProfileCard } from '@/src/features/settings';
 import { useAuthStore } from '@/src/stores/auth-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
+import { useSubscriptionStore } from '@/src/stores/subscription-store';
+import { PaywallModal } from '@/src/components/subscription';
 import { UserType } from '@/src/types/database';
 
 // User type options with descriptions
@@ -150,16 +154,29 @@ export default function SettingsScreen() {
     setStaleThreshold,
     setIncludeUnsellableInCost,
   } = useUserSettingsStore();
+  const {
+    getEffectiveTier,
+    expirationDate,
+    billingCycle,
+    willRenew,
+    restorePurchases,
+    refreshSubscription,
+  } = useSubscriptionStore();
 
   const [showUserTypePicker, setShowUserTypePicker] = useState(false);
   const [signOutModalVisible, setSignOutModalVisible] = useState(false);
   const [expenseModalVisible, setExpenseModalVisible] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
 
-  // Fetch settings on mount and focus
+  const currentTier = getEffectiveTier();
+
+  // Fetch settings and refresh subscription on mount and focus
   useFocusEffect(
     useCallback(() => {
       fetchSettings();
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Store function is stable reference
+      refreshSubscription();
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
   );
 
   const handleSignOut = () => {
@@ -216,8 +233,43 @@ export default function SettingsScreen() {
   };
 
   const handleSubscriptionPress = () => {
-    // TODO: Navigate to subscription management
-    // For now, this is a placeholder
+    setShowPaywall(true);
+  };
+
+  const handleManageSubscription = () => {
+    // Open platform-specific subscription management
+    if (Platform.OS === 'ios') {
+      Linking.openURL('https://apps.apple.com/account/subscriptions');
+    } else {
+      Linking.openURL('https://play.google.com/store/account/subscriptions');
+    }
+  };
+
+  const handleRestorePurchases = async () => {
+    setIsRestoring(true);
+    try {
+      const result = await restorePurchases();
+      if (result.restored) {
+        Alert.alert('Success', 'Your purchases have been restored.');
+      } else if (result.success) {
+        Alert.alert('No Purchases Found', 'No previous purchases were found to restore.');
+      } else if (result.error) {
+        Alert.alert('Error', result.error);
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to restore purchases. Please try again.');
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const formatExpirationDate = (date: Date | null) => {
+    if (!date) return 'N/A';
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
   if (isLoading && !settings) {
@@ -241,9 +293,77 @@ export default function SettingsScreen() {
       {/* Profile Card */}
       <UserProfileCard
         email={user?.email ?? null}
-        tier="free"
+        tier={currentTier === 'enterprise' ? 'pro' : currentTier}
         onSubscriptionPress={handleSubscriptionPress}
       />
+
+      {/* Subscription Section */}
+      {currentTier !== 'free' && (
+        <>
+          <SectionHeader title="Subscription" />
+          <Card shadow="sm" padding={0} style={styles.sectionCard}>
+            <SettingRow
+              icon="card-outline"
+              label="Current Plan"
+              value={currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
+            />
+            {billingCycle && (
+              <SettingRow
+                icon="calendar-outline"
+                label="Billing Cycle"
+                value={billingCycle.charAt(0).toUpperCase() + billingCycle.slice(1)}
+              />
+            )}
+            {expirationDate && (
+              <SettingRow
+                icon="time-outline"
+                label={willRenew ? 'Next Billing Date' : 'Expires On'}
+                value={formatExpirationDate(expirationDate)}
+              />
+            )}
+            <SettingRow
+              icon="settings-outline"
+              label="Manage Subscription"
+              onPress={handleManageSubscription}
+              isLast
+            />
+          </Card>
+        </>
+      )}
+
+      {/* Upgrade Prompt for Free Users */}
+      {currentTier === 'free' && (
+        <>
+          <SectionHeader title="Subscription" />
+          <Card shadow="sm" padding="md" style={styles.upgradeCard}>
+            <View style={styles.upgradeContent}>
+              <Ionicons name="rocket-outline" size={32} color={colors.primary} />
+              <View style={styles.upgradeText}>
+                <Text style={styles.upgradeTitle}>Upgrade Your Plan</Text>
+                <Text style={styles.upgradeSubtitle}>
+                  Unlock unlimited pallets, items, photos, and more
+                </Text>
+              </View>
+            </View>
+            <Button
+              title="View Plans"
+              onPress={handleSubscriptionPress}
+              style={styles.upgradeButton}
+            />
+            <Pressable
+              style={styles.restoreLink}
+              onPress={handleRestorePurchases}
+              disabled={isRestoring}
+            >
+              {isRestoring ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Text style={styles.restoreLinkText}>Restore Purchases</Text>
+              )}
+            </Pressable>
+          </Card>
+        </>
+      )}
 
       {/* App Settings Section */}
       <SectionHeader title="App Settings" />
@@ -391,6 +511,13 @@ export default function SettingsScreen() {
         secondaryLabel="Cancel"
         onPrimary={confirmEnableExpenseTracking}
         onClose={() => setExpenseModalVisible(false)}
+      />
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        requiredTier={currentTier === 'free' ? 'starter' : 'pro'}
       />
     </ScrollView>
   );
@@ -558,5 +685,40 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: spacing.xxl,
+  },
+  // Upgrade card styles
+  upgradeCard: {
+    marginBottom: spacing.md,
+  },
+  upgradeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  upgradeText: {
+    flex: 1,
+  },
+  upgradeTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  upgradeSubtitle: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  upgradeButton: {
+    marginBottom: spacing.sm,
+  },
+  restoreLink: {
+    alignItems: 'center',
+    padding: spacing.sm,
+  },
+  restoreLinkText: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+    fontWeight: '500',
   },
 });

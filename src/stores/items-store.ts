@@ -6,6 +6,12 @@ import { supabase } from '@/src/lib/supabase';
 import { Item, ItemCondition, ItemStatus, SourceType, ItemPhoto, SalesPlatform } from '@/src/types/database';
 import { uploadItemPhoto, deletePhoto, getPhotoUrl } from '@/src/lib/photo-utils';
 import { PhotoItem } from '@/src/components/ui/PhotoPicker';
+import { SubscriptionTier } from '@/src/constants/tier-limits';
+
+// Error codes for tier limit enforcement
+export const ITEM_ERROR_CODES = {
+  TIER_LIMIT_REACHED: 'TIER_LIMIT_REACHED',
+} as const;
 
 export interface ItemInsert {
   pallet_id?: string | null;
@@ -61,6 +67,14 @@ export interface SaleData {
   shipping_cost?: number;
 }
 
+export interface AddItemResult {
+  success: boolean;
+  data?: Item;
+  error?: string;
+  errorCode?: typeof ITEM_ERROR_CODES[keyof typeof ITEM_ERROR_CODES];
+  requiredTier?: SubscriptionTier;
+}
+
 export interface ItemsState {
   items: Item[];
   isLoading: boolean;
@@ -70,7 +84,7 @@ export interface ItemsState {
   fetchItemsByPallet: (palletId: string) => Promise<Item[]>;
   getItemById: (id: string) => Item | undefined;
   getItemsByPallet: (palletId: string) => Item[];
-  addItem: (item: ItemInsert) => Promise<{ success: boolean; data?: Item; error?: string }>;
+  addItem: (item: ItemInsert) => Promise<AddItemResult>;
   updateItem: (id: string, updates: ItemUpdate) => Promise<{ success: boolean; error?: string }>;
   deleteItem: (id: string) => Promise<{ success: boolean; error?: string }>;
   markAsSold: (id: string, saleData: SaleData) => Promise<{ success: boolean; error?: string }>;
@@ -126,6 +140,23 @@ export const useItemsStore = create<ItemsState>()(
       getItemsByPallet: (palletId: string) => get().items.filter(i => i.pallet_id === palletId),
 
       addItem: async (itemData: ItemInsert) => {
+        // Lazy import to avoid circular dependency issues at module load time
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- circular dependency workaround
+        const { useSubscriptionStore } = require('./subscription-store');
+        const subscriptionStore = useSubscriptionStore.getState();
+        const currentItemCount = get().items.length;
+
+        // Check tier limits before allowing item creation
+        if (!subscriptionStore.canPerform('items', currentItemCount)) {
+          const requiredTier = subscriptionStore.getRequiredTierForAction('items', currentItemCount);
+          return {
+            success: false,
+            error: 'You have reached your item limit. Upgrade to add more items.',
+            errorCode: ITEM_ERROR_CODES.TIER_LIMIT_REACHED,
+            requiredTier: requiredTier || 'starter',
+          };
+        }
+
         set({ isLoading: true, error: null });
         try {
           const { data: { user } } = await supabase.auth.getUser();

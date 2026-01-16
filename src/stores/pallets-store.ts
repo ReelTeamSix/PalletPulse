@@ -4,6 +4,12 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/src/lib/supabase';
 import { Pallet, PalletStatus, SourceType } from '@/src/types/database';
+import { SubscriptionTier } from '@/src/constants/tier-limits';
+
+// Error codes for tier limit enforcement
+export const PALLET_ERROR_CODES = {
+  TIER_LIMIT_REACHED: 'TIER_LIMIT_REACHED',
+} as const;
 
 export interface PalletInsert {
   name: string;
@@ -29,6 +35,14 @@ export interface PalletUpdate {
   notes?: string | null;
 }
 
+export interface AddPalletResult {
+  success: boolean;
+  data?: Pallet;
+  error?: string;
+  errorCode?: typeof PALLET_ERROR_CODES[keyof typeof PALLET_ERROR_CODES];
+  requiredTier?: SubscriptionTier;
+}
+
 export interface PalletsState {
   pallets: Pallet[];
   isLoading: boolean;
@@ -36,7 +50,7 @@ export interface PalletsState {
   selectedPalletId: string | null;
   fetchPallets: () => Promise<void>;
   getPalletById: (id: string) => Pallet | undefined;
-  addPallet: (pallet: PalletInsert) => Promise<{ success: boolean; data?: Pallet; error?: string }>;
+  addPallet: (pallet: PalletInsert) => Promise<AddPalletResult>;
   updatePallet: (id: string, updates: PalletUpdate) => Promise<{ success: boolean; error?: string }>;
   deletePallet: (id: string) => Promise<{ success: boolean; error?: string }>;
   setSelectedPallet: (id: string | null) => void;
@@ -70,6 +84,23 @@ export const usePalletsStore = create<PalletsState>()(
       getPalletById: (id: string) => get().pallets.find(p => p.id === id),
 
       addPallet: async (palletData: PalletInsert) => {
+        // Lazy import to avoid circular dependency issues at module load time
+        // eslint-disable-next-line @typescript-eslint/no-require-imports -- circular dependency workaround
+        const { useSubscriptionStore } = require('./subscription-store');
+        const subscriptionStore = useSubscriptionStore.getState();
+        const currentPalletCount = get().pallets.length;
+
+        // Check tier limits before allowing pallet creation
+        if (!subscriptionStore.canPerform('pallets', currentPalletCount)) {
+          const requiredTier = subscriptionStore.getRequiredTierForAction('pallets', currentPalletCount);
+          return {
+            success: false,
+            error: 'You have reached your pallet limit. Upgrade to add more pallets.',
+            errorCode: PALLET_ERROR_CODES.TIER_LIMIT_REACHED,
+            requiredTier: requiredTier || 'starter',
+          };
+        }
+
         set({ isLoading: true, error: null });
         try {
           const { data: { user } } = await supabase.auth.getUser();
