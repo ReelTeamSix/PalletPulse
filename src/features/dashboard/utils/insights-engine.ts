@@ -298,3 +298,94 @@ export function calculateAverageDaysToSell(soldItems: Item[]): number | null {
 
   return totalDays / itemsWithDates.length;
 }
+
+/**
+ * User journey stage for contextual empty states
+ */
+export type UserStage =
+  | 'new_user'           // No pallets or items
+  | 'has_inventory'      // Has items but none listed
+  | 'has_listings'       // Has listed items but no sales
+  | 'making_sales'       // Has sales, insights will appear naturally
+  | 'established';       // 10+ sales, full insights available
+
+/**
+ * Determine user's current stage in their journey
+ */
+export function getUserStage(input: InsightsInput): UserStage {
+  const { pallets, items } = input;
+
+  const totalItems = items.length;
+  const listedItems = items.filter(i => i.status === 'listed').length;
+  const soldItems = items.filter(i => i.status === 'sold').length;
+
+  if (pallets.length === 0 && totalItems === 0) {
+    return 'new_user';
+  }
+
+  if (soldItems >= 10) {
+    return 'established';
+  }
+
+  if (soldItems > 0) {
+    return 'making_sales';
+  }
+
+  if (listedItems > 0) {
+    return 'has_listings';
+  }
+
+  return 'has_inventory';
+}
+
+/**
+ * Empty state content based on user stage
+ */
+export interface EmptyStateContent {
+  title: string;
+  message: string;
+  actionLabel?: string;
+  actionRoute?: string;
+}
+
+/**
+ * Get contextual empty state content based on user's journey stage
+ */
+export function getEmptyStateContent(stage: UserStage): EmptyStateContent {
+  switch (stage) {
+    case 'new_user':
+      return {
+        title: 'Welcome!',
+        message: 'Add your first pallet or item to start tracking profits.',
+        actionLabel: 'Add Pallet',
+        actionRoute: '/pallets/new',
+      };
+
+    case 'has_inventory':
+      return {
+        title: 'Ready to sell?',
+        message: 'List your items to start making sales and unlock insights.',
+        actionLabel: 'View Inventory',
+        actionRoute: '/(tabs)/inventory',
+      };
+
+    case 'has_listings':
+      return {
+        title: 'Looking good!',
+        message: 'Once you make a few sales, I\'ll show you trends and tips.',
+      };
+
+    case 'making_sales':
+      return {
+        title: 'Keep it up!',
+        message: 'A few more sales and I\'ll have insights about your best sources and strategies.',
+      };
+
+    case 'established':
+    default:
+      return {
+        title: 'All caught up!',
+        message: 'No new insights right now. Keep selling and check back soon.',
+      };
+  }
+}

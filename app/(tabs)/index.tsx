@@ -25,6 +25,8 @@ import {
   TimePeriod,
   isWithinTimePeriod,
   generateInsights,
+  getUserStage,
+  getEmptyStateContent,
 } from '@/src/features/dashboard/utils';
 
 export default function DashboardScreen() {
@@ -109,13 +111,17 @@ export default function DashboardScreen() {
   const { settings } = useUserSettingsStore();
   const staleThresholdDays = settings?.stale_threshold_days ?? 30;
 
-  // Generate smart insights
-  const insights = useMemo(() => {
-    return generateInsights({
-      pallets,
-      items,
-      staleThresholdDays,
-    });
+  // Generate smart insights and empty state content
+  const { insights, emptyState } = useMemo(() => {
+    const insightsInput = { pallets, items, staleThresholdDays };
+    const generatedInsights = generateInsights(insightsInput);
+    const userStage = getUserStage(insightsInput);
+    const emptyStateContent = getEmptyStateContent(userStage);
+
+    return {
+      insights: generatedInsights,
+      emptyState: emptyStateContent,
+    };
   }, [pallets, items, staleThresholdDays]);
 
   // Build recent activity from sales, listings, and new pallets
@@ -228,7 +234,7 @@ export default function DashboardScreen() {
         />
       </MetricGrid>
 
-      <InsightsCard insights={insights} />
+      <InsightsCard insights={insights} emptyState={emptyState} />
 
       <ActionButtonPair
         primaryLabel="Add Pallet"

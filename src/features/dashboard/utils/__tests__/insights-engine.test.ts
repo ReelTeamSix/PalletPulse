@@ -1,7 +1,10 @@
 import {
   generateInsights,
   calculateAverageDaysToSell,
+  getUserStage,
+  getEmptyStateContent,
   Insight,
+  UserStage,
 } from '../insights-engine';
 import { Item, Pallet } from '@/src/types/database';
 
@@ -402,6 +405,98 @@ describe('insights-engine', () => {
     it('should return null for empty array', () => {
       const avg = calculateAverageDaysToSell([]);
       expect(avg).toBeNull();
+    });
+  });
+
+  describe('getUserStage', () => {
+    it('should return "new_user" for empty data', () => {
+      const stage = getUserStage({ pallets: [], items: [] });
+      expect(stage).toBe('new_user');
+    });
+
+    it('should return "has_inventory" for items but no listings', () => {
+      const items: Item[] = [
+        createMockItem({ status: 'unlisted' }),
+        createMockItem({ status: 'unlisted' }),
+      ];
+
+      const stage = getUserStage({ pallets: [], items });
+      expect(stage).toBe('has_inventory');
+    });
+
+    it('should return "has_listings" for listed items but no sales', () => {
+      const items: Item[] = [
+        createMockItem({ status: 'listed' }),
+        createMockItem({ status: 'unlisted' }),
+      ];
+
+      const stage = getUserStage({ pallets: [], items });
+      expect(stage).toBe('has_listings');
+    });
+
+    it('should return "making_sales" for 1-9 sold items', () => {
+      const items: Item[] = [
+        createMockItem({ status: 'sold', sale_date: daysAgo(1) }),
+        createMockItem({ status: 'sold', sale_date: daysAgo(2) }),
+        createMockItem({ status: 'listed' }),
+      ];
+
+      const stage = getUserStage({ pallets: [], items });
+      expect(stage).toBe('making_sales');
+    });
+
+    it('should return "established" for 10+ sold items', () => {
+      const items: Item[] = Array(15).fill(null).map(() =>
+        createMockItem({ status: 'sold', sale_date: daysAgo(1) })
+      );
+
+      const stage = getUserStage({ pallets: [], items });
+      expect(stage).toBe('established');
+    });
+
+    it('should consider pallets when determining new_user', () => {
+      const pallet = createMockPallet();
+
+      const stage = getUserStage({ pallets: [pallet], items: [] });
+      // Has a pallet but no items = has_inventory stage
+      expect(stage).toBe('has_inventory');
+    });
+  });
+
+  describe('getEmptyStateContent', () => {
+    it('should return welcome content for new_user', () => {
+      const content = getEmptyStateContent('new_user');
+
+      expect(content.title).toBe('Welcome!');
+      expect(content.actionLabel).toBe('Add Pallet');
+      expect(content.actionRoute).toBe('/pallets/new');
+    });
+
+    it('should return sell prompt for has_inventory', () => {
+      const content = getEmptyStateContent('has_inventory');
+
+      expect(content.title).toBe('Ready to sell?');
+      expect(content.actionLabel).toBe('View Inventory');
+    });
+
+    it('should return encouragement for has_listings', () => {
+      const content = getEmptyStateContent('has_listings');
+
+      expect(content.title).toBe('Looking good!');
+      expect(content.message).toContain('sales');
+    });
+
+    it('should return progress message for making_sales', () => {
+      const content = getEmptyStateContent('making_sales');
+
+      expect(content.title).toBe('Keep it up!');
+      expect(content.message).toContain('insights');
+    });
+
+    it('should return all caught up for established', () => {
+      const content = getEmptyStateContent('established');
+
+      expect(content.title).toBe('All caught up!');
     });
   });
 });
