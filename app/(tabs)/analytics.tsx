@@ -10,7 +10,6 @@ import {
   RefreshControl,
   Pressable,
   Modal,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,6 +59,7 @@ import {
 
 // Date range filter
 import { DateRangeFilter, DateRange } from '@/src/components/ui/DateRangeFilter';
+import { ConfirmationModal } from '@/src/components/ui';
 
 // TODO: Replace with actual subscription hook when RevenueCat is integrated (Phase 10)
 function useSubscriptionTier(): SubscriptionTier {
@@ -95,6 +95,11 @@ export default function AnalyticsScreen() {
   // Export modal state (paid tier only)
   const [showExportModal, setShowExportModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Fetch data on mount and focus
   useFocusEffect(
@@ -208,11 +213,19 @@ export default function AnalyticsScreen() {
       }
 
       if (!result.success) {
-        Alert.alert('Export Failed', result.error || 'Failed to export data');
+        setErrorModal({
+          visible: true,
+          title: 'Export Failed',
+          message: result.error || 'Failed to export data',
+        });
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to export data';
-      Alert.alert('Export Failed', message);
+      setErrorModal({
+        visible: true,
+        title: 'Export Failed',
+        message,
+      });
     } finally {
       setIsExporting(false);
     }
@@ -383,6 +396,17 @@ export default function AnalyticsScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Error Modal */}
+      <ConfirmationModal
+        visible={errorModal.visible}
+        type="warning"
+        title={errorModal.title}
+        message={errorModal.message}
+        primaryLabel="OK"
+        onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+        onClose={() => setErrorModal({ ...errorModal, visible: false })}
+      />
     </ScrollView>
   );
 }

@@ -5,7 +5,6 @@ import {
   Text,
   ScrollView,
   Pressable,
-  Alert,
   ActivityIndicator,
   Image,
   Dimensions,
@@ -45,6 +44,11 @@ export default function ItemDetailScreen() {
   const [photoViewerVisible, setPhotoViewerVisible] = useState(false);
   const [viewerPhotoIndex, setViewerPhotoIndex] = useState(0);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Fetch items if not loaded
   useEffect(() => {
@@ -94,7 +98,11 @@ export default function ItemDetailScreen() {
     if (result.success) {
       router.back();
     } else {
-      Alert.alert('Error', result.error || 'Failed to delete item');
+      setErrorModal({
+        visible: true,
+        title: 'Error',
+        message: result.error || 'Failed to delete item',
+      });
     }
   };
 
@@ -560,6 +568,17 @@ export default function ItemDetailScreen() {
           secondaryLabel="Cancel"
           onPrimary={confirmDelete}
           onClose={() => setDeleteModalVisible(false)}
+        />
+
+        {/* Error Modal */}
+        <ConfirmationModal
+          visible={errorModal.visible}
+          type="warning"
+          title={errorModal.title}
+          message={errorModal.message}
+          primaryLabel="OK"
+          onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+          onClose={() => setErrorModal({ ...errorModal, visible: false })}
         />
       </View>
     </>

@@ -11,7 +11,6 @@ import {
   TextInput,
   Animated,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -76,6 +75,13 @@ export default function InventoryScreen() {
 
   // Delete confirmation modal state
   const [deleteModalItem, setDeleteModalItem] = useState<Item | null>(null);
+
+  // Error modal state
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Thumbnail state for item images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
@@ -193,7 +199,7 @@ export default function InventoryScreen() {
     if (!quickSellItem) return;
     const price = parseFloat(quickSellPrice);
     if (isNaN(price) || price < 0) {
-      Alert.alert('Invalid Price', 'Please enter a valid sale price');
+      setErrorModal({ visible: true, title: 'Invalid Price', message: 'Please enter a valid sale price.' });
       return;
     }
     const platformFee = quickSellPlatform
@@ -212,7 +218,7 @@ export default function InventoryScreen() {
         setQuickSellPlatform(null);
         fetchItems();
       } else {
-        Alert.alert('Error', result.error || 'Failed to mark item as sold');
+        setErrorModal({ visible: true, title: 'Error', message: result.error || 'Failed to mark item as sold.' });
       }
     } finally {
       setIsQuickSelling(false);
@@ -230,7 +236,7 @@ export default function InventoryScreen() {
     if (!deleteModalItem) return;
     const result = await deleteItem(deleteModalItem.id);
     if (!result.success) {
-      Alert.alert('Error', result.error || 'Failed to delete item');
+      setErrorModal({ visible: true, title: 'Error', message: result.error || 'Failed to delete item.' });
     }
     setDeleteModalItem(null);
   };
@@ -697,6 +703,17 @@ export default function InventoryScreen() {
         secondaryLabel="Cancel"
         onPrimary={handleConfirmDelete}
         onClose={() => setDeleteModalItem(null)}
+      />
+
+      {/* Error Modal */}
+      <ConfirmationModal
+        visible={errorModal.visible}
+        type="warning"
+        title={errorModal.title}
+        message={errorModal.message}
+        primaryLabel="OK"
+        onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+        onClose={() => setErrorModal({ ...errorModal, visible: false })}
       />
     </GestureHandlerRootView>
   );

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, Alert } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
 import { useMileageStore } from '@/src/stores/mileage-store';
 import { MileageForm, MileageFormData } from '@/src/features/mileage';
+import { ConfirmationModal } from '@/src/components/ui';
 
 export default function NewMileageTripScreen() {
   const { palletId } = useLocalSearchParams<{ palletId?: string }>();
@@ -12,6 +13,11 @@ export default function NewMileageTripScreen() {
   const insets = useSafeAreaInsets();
   const { addTrip, isLoading, fetchCurrentMileageRate, currentMileageRate } = useMileageStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Fetch current IRS rate on mount
   useEffect(() => {
@@ -43,10 +49,18 @@ export default function NewMileageTripScreen() {
       if (result.success) {
         router.dismiss();
       } else {
-        Alert.alert('Error', result.error || 'Failed to create mileage trip');
+        setErrorModal({
+          visible: true,
+          title: 'Error',
+          message: result.error || 'Failed to create mileage trip',
+        });
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      setErrorModal({
+        visible: true,
+        title: 'Error',
+        message: 'An unexpected error occurred',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -70,6 +84,17 @@ export default function NewMileageTripScreen() {
           isLoading={isSubmitting || isLoading}
           submitLabel="Log Trip"
           currentMileageRate={currentMileageRate}
+        />
+
+        {/* Error Modal */}
+        <ConfirmationModal
+          visible={errorModal.visible}
+          type="warning"
+          title={errorModal.title}
+          message={errorModal.message}
+          primaryLabel="OK"
+          onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+          onClose={() => setErrorModal({ ...errorModal, visible: false })}
         />
       </View>
     </>

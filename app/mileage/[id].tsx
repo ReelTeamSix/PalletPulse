@@ -1,11 +1,10 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   ScrollView,
   Pressable,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -15,7 +14,7 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { useMileageStore } from '@/src/stores/mileage-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
-import { Button } from '@/src/components/ui';
+import { Button, ConfirmationModal } from '@/src/components/ui';
 import {
   formatDeduction,
   formatMiles,
@@ -31,6 +30,12 @@ export default function MileageTripDetailScreen() {
   const insets = useSafeAreaInsets();
   const { trips, getTripById, deleteTrip, fetchTrips, isLoading } = useMileageStore();
   const { pallets, getPalletById } = usePalletsStore();
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Fetch trips if not loaded
   useEffect(() => {
@@ -61,26 +66,22 @@ export default function MileageTripDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Trip',
-      `Are you sure you want to delete this ${formatMiles(trip?.miles || 0)} mileage trip? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            if (!id) return;
-            const result = await deleteTrip(id);
-            if (result.success) {
-              router.back();
-            } else {
-              Alert.alert('Error', result.error || 'Failed to delete mileage trip');
-            }
-          },
-        },
-      ]
-    );
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!id) return;
+    setDeleteModalVisible(false);
+    const result = await deleteTrip(id);
+    if (result.success) {
+      router.back();
+    } else {
+      setErrorModal({
+        visible: true,
+        title: 'Error',
+        message: result.error || 'Failed to delete mileage trip',
+      });
+    }
   };
 
   const handlePalletPress = (palletId: string) => {
@@ -223,6 +224,30 @@ export default function MileageTripDetailScreen() {
           />
         </View>
       </ScrollView>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        visible={deleteModalVisible}
+        type="delete"
+        title="Delete Trip?"
+        message={`Are you sure you want to delete this ${formatMiles(trip.miles)} mileage trip? This action cannot be undone.`}
+        primaryLabel="Delete Trip"
+        secondaryLabel="Cancel"
+        onPrimary={handleConfirmDelete}
+        onSecondary={() => setDeleteModalVisible(false)}
+        onClose={() => setDeleteModalVisible(false)}
+      />
+
+      {/* Error Modal */}
+      <ConfirmationModal
+        visible={errorModal.visible}
+        type="warning"
+        title={errorModal.title}
+        message={errorModal.message}
+        primaryLabel="OK"
+        onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+        onClose={() => setErrorModal({ ...errorModal, visible: false })}
+      />
     </>
   );
 }

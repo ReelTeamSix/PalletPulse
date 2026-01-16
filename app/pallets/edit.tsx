@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, View, Alert, ActivityIndicator, Text } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -7,6 +7,7 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize } from '@/src/constants/spacing';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { PalletForm, PalletFormData } from '@/src/features/pallets';
+import { ConfirmationModal } from '@/src/components/ui';
 
 export default function EditPalletScreen() {
   const router = useRouter();
@@ -14,6 +15,11 @@ export default function EditPalletScreen() {
   const insets = useSafeAreaInsets();
   const { pallets, getPalletById, updatePallet, isLoading, fetchPallets } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Fetch pallets if not loaded
   useEffect(() => {
@@ -50,10 +56,18 @@ export default function EditPalletScreen() {
       if (result.success) {
         router.back();
       } else {
-        Alert.alert('Error', result.error || 'Failed to update pallet');
+        setErrorModal({
+          visible: true,
+          title: 'Error',
+          message: result.error || 'Failed to update pallet',
+        });
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      setErrorModal({
+        visible: true,
+        title: 'Error',
+        message: 'An unexpected error occurred',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -102,6 +116,17 @@ export default function EditPalletScreen() {
           onCancel={handleCancel}
           isLoading={isSubmitting || isLoading}
           submitLabel="Save Changes"
+        />
+
+        {/* Error Modal */}
+        <ConfirmationModal
+          visible={errorModal.visible}
+          type="warning"
+          title={errorModal.title}
+          message={errorModal.message}
+          primaryLabel="OK"
+          onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+          onClose={() => setErrorModal({ ...errorModal, visible: false })}
         />
       </View>
     </>

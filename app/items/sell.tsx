@@ -6,7 +6,6 @@ import {
   Text,
   ScrollView,
   Pressable,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -22,7 +21,7 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
-import { Button, Input } from '@/src/components/ui';
+import { Button, Input, ConfirmationModal } from '@/src/components/ui';
 import {
   formatCondition,
   getConditionColor,
@@ -61,6 +60,11 @@ export default function SellItemScreen() {
   const [platformFeeText, setPlatformFeeText] = useState(''); // Local text state for fee input
   const [isEditingFee, setIsEditingFee] = useState(false); // Track if user is actively editing fee
   const scrollViewRef = useRef<ScrollView>(null);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Fetch items if not loaded
   useEffect(() => {
@@ -175,10 +179,18 @@ export default function SellItemScreen() {
       if (result.success) {
         router.back();
       } else {
-        Alert.alert('Error', result.error || 'Failed to mark item as sold');
+        setErrorModal({
+          visible: true,
+          title: 'Error',
+          message: result.error || 'Failed to mark item as sold',
+        });
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      setErrorModal({
+        visible: true,
+        title: 'Error',
+        message: 'An unexpected error occurred',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -598,6 +610,17 @@ export default function SellItemScreen() {
             disabled={isSubmitting}
           />
         </View>
+
+        {/* Error Modal */}
+        <ConfirmationModal
+          visible={errorModal.visible}
+          type="warning"
+          title={errorModal.title}
+          message={errorModal.message}
+          primaryLabel="OK"
+          onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+          onClose={() => setErrorModal({ ...errorModal, visible: false })}
+        />
       </KeyboardAvoidingView>
     </>
   );

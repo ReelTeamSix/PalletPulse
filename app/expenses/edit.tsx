@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, View, Alert, ActivityIndicator, Text } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -8,6 +8,7 @@ import { fontSize } from '@/src/constants/spacing';
 import { useExpensesStore } from '@/src/stores/expenses-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { ExpenseForm, ExpenseFormData } from '@/src/features/expenses';
+import { ConfirmationModal } from '@/src/components/ui';
 
 export default function EditExpenseScreen() {
   const router = useRouter();
@@ -17,6 +18,11 @@ export default function EditExpenseScreen() {
   const { getPalletById } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receiptPhotoUri, setReceiptPhotoUri] = useState<string | null>(null);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Fetch expenses if not loaded
   useEffect(() => {
@@ -51,7 +57,11 @@ export default function EditExpenseScreen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Please allow access to your photos to add a receipt.');
+        setErrorModal({
+          visible: true,
+          title: 'Permission Required',
+          message: 'Please allow access to your photos to add a receipt.',
+        });
         return;
       }
 
@@ -66,7 +76,11 @@ export default function EditExpenseScreen() {
         setReceiptPhotoUri(result.assets[0].uri);
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to select photo');
+      setErrorModal({
+        visible: true,
+        title: 'Error',
+        message: 'Failed to select photo',
+      });
     }
   };
 
@@ -91,10 +105,18 @@ export default function EditExpenseScreen() {
       if (result.success) {
         router.back();
       } else {
-        Alert.alert('Error', result.error || 'Failed to update expense');
+        setErrorModal({
+          visible: true,
+          title: 'Error',
+          message: result.error || 'Failed to update expense',
+        });
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      setErrorModal({
+        visible: true,
+        title: 'Error',
+        message: 'An unexpected error occurred',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -133,6 +155,17 @@ export default function EditExpenseScreen() {
           onReceiptPhotoSelect={handleReceiptPhotoSelect}
           receiptPhotoUri={receiptPhotoUri}
           onReceiptPhotoRemove={handleReceiptPhotoRemove}
+        />
+
+        {/* Error Modal */}
+        <ConfirmationModal
+          visible={errorModal.visible}
+          type="warning"
+          title={errorModal.title}
+          message={errorModal.message}
+          primaryLabel="OK"
+          onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+          onClose={() => setErrorModal({ ...errorModal, visible: false })}
         />
       </View>
     </>

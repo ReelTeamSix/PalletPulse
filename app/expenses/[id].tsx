@@ -5,7 +5,6 @@ import {
   Text,
   ScrollView,
   Pressable,
-  Alert,
   ActivityIndicator,
   Image,
   Modal,
@@ -17,7 +16,7 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { useExpensesStore } from '@/src/stores/expenses-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
-import { Button } from '@/src/components/ui';
+import { Button, ConfirmationModal } from '@/src/components/ui';
 import {
   formatExpenseAmount,
   formatExpenseDate,
@@ -32,6 +31,12 @@ export default function ExpenseDetailScreen() {
   const { expenses, getExpenseById, deleteExpense, fetchExpenses, isLoading } = useExpensesStore();
   const { getPalletById } = usePalletsStore();
   const [receiptViewerVisible, setReceiptViewerVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Fetch expenses if not loaded
   useEffect(() => {
@@ -62,26 +67,22 @@ export default function ExpenseDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Expense',
-      `Are you sure you want to delete this ${formatExpenseAmount(expense?.amount || 0)} expense? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            if (!id) return;
-            const result = await deleteExpense(id);
-            if (result.success) {
-              router.back();
-            } else {
-              Alert.alert('Error', result.error || 'Failed to delete expense');
-            }
-          },
-        },
-      ]
-    );
+    setDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!id) return;
+    setDeleteModalVisible(false);
+    const result = await deleteExpense(id);
+    if (result.success) {
+      router.back();
+    } else {
+      setErrorModal({
+        visible: true,
+        title: 'Error',
+        message: result.error || 'Failed to delete expense',
+      });
+    }
   };
 
   const handlePalletPress = (palletId: string) => {
@@ -256,6 +257,30 @@ export default function ExpenseDetailScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        visible={deleteModalVisible}
+        type="delete"
+        title="Delete Expense?"
+        message={`Are you sure you want to delete this ${formatExpenseAmount(expense.amount)} expense? This action cannot be undone.`}
+        primaryLabel="Delete Expense"
+        secondaryLabel="Cancel"
+        onPrimary={handleConfirmDelete}
+        onSecondary={() => setDeleteModalVisible(false)}
+        onClose={() => setDeleteModalVisible(false)}
+      />
+
+      {/* Error Modal */}
+      <ConfirmationModal
+        visible={errorModal.visible}
+        type="warning"
+        title={errorModal.title}
+        message={errorModal.message}
+        primaryLabel="OK"
+        onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+        onClose={() => setErrorModal({ ...errorModal, visible: false })}
+      />
     </>
   );
 }

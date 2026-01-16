@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View, Alert } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
@@ -7,6 +7,7 @@ import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { ItemForm, ItemFormData } from '@/src/features/items';
 import { PhotoItem } from '@/src/components/ui/PhotoPicker';
+import { ConfirmationModal } from '@/src/components/ui';
 
 export default function NewItemScreen() {
   const { palletId } = useLocalSearchParams<{ palletId?: string }>();
@@ -16,6 +17,11 @@ export default function NewItemScreen() {
   const { getPalletById } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Get pallet name for display
   const pallet = palletId ? getPalletById(palletId) : null;
@@ -59,10 +65,18 @@ export default function NewItemScreen() {
           router.push(`/items/${result.data!.id}`);
         }, 100);
       } else {
-        Alert.alert('Error', result.error || 'Failed to create item');
+        setErrorModal({
+          visible: true,
+          title: 'Error',
+          message: result.error || 'Failed to create item',
+        });
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      setErrorModal({
+        visible: true,
+        title: 'Error',
+        message: 'An unexpected error occurred',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -85,6 +99,17 @@ export default function NewItemScreen() {
           submitLabel="Create Item"
           photos={photos}
           onPhotosChange={setPhotos}
+        />
+
+        {/* Error Modal */}
+        <ConfirmationModal
+          visible={errorModal.visible}
+          type="warning"
+          title={errorModal.title}
+          message={errorModal.message}
+          primaryLabel="OK"
+          onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+          onClose={() => setErrorModal({ ...errorModal, visible: false })}
         />
       </View>
     </>

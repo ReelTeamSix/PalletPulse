@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View, Alert } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
@@ -10,12 +10,18 @@ import {
   PalletFormData,
   generatePalletName,
 } from '@/src/features/pallets';
+import { ConfirmationModal } from '@/src/components/ui';
 
 export default function NewPalletScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { pallets, addPallet, isLoading } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   const handleCancel = () => {
     router.dismiss();
@@ -45,10 +51,18 @@ export default function NewPalletScreen() {
           }, 100);
         }
       } else {
-        Alert.alert('Error', result.error || 'Failed to create pallet');
+        setErrorModal({
+          visible: true,
+          title: 'Error',
+          message: result.error || 'Failed to create pallet',
+        });
       }
     } catch (error) {
-      Alert.alert('Error', 'An unexpected error occurred');
+      setErrorModal({
+        visible: true,
+        title: 'Error',
+        message: 'An unexpected error occurred',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -72,6 +86,17 @@ export default function NewPalletScreen() {
           onCancel={handleCancel}
           isLoading={isSubmitting || isLoading}
           submitLabel="Create Pallet"
+        />
+
+        {/* Error Modal */}
+        <ConfirmationModal
+          visible={errorModal.visible}
+          type="warning"
+          title={errorModal.title}
+          message={errorModal.message}
+          primaryLabel="OK"
+          onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+          onClose={() => setErrorModal({ ...errorModal, visible: false })}
         />
       </View>
     </>

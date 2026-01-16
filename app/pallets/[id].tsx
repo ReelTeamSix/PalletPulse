@@ -5,7 +5,6 @@ import {
   Text,
   ScrollView,
   Pressable,
-  Alert,
   ActivityIndicator,
   Modal,
   TextInput,
@@ -18,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
+import { ConfirmationModal } from '@/src/components/ui';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
@@ -72,6 +72,15 @@ export default function PalletDetailScreen() {
   const [quickSellPlatform, setQuickSellPlatform] = useState<SalesPlatform | null>(null);
   const [isQuickSelling, setIsQuickSelling] = useState(false);
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map());
+
+  // Modal states
+  const [showDeletePalletModal, setShowDeletePalletModal] = useState(false);
+  const [deleteItemModal, setDeleteItemModal] = useState<Item | null>(null);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Fetch pallets if not loaded
   useEffect(() => {
@@ -132,26 +141,18 @@ export default function PalletDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Pallet',
-      `Are you sure you want to delete "${pallet?.name}"? This will also delete all items in this pallet.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            if (!id) return;
-            const result = await deletePallet(id);
-            if (result.success) {
-              router.back();
-            } else {
-              Alert.alert('Error', result.error || 'Failed to delete pallet');
-            }
-          },
-        },
-      ]
-    );
+    setShowDeletePalletModal(true);
+  };
+
+  const handleConfirmDeletePallet = async () => {
+    if (!id) return;
+    setShowDeletePalletModal(false);
+    const result = await deletePallet(id);
+    if (result.success) {
+      router.back();
+    } else {
+      setErrorModal({ visible: true, title: 'Error', message: result.error || 'Failed to delete pallet.' });
+    }
   };
 
   const handleStatusChange = async (newStatus: PalletStatus) => {
@@ -159,7 +160,7 @@ export default function PalletDetailScreen() {
     setShowStatusPicker(false);
     const result = await updatePallet(id, { status: newStatus });
     if (!result.success) {
-      Alert.alert('Error', result.error || 'Failed to update status');
+      setErrorModal({ visible: true, title: 'Error', message: result.error || 'Failed to update status.' });
     }
   };
 
@@ -179,7 +180,7 @@ export default function PalletDetailScreen() {
 
     const price = parseFloat(quickSellPrice);
     if (isNaN(price) || price < 0) {
-      Alert.alert('Invalid Price', 'Please enter a valid sale price');
+      setErrorModal({ visible: true, title: 'Invalid Price', message: 'Please enter a valid sale price.' });
       return;
     }
 
@@ -202,7 +203,7 @@ export default function PalletDetailScreen() {
         // Refresh the items list
         loadData();
       } else {
-        Alert.alert('Error', result.error || 'Failed to mark item as sold');
+        setErrorModal({ visible: true, title: 'Error', message: result.error || 'Failed to mark item as sold.' });
       }
     } finally {
       setIsQuickSelling(false);
@@ -212,26 +213,18 @@ export default function PalletDetailScreen() {
   // Item delete handler with confirmation
   const handleItemDelete = (item: Item) => {
     swipeableRefs.current.get(item.id)?.close();
+    setDeleteItemModal(item);
+  };
 
-    Alert.alert(
-      'Delete Item',
-      `Are you sure you want to permanently delete "${item.name}"? This action cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const result = await deleteItem(item.id);
-            if (result.success) {
-              loadData(); // Refresh the items list
-            } else {
-              Alert.alert('Error', result.error || 'Failed to delete item');
-            }
-          },
-        },
-      ]
-    );
+  const handleConfirmDeleteItem = async () => {
+    if (!deleteItemModal) return;
+    const result = await deleteItem(deleteItemModal.id);
+    if (result.success) {
+      loadData(); // Refresh the items list
+    } else {
+      setErrorModal({ visible: true, title: 'Error', message: result.error || 'Failed to delete item.' });
+    }
+    setDeleteItemModal(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -735,6 +728,44 @@ export default function PalletDetailScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* Delete Pallet Confirmation Modal */}
+      <ConfirmationModal
+        visible={showDeletePalletModal}
+        type="delete"
+        title={`Delete ${pallet?.name || 'Pallet'}?`}
+        message="This will also delete all items in this pallet."
+        infoText="This action is permanent and cannot be undone."
+        primaryLabel="Delete Pallet"
+        secondaryLabel="Cancel"
+        onPrimary={handleConfirmDeletePallet}
+        onSecondary={() => setShowDeletePalletModal(false)}
+        onClose={() => setShowDeletePalletModal(false)}
+      />
+
+      {/* Delete Item Confirmation Modal */}
+      <ConfirmationModal
+        visible={deleteItemModal !== null}
+        type="delete"
+        title={`Delete ${deleteItemModal?.name || 'Item'}?`}
+        message="This action is permanent and cannot be undone."
+        primaryLabel="Delete Item"
+        secondaryLabel="Cancel"
+        onPrimary={handleConfirmDeleteItem}
+        onSecondary={() => setDeleteItemModal(null)}
+        onClose={() => setDeleteItemModal(null)}
+      />
+
+      {/* Error Modal */}
+      <ConfirmationModal
+        visible={errorModal.visible}
+        type="warning"
+        title={errorModal.title}
+        message={errorModal.message}
+        primaryLabel="OK"
+        onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+        onClose={() => setErrorModal({ ...errorModal, visible: false })}
+      />
     </GestureHandlerRootView>
   );
 }
