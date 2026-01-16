@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -12,7 +12,6 @@ import {
   StatusBar,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
@@ -55,7 +54,7 @@ export default function ItemDetailScreen() {
     if (items.length === 0) {
       fetchItems();
     }
-  }, []);
+  }, [items.length, fetchItems]);
 
   // Load photos
   useEffect(() => {
@@ -66,17 +65,18 @@ export default function ItemDetailScreen() {
       }
     }
     loadPhotos();
-  }, [id]);
+  }, [id, fetchItemPhotos]);
 
   const item = useMemo(() => {
     if (!id) return null;
     return getItemById(id);
-  }, [id, items]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- items triggers re-fetch
+  }, [id, items, getItemById]);
 
   const pallet = useMemo(() => {
     if (!item?.pallet_id) return null;
     return getPalletById(item.pallet_id);
-  }, [item, items]);
+  }, [item, getPalletById]);
 
   const handleMarkAsSold = () => {
     // Mark as sold will be fully implemented in Phase 7

@@ -19,11 +19,6 @@ export interface ExportResult {
   filename?: string;
 }
 
-interface ExportOptions {
-  filename?: string;
-  includeHeaders?: boolean;
-}
-
 // ============================================================================
 // CSV Formatting Utilities
 // ============================================================================

@@ -73,6 +73,7 @@ export const useAppSettingsStore = create<AppSettingsState>()(
 
           if (error) {
             // If table doesn't exist or RLS blocks, use defaults silently
+            // eslint-disable-next-line no-console -- intentional warning logging
             console.warn('App settings fetch warning:', error.message);
             set({ settingsLoaded: true, isLoading: false, lastFetched: new Date().toISOString() });
             return;
@@ -105,8 +106,9 @@ export const useAppSettingsStore = create<AppSettingsState>()(
             isLoading: false,
             lastFetched: new Date().toISOString(),
           });
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to fetch settings';
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Failed to fetch settings';
+          // eslint-disable-next-line no-console -- intentional warning logging
           console.warn('App settings fetch error:', message);
           // Use defaults on error - don't block app functionality
           set({

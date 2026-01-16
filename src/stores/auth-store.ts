@@ -58,6 +58,7 @@ export const useAuthStore = create<AuthState>()(
           const { data: { session }, error } = await supabase.auth.getSession();
 
           if (error) {
+            // eslint-disable-next-line no-console -- intentional error logging
             console.error('Error getting session:', error);
             set({ isLoading: false, isInitialized: true, error: formatAuthError(error) });
             return;
@@ -77,8 +78,9 @@ export const useAuthStore = create<AuthState>()(
               user: session?.user ?? null,
             });
           });
-        } catch (error) {
-          console.error('Error initializing auth:', error);
+        } catch (err) {
+          // eslint-disable-next-line no-console -- intentional error logging
+          console.error('Error initializing auth:', err);
           set({
             isLoading: false,
             isInitialized: true,
@@ -124,7 +126,7 @@ export const useAuthStore = create<AuthState>()(
           });
 
           return { success: true };
-        } catch (error) {
+        } catch {
           const errorMessage = 'An unexpected error occurred during sign up.';
           set({ isLoading: false, error: errorMessage });
           return { success: false, error: errorMessage };
@@ -154,7 +156,7 @@ export const useAuthStore = create<AuthState>()(
           });
 
           return { success: true };
-        } catch (error) {
+        } catch {
           const errorMessage = 'An unexpected error occurred during sign in.';
           set({ isLoading: false, error: errorMessage });
           return { success: false, error: errorMessage };
@@ -169,6 +171,7 @@ export const useAuthStore = create<AuthState>()(
           const { error } = await supabase.auth.signOut();
 
           if (error) {
+            // eslint-disable-next-line no-console -- intentional error logging
             console.error('Error signing out:', error);
           }
 
@@ -177,8 +180,9 @@ export const useAuthStore = create<AuthState>()(
             session: null,
             isLoading: false,
           });
-        } catch (error) {
-          console.error('Error signing out:', error);
+        } catch (err) {
+          // eslint-disable-next-line no-console -- intentional error logging
+          console.error('Error signing out:', err);
           set({
             user: null,
             session: null,
@@ -204,7 +208,7 @@ export const useAuthStore = create<AuthState>()(
 
           set({ isLoading: false });
           return { success: true };
-        } catch (error) {
+        } catch {
           const errorMessage = 'An unexpected error occurred. Please try again.';
           set({ isLoading: false, error: errorMessage });
           return { success: false, error: errorMessage };
@@ -228,7 +232,7 @@ export const useAuthStore = create<AuthState>()(
 
           set({ isLoading: false });
           return { success: true };
-        } catch (error) {
+        } catch {
           const errorMessage = 'An unexpected error occurred. Please try again.';
           set({ isLoading: false, error: errorMessage });
           return { success: false, error: errorMessage };

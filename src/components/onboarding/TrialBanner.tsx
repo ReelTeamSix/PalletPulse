@@ -19,7 +19,7 @@ interface TrialBannerProps {
 
 export function TrialBanner({ onUpgrade }: TrialBannerProps) {
   const router = useRouter();
-  const { show, daysRemaining, message, selectedTier } = useTrialBanner();
+  const { show, daysRemaining, message } = useTrialBanner();
 
   if (!show) return null;
 

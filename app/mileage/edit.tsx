@@ -3,7 +3,7 @@ import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize } from '@/src/constants/spacing';
+import { fontSize } from '@/src/constants/spacing';
 import { useMileageStore } from '@/src/stores/mileage-store';
 import { MileageForm, MileageFormData } from '@/src/features/mileage';
 import { ConfirmationModal } from '@/src/components/ui';
@@ -32,12 +32,13 @@ export default function EditMileageTripScreen() {
     if (trips.length === 0) {
       fetchTrips();
     }
-  }, []);
+  }, [trips.length, fetchTrips]);
 
   const trip = useMemo(() => {
     if (!id) return null;
     return getTripById(id);
-  }, [id, trips]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trips triggers re-fetch
+  }, [id, trips, getTripById]);
 
   const handleCancel = () => {
     router.back();
@@ -66,7 +67,7 @@ export default function EditMileageTripScreen() {
           message: result.error || 'Failed to update mileage trip',
         });
       }
-    } catch (error) {
+    } catch {
       setErrorModal({
         visible: true,
         title: 'Error',

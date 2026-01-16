@@ -307,8 +307,9 @@ export const useMileageStore = create<MileageState>()(
           const rate = settingsStore.getMileageRate();
           set({ currentMileageRate: rate });
           return rate;
-        } catch (error) {
-          console.warn('Error fetching mileage rate:', error);
+        } catch (err) {
+          // eslint-disable-next-line no-console -- intentional warning logging
+          console.warn('Error fetching mileage rate:', err);
           return DEFAULT_IRS_MILEAGE_RATE;
         }
       },

@@ -1,7 +1,6 @@
 // Unit tests for Item Form Schema
 import {
   itemFormSchema,
-  ItemFormData,
   defaultItemFormValues,
   calculateItemProfit,
   calculateItemROI,

@@ -2,7 +2,6 @@
 // Consistent text styles across the app
 
 import { TextStyle } from 'react-native';
-import { fontSize, fontWeight } from './spacing';
 
 type TypographyStyle = Pick<TextStyle, 'fontSize' | 'fontWeight' | 'letterSpacing' | 'lineHeight'>;
 

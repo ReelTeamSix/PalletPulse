@@ -1,7 +1,7 @@
 // Profit Calculation Utilities
 // Pure functions for calculating profit, ROI, and cost allocation
 
-import type { Item, Pallet, Expense, ItemCondition } from '@/src/types/database';
+import type { Item, Pallet, Expense } from '@/src/types/database';
 
 // ============================================================================
 // Types

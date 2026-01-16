@@ -42,19 +42,21 @@ export default function MileageTripDetailScreen() {
     if (trips.length === 0) {
       fetchTrips();
     }
-  }, []);
+  }, [trips.length, fetchTrips]);
 
   const trip = useMemo(() => {
     if (!id) return null;
     return getTripById(id);
-  }, [id, trips]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- trips triggers re-fetch
+  }, [id, trips, getTripById]);
 
   const linkedPallets = useMemo(() => {
     if (!trip) return [];
     return trip.pallet_ids
       .map((palletId) => getPalletById(palletId))
       .filter((p) => p !== undefined);
-  }, [trip, pallets]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pallets triggers re-fetch
+  }, [trip, pallets, getPalletById]);
 
   const deduction = useMemo(() => {
     if (!trip) return 0;

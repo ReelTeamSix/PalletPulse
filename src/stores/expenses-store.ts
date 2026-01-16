@@ -130,7 +130,7 @@ export const useExpensesStore = create<ExpensesState>()(
             const localExpense = localExpenses.find(e => e.id === expense.id);
             return localExpense || { ...expense, pallet_ids: [palletId] };
           });
-        } catch (error) {
+        } catch {
           return [];
         }
       },
@@ -177,6 +177,7 @@ export const useExpensesStore = create<ExpensesState>()(
 
             if (junctionError) {
               // Log but don't fail the entire operation
+              // eslint-disable-next-line no-console -- intentional error logging
               console.error('Failed to insert expense_pallets:', junctionError);
             }
           }
@@ -222,6 +223,7 @@ export const useExpensesStore = create<ExpensesState>()(
               .eq('expense_id', id);
 
             if (deleteError) {
+              // eslint-disable-next-line no-console -- intentional error logging
               console.error('Failed to delete expense_pallets:', deleteError);
             }
 
@@ -237,6 +239,7 @@ export const useExpensesStore = create<ExpensesState>()(
                 .insert(junctionRecords);
 
               if (insertError) {
+                // eslint-disable-next-line no-console -- intentional error logging
                 console.error('Failed to insert expense_pallets:', insertError);
               }
             }

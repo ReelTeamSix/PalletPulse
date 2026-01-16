@@ -1,7 +1,7 @@
 // PalletPulse Shadow System
 // Consistent elevation for cards and interactive elements
 
-import { Platform, ViewStyle } from 'react-native';
+import { ViewStyle } from 'react-native';
 
 type ShadowStyle = Pick<ViewStyle, 'shadowColor' | 'shadowOffset' | 'shadowOpacity' | 'shadowRadius' | 'elevation'>;
 

@@ -24,8 +24,10 @@ jest.mock('@/src/lib/supabase', () => ({
 }));
 
 // Silence console.error in tests unless specifically testing errors
+// eslint-disable-next-line no-console -- intentional console manipulation for test setup
 const originalError = console.error;
 beforeAll(() => {
+  // eslint-disable-next-line no-console -- intentional console manipulation for test setup
   console.error = (...args) => {
     if (
       typeof args[0] === 'string' &&
@@ -38,5 +40,6 @@ beforeAll(() => {
 });
 
 afterAll(() => {
+  // eslint-disable-next-line no-console -- restoring original console.error
   console.error = originalError;
 });

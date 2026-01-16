@@ -54,7 +54,7 @@ export default function NewExpenseScreen() {
       if (!result.canceled && result.assets[0]) {
         setReceiptPhotoUri(result.assets[0].uri);
       }
-    } catch (error) {
+    } catch {
       setErrorModal({
         visible: true,
         title: 'Error',
@@ -94,7 +94,7 @@ export default function NewExpenseScreen() {
           message: result.error || 'Failed to create expense',
         });
       }
-    } catch (error) {
+    } catch {
       setErrorModal({
         visible: true,
         title: 'Error',

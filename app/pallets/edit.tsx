@@ -26,12 +26,13 @@ export default function EditPalletScreen() {
     if (pallets.length === 0) {
       fetchPallets();
     }
-  }, []);
+  }, [pallets.length, fetchPallets]);
 
   const pallet = useMemo(() => {
     if (!id) return null;
     return getPalletById(id);
-  }, [id, pallets]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pallets triggers re-fetch
+  }, [id, pallets, getPalletById]);
 
   const handleCancel = () => {
     router.back();
@@ -62,7 +63,7 @@ export default function EditPalletScreen() {
           message: result.error || 'Failed to update pallet',
         });
       }
-    } catch (error) {
+    } catch {
       setErrorModal({
         visible: true,
         title: 'Error',

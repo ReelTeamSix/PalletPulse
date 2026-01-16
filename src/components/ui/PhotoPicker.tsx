@@ -18,7 +18,6 @@ import {
   PhotoPickResult,
   pickImageFromCamera,
   pickImageFromGallery,
-  getPhotoUrl,
 } from '@/src/lib/photo-utils';
 
 export interface PhotoItem {
@@ -63,7 +62,7 @@ export function PhotoPicker({
       if (result) {
         addPhotoFromResult(result);
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to take photo');
     } finally {
       setIsProcessing(false);
@@ -79,7 +78,7 @@ export function PhotoPicker({
       if (result) {
         addPhotoFromResult(result);
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Failed to select photo');
     } finally {
       setIsProcessing(false);

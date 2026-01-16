@@ -19,6 +19,7 @@ import { typography } from '@/src/constants/typography';
 import { Card } from '@/src/components/ui/Card';
 import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Button, ConfirmationModal } from '@/src/components/ui';
+import { UserProfileCard } from '@/src/features/settings';
 import { useAuthStore } from '@/src/stores/auth-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { UserType } from '@/src/types/database';
@@ -214,9 +215,9 @@ export default function SettingsScreen() {
     return option?.label || 'Hobby Flipper';
   };
 
-  const getInitials = (email: string | null) => {
-    if (!email) return '?';
-    return email.charAt(0).toUpperCase();
+  const handleSubscriptionPress = () => {
+    // TODO: Navigate to subscription management
+    // For now, this is a placeholder
   };
 
   if (isLoading && !settings) {
@@ -238,21 +239,11 @@ export default function SettingsScreen() {
       <Text style={styles.title}>Settings</Text>
 
       {/* Profile Card */}
-      <Card shadow="md" padding="md" style={styles.profileCard}>
-        <View style={styles.profileRow}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{getInitials(user?.email ?? null)}</Text>
-          </View>
-          <View style={styles.profileContent}>
-            <Text style={styles.profileName}>{user?.email || 'User'}</Text>
-            <View style={styles.tierBadge}>
-              <Ionicons name="star" size={12} color={colors.warning} />
-              <Text style={styles.tierText}>Free Plan</Text>
-            </View>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.textDisabled} />
-        </View>
-      </Card>
+      <UserProfileCard
+        email={user?.email ?? null}
+        tier="free"
+        onSubscriptionPress={handleSubscriptionPress}
+      />
 
       {/* App Settings Section */}
       <SectionHeader title="App Settings" />
@@ -426,46 +417,6 @@ const styles = StyleSheet.create({
     ...typography.screenTitle,
     color: colors.textPrimary,
     marginBottom: spacing.lg,
-  },
-  profileCard: {
-    marginBottom: spacing.lg,
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: colors.background,
-  },
-  profileContent: {
-    flex: 1,
-    marginLeft: spacing.md,
-  },
-  profileName: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  tierBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  tierText: {
-    fontSize: fontSize.xs,
-    color: colors.warning,
-    fontWeight: '500',
   },
   sectionCard: {
     marginBottom: spacing.md,

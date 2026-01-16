@@ -165,7 +165,6 @@ export default function AnalyticsScreen() {
     : staleItems.slice(0, FREE_TIER_LIMITS.staleItems);
 
   // Check if there's hidden data
-  const _hasMoreLeaderboard = !isPaidTier && leaderboard.length > FREE_TIER_LIMITS.leaderboard;
   const hasMoreTypeComparison = !isPaidTier && typeComparison.length > FREE_TIER_LIMITS.typeComparison;
   const hasMoreStaleItems = !isPaidTier && staleItems.length > FREE_TIER_LIMITS.staleItems;
   const hiddenLeaderboardCount = Math.max(0, leaderboard.length - FREE_TIER_LIMITS.leaderboard);

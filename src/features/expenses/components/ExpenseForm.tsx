@@ -29,7 +29,7 @@ import {
   formatExpenseAmount,
   parseCurrencyInput,
 } from '../schemas/expense-form-schema';
-import { Expense, ExpenseCategory } from '@/src/types/database';
+import { Expense } from '@/src/types/database';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 
 interface ExpenseFormProps {
@@ -89,7 +89,8 @@ export function ExpenseForm({
 
   const watchCategory = watch('category');
   const watchExpenseDate = watch('expense_date');
-  const watchPalletIds = watch('pallet_ids') || [];
+  const rawWatchPalletIds = watch('pallet_ids');
+  const watchPalletIds = useMemo(() => rawWatchPalletIds || [], [rawWatchPalletIds]);
   const watchAmount = watch('amount');
 
   const handleDateChange = (event: any, selectedDate?: Date) => {

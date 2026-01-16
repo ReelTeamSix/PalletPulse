@@ -1,6 +1,6 @@
 // Item Form Validation Schema
 import { z } from 'zod';
-import { ItemCondition, ItemStatus, SalesPlatform } from '@/src/types/database';
+import { ItemCondition, ItemStatus } from '@/src/types/database';
 
 // Item condition options for dropdown
 export const ITEM_CONDITION_OPTIONS: { label: string; value: ItemCondition }[] = [

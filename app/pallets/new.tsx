@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
-import { spacing } from '@/src/constants/spacing';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import {
   PalletForm,
@@ -57,7 +56,7 @@ export default function NewPalletScreen() {
           message: result.error || 'Failed to create pallet',
         });
       }
-    } catch (error) {
+    } catch {
       setErrorModal({
         visible: true,
         title: 'Error',

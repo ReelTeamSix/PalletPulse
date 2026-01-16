@@ -55,7 +55,7 @@ export default function NewMileageTripScreen() {
           message: result.error || 'Failed to create mileage trip',
         });
       }
-    } catch (error) {
+    } catch {
       setErrorModal({
         visible: true,
         title: 'Error',

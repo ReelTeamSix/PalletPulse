@@ -210,7 +210,7 @@ export async function uploadItemPhoto(
     const arrayBuffer = await uriToArrayBuffer(photo.uri);
 
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from(STORAGE_BUCKET)
       .upload(storagePath, arrayBuffer, {
         contentType: photo.type ?? 'image/jpeg',

@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { StyleSheet, View, ActivityIndicator, Text, Pressable } from 'react-native';
+import { useState, useEffect, useMemo } from 'react';
+import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
@@ -42,7 +42,7 @@ export default function EditItemScreen() {
     if (items.length === 0) {
       fetchItems();
     }
-  }, []);
+  }, [items.length, fetchItems]);
 
   // Load existing photos
   useEffect(() => {
@@ -62,12 +62,13 @@ export default function EditItemScreen() {
       }
     }
     loadPhotos();
-  }, [id, photosLoaded]);
+  }, [id, photosLoaded, fetchItemPhotos]);
 
   const item = useMemo(() => {
     if (!id) return null;
     return getItemById(id);
-  }, [id, items]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- items triggers re-fetch
+  }, [id, items, getItemById]);
 
   const handleCancel = () => {
     router.back();
@@ -137,7 +138,7 @@ export default function EditItemScreen() {
           message: result.error || 'Failed to update item',
         });
       }
-    } catch (error) {
+    } catch {
       setErrorModal({
         visible: true,
         title: 'Error',

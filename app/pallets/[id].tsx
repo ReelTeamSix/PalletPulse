@@ -9,7 +9,6 @@ import {
   Modal,
   TextInput,
   Animated,
-  Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -32,13 +31,10 @@ import {
   formatProfit,
   formatROI,
   getROIColor,
-  calculateItemROIFromValues,
 } from '@/src/lib/profit-utils';
 import {
   ExpenseCardCompact,
   formatExpenseAmount,
-  getCategoryLabel,
-  getCategoryColor,
 } from '@/src/features/expenses';
 import {
   PLATFORM_OPTIONS,
@@ -52,14 +48,12 @@ const STATUS_CONFIG: Record<PalletStatus, { label: string; color: string }> = {
   completed: { label: 'Processed', color: colors.statusSold },
 };
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export default function PalletDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { pallets, getPalletById, deletePallet, updatePallet, isLoading, fetchPallets } = usePalletsStore();
-  const { items, fetchItems, fetchItemsByPallet, markAsSold, deleteItem } = useItemsStore();
+  const { fetchItemsByPallet, markAsSold, deleteItem } = useItemsStore();
   const { fetchExpensesByPallet } = useExpensesStore();
   const { isExpenseTrackingEnabled } = useUserSettingsStore();
   const expenseTrackingEnabled = isExpenseTrackingEnabled();
@@ -87,7 +81,7 @@ export default function PalletDetailScreen() {
     if (pallets.length === 0) {
       fetchPallets();
     }
-  }, []);
+  }, [pallets.length, fetchPallets]);
 
   // Load data function
   const loadData = useCallback(async () => {
@@ -120,7 +114,8 @@ export default function PalletDetailScreen() {
   const pallet = useMemo(() => {
     if (!id) return null;
     return getPalletById(id);
-  }, [id, pallets]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pallets triggers re-fetch
+  }, [id, pallets, getPalletById]);
 
   const handleAddItem = () => {
     router.push({ pathname: '/items/new', params: { palletId: id } });
@@ -327,7 +322,6 @@ export default function PalletDetailScreen() {
   const totalCost = profitMetrics?.totalCost ?? 0;
   const totalProfit = profitMetrics?.netProfit ?? 0;
   const roi = profitMetrics?.roi ?? 0;
-  const isProfitable = totalProfit >= 0;
   const profitFormatted = formatProfit(totalProfit);
   const roiColor = getROIColor(roi);
 

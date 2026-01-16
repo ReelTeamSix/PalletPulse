@@ -253,7 +253,7 @@ export default function InventoryScreen() {
       }
     }
     return item.purchase_cost ?? 0;
-  }, [items, getPalletById]); // eslint-disable-line react-hooks/exhaustive-deps -- getPalletById is stable
+  }, [items, getPalletById]);
 
   // Render swipe actions for items
   const renderRightActions = (item: Item, progress: Animated.AnimatedInterpolation<number>) => {

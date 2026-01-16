@@ -117,7 +117,7 @@ export const useItemsStore = create<ItemsState>()(
             .order('created_at', { ascending: false });
           if (error) throw error;
           return (data as Item[]) || [];
-        } catch (error) {
+        } catch {
           return [];
         }
       },
@@ -144,7 +144,7 @@ export const useItemsStore = create<ItemsState>()(
 
             if (!palletError && pallet) {
               // Count existing items in this pallet
-              const { count, error: countError } = await supabase
+              const { count } = await supabase
                 .from('items')
                 .select('*', { count: 'exact', head: true })
                 .eq('pallet_id', itemData.pallet_id);
@@ -467,7 +467,7 @@ export const useItemsStore = create<ItemsState>()(
 
           if (error) throw error;
           return (data as ItemPhoto[]) || [];
-        } catch (error) {
+        } catch {
           return [];
         }
       },
@@ -512,8 +512,9 @@ export const useItemsStore = create<ItemsState>()(
             }
           }
           return thumbnails;
-        } catch (error) {
-          console.error('Failed to fetch thumbnails:', error);
+        } catch (err) {
+          // eslint-disable-next-line no-console -- intentional error logging
+          console.error('Failed to fetch thumbnails:', err);
           return {};
         }
       },

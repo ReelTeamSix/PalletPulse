@@ -24,8 +24,9 @@ export async function getStorageItem<T>(key: StorageKey): Promise<T | null> {
       return null;
     }
     return JSON.parse(value) as T;
-  } catch (error) {
-    console.error(`Error reading ${key} from storage:`, error);
+  } catch (err) {
+    // eslint-disable-next-line no-console -- intentional error logging
+    console.error(`Error reading ${key} from storage:`, err);
     return null;
   }
 }
@@ -37,8 +38,9 @@ export async function setStorageItem<T>(key: StorageKey, value: T): Promise<bool
   try {
     await AsyncStorage.setItem(key, JSON.stringify(value));
     return true;
-  } catch (error) {
-    console.error(`Error writing ${key} to storage:`, error);
+  } catch (err) {
+    // eslint-disable-next-line no-console -- intentional error logging
+    console.error(`Error writing ${key} to storage:`, err);
     return false;
   }
 }
@@ -50,8 +52,9 @@ export async function removeStorageItem(key: StorageKey): Promise<boolean> {
   try {
     await AsyncStorage.removeItem(key);
     return true;
-  } catch (error) {
-    console.error(`Error removing ${key} from storage:`, error);
+  } catch (err) {
+    // eslint-disable-next-line no-console -- intentional error logging
+    console.error(`Error removing ${key} from storage:`, err);
     return false;
   }
 }
@@ -64,8 +67,9 @@ export async function clearAllStorage(): Promise<boolean> {
     const keys = Object.values(STORAGE_KEYS);
     await AsyncStorage.multiRemove(keys);
     return true;
-  } catch (error) {
-    console.error('Error clearing all storage:', error);
+  } catch (err) {
+    // eslint-disable-next-line no-console -- intentional error logging
+    console.error('Error clearing all storage:', err);
     return false;
   }
 }

@@ -71,7 +71,7 @@ export default function NewItemScreen() {
           message: result.error || 'Failed to create item',
         });
       }
-    } catch (error) {
+    } catch {
       setErrorModal({
         visible: true,
         title: 'Error',

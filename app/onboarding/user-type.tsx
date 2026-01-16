@@ -115,8 +115,7 @@ export default function UserTypeScreen() {
 
       // Navigate to main app
       router.replace('/(tabs)');
-    } catch (error) {
-      console.error('Error completing onboarding:', error);
+    } catch {
       // Still navigate on error - don't block the user
       router.replace('/(tabs)');
     } finally {

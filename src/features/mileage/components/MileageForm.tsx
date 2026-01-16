@@ -1,5 +1,5 @@
 // MileageForm Component - Form for creating and editing mileage trips
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -29,7 +29,6 @@ import {
   formatTripPurpose,
   getPurposeColor,
 } from '../schemas/mileage-form-schema';
-import { MileageTrip, TripPurpose } from '@/src/types/database';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { MileageTripWithPallets } from '@/src/stores/mileage-store';
 
@@ -85,7 +84,8 @@ export function MileageForm({
   const watchTripDate = watch('trip_date');
   const watchMiles = watch('miles');
   const watchMileageRate = watch('mileage_rate');
-  const watchPalletIds = watch('pallet_ids') || [];
+  const rawWatchPalletIds = watch('pallet_ids');
+  const watchPalletIds = useMemo(() => rawWatchPalletIds || [], [rawWatchPalletIds]);
 
   // Calculate deduction preview
   const deduction = useMemo(

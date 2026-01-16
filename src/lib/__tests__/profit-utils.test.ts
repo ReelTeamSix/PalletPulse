@@ -17,8 +17,6 @@ import {
   getDaysSinceListed,
   getDaysToSell,
   calculateAverageDaysToSell,
-  type PalletProfitResult,
-  type CostAllocationOptions,
 } from '../profit-utils';
 import type { Item, Pallet, Expense } from '@/src/types/database';
 

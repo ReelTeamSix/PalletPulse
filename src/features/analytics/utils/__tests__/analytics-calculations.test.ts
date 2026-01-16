@@ -9,7 +9,7 @@ import {
   calculatePeriodSummary,
   getSourceTypeLabel,
 } from '../analytics-calculations';
-import type { Pallet, Item, Expense } from '@/src/types/database';
+import type { Pallet, Item } from '@/src/types/database';
 import type { ExpenseWithPallets } from '@/src/stores/expenses-store';
 import type { DateRange } from '@/src/components/ui/DateRangeFilter';
 

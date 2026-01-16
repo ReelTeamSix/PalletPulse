@@ -10,7 +10,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput,
-  Keyboard,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,7 +24,6 @@ import { Button, Input, ConfirmationModal } from '@/src/components/ui';
 import {
   formatCondition,
   getConditionColor,
-  calculateItemProfit,
 } from '@/src/features/items/schemas/item-form-schema';
 import {
   saleFormSchema,
@@ -39,13 +37,11 @@ import {
   calculateNetProfit,
   getSalesChannelFromPlatform,
 } from '@/src/features/sales/schemas/sale-form-schema';
-import type { SalesPlatform } from '@/src/types/database';
 import {
   formatCurrency,
   formatProfit,
   formatROI,
   getROIColor,
-  calculateItemROIFromValues,
 } from '@/src/lib/profit-utils';
 
 export default function SellItemScreen() {
@@ -71,17 +67,19 @@ export default function SellItemScreen() {
     if (items.length === 0) {
       fetchItems();
     }
-  }, []);
+  }, [items.length, fetchItems]);
 
   const item = useMemo(() => {
     if (!id) return null;
     return getItemById(id);
-  }, [id, items]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- items triggers re-fetch
+  }, [id, items, getItemById]);
 
   const pallet = useMemo(() => {
     if (!item?.pallet_id) return null;
     return getPalletById(item.pallet_id);
-  }, [item, pallets]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pallets triggers re-fetch
+  }, [item, pallets, getPalletById]);
 
   // Calculate cost allocation for pallet items
   const palletItems = pallet ? useItemsStore.getState().getItemsByPallet(pallet.id) : [];
@@ -185,7 +183,7 @@ export default function SellItemScreen() {
           message: result.error || 'Failed to mark item as sold',
         });
       }
-    } catch (error) {
+    } catch {
       setErrorModal({
         visible: true,
         title: 'Error',

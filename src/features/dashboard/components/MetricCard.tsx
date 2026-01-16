@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/src/components/ui/Card';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { spacing } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
 
 interface MetricCardProps {

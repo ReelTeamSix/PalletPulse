@@ -2,7 +2,6 @@ import {
   isWithinDateRange,
   getDateRangeFromPreset,
   DateRange,
-  DateRangePreset,
 } from '../DateRangeFilter';
 
 describe('DateRangeFilter', () => {
@@ -49,9 +48,6 @@ describe('DateRangeFilter', () => {
   });
 
   describe('getDateRangeFromPreset', () => {
-    // Store original Date to restore after tests
-    const RealDate = Date;
-
     beforeEach(() => {
       // Mock Date to return a fixed date for consistent tests
       jest.useFakeTimers();

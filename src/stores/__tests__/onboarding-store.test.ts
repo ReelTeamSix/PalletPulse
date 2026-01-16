@@ -135,8 +135,6 @@ describe('OnboardingStore', () => {
     });
 
     it('should auto-end expired trial', async () => {
-      const store = useOnboardingStore.getState();
-
       // Manually set an expired trial
       useOnboardingStore.setState({
         trial: {

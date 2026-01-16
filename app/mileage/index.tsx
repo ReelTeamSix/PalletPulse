@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -46,7 +46,7 @@ export default function MileageLogScreen() {
       fetchTrips();
       fetchPallets();
       fetchCurrentMileageRate();
-    }, [])
+    }, [fetchTrips, fetchPallets, fetchCurrentMileageRate])
   );
 
   // Filter trips by date range
@@ -74,7 +74,8 @@ export default function MileageLogScreen() {
         .map((id) => getPalletById(id)?.name)
         .filter((name): name is string => !!name);
     },
-    [pallets]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pallets triggers re-fetch
+    [pallets, getPalletById]
   );
 
   const handleAddTrip = () => {

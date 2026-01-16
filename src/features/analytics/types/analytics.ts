@@ -1,7 +1,7 @@
 // Analytics Types - Phase 9
 // Type definitions for analytics calculations and components
 
-import type { Item, Pallet, SourceType } from '@/src/types/database';
+import type { SourceType } from '@/src/types/database';
 import type { DateRange } from '@/src/components/ui/DateRangeFilter';
 
 // Hero metrics displayed at the top of analytics screen

@@ -15,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Input, Button, PhotoPicker, PhotoItem } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import type { SalesPlatform } from '@/src/types/database';
 import {
   itemFormSchema,
   ItemFormData,
@@ -23,9 +24,8 @@ import {
   getUniqueStorageLocations,
   getUniqueItemSourceNames,
 } from '../schemas/item-form-schema';
-import { Item, SalesPlatform } from '@/src/types/database';
+import { Item } from '@/src/types/database';
 import { PLATFORM_PRESETS } from '@/src/features/sales/schemas/sale-form-schema';
-import { formatCurrency } from '@/src/lib/profit-utils';
 import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 
@@ -64,6 +64,7 @@ export function ItemForm({
     if (photos.length > 0 && localPhotos.length === 0) {
       setLocalPhotos(photos);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only sync when photos prop changes
   }, [photos]);
 
   // Text state for price fields to allow decimal input
@@ -101,7 +102,8 @@ export function ItemForm({
   const linkedPallet = useMemo(() => {
     const id = item?.pallet_id ?? palletId ?? initialValues?.pallet_id;
     return id ? getPalletById(id) : null;
-  }, [item?.pallet_id, palletId, initialValues?.pallet_id, pallets]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pallets triggers re-fetch
+  }, [item?.pallet_id, palletId, initialValues?.pallet_id, pallets, getPalletById]);
 
   // Get unique values from existing items for autocomplete
   const uniqueStorageLocations = useMemo(() => getUniqueStorageLocations(items), [items]);
@@ -143,11 +145,11 @@ export function ItemForm({
   const watchCondition = watch('condition');
   const watchPalletId = watch('pallet_id') as string | null | undefined;
   const watchStatus = watch('status');
-  const watchPlatform = watch('platform') as SalesPlatform | null | undefined;
 
   // Get selected pallet (from form value)
   const selectedPallet = useMemo(() => {
     return watchPalletId ? getPalletById(watchPalletId) : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pallets triggers re-fetch
   }, [watchPalletId, pallets, getPalletById]);
 
   // Check if pallet was pre-selected (came from pallet detail screen)
