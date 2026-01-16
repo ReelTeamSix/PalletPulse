@@ -32,7 +32,7 @@ export default function RootLayout() {
   });
 
   const { initialize, isInitialized, session } = useAuthStore();
-  const { initialize: initializeSubscription, isInitialized: subscriptionInitialized } = useSubscriptionStore();
+  const { initialize: initializeSubscription } = useSubscriptionStore();
 
   // Initialize auth on app start
   useEffect(() => {

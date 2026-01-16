@@ -19,6 +19,13 @@ import {
 import { SubscriptionTier, TIER_LIMITS, TierLimits, canPerformAction } from '@/src/constants/tier-limits';
 import { useOnboardingStore } from './onboarding-store';
 
+// Dev mode tier override - set via environment variable for testing
+// Usage: Add EXPO_PUBLIC_DEV_TIER=pro to .env.local to test pro features
+const DEV_TIER_OVERRIDE = process.env.EXPO_PUBLIC_DEV_TIER as SubscriptionTier | undefined;
+
+// Runtime dev tier override (can be set via console without restart)
+let runtimeDevTier: SubscriptionTier | null = null;
+
 export interface SubscriptionState {
   // State
   tier: SubscriptionTier;
@@ -283,9 +290,19 @@ export const useSubscriptionStore = create<SubscriptionState>()((set, get) => ({
   },
 
   /**
-   * Get effective tier (considers trial from onboarding store)
+   * Get effective tier (considers dev override and trial from onboarding store)
    */
   getEffectiveTier: () => {
+    // Runtime dev override takes highest precedence (for testing via console)
+    if (runtimeDevTier && ['free', 'starter', 'pro', 'enterprise'].includes(runtimeDevTier)) {
+      return runtimeDevTier;
+    }
+
+    // Env var dev mode override (for testing via .env.local)
+    if (DEV_TIER_OVERRIDE && ['free', 'starter', 'pro', 'enterprise'].includes(DEV_TIER_OVERRIDE)) {
+      return DEV_TIER_OVERRIDE;
+    }
+
     const { tier } = get();
     const onboardingStore = useOnboardingStore.getState();
 
@@ -363,4 +380,29 @@ export function useCanPerform(limitType: keyof TierLimits, currentCount: number)
 export function useRequiredTier(limitType: keyof TierLimits, currentCount: number): SubscriptionTier | null {
   const getRequiredTierForAction = useSubscriptionStore((state) => state.getRequiredTierForAction);
   return getRequiredTierForAction(limitType, currentCount);
+}
+
+/**
+ * DEV ONLY: Set the subscription tier for testing purposes
+ * Call from React Native debugger console:
+ *   setDevTier('pro')   // Test Pro features
+ *   setDevTier('starter')  // Test Starter features
+ *   setDevTier('free')  // Test free tier limits
+ *   setDevTier(null)    // Clear override, use real tier
+ *
+ * Note: This is a runtime override - changes take effect immediately
+ * without needing to restart the app.
+ */
+export function setDevTier(tier: SubscriptionTier | null): void {
+  if (__DEV__) {
+    runtimeDevTier = tier;
+    console.log(`[DEV] Subscription tier set to: ${tier || 'real tier (override cleared)'}`);
+  } else {
+    console.warn('setDevTier is only available in development mode');
+  }
+}
+
+// Make setDevTier available globally in dev mode for console access
+if (__DEV__ && typeof global !== 'undefined') {
+  (global as unknown as { setDevTier: typeof setDevTier }).setDevTier = setDevTier;
 }

@@ -247,15 +247,29 @@ export function getBillingCycle(
 }
 
 /**
- * Check if RevenueCat is configured
+ * Check if RevenueCat is configured with a valid API key
+ * Returns false for empty keys or placeholder values
  */
 export function isConfigured(): boolean {
-  return Boolean(
-    Platform.select({
-      ios: REVENUECAT_IOS_KEY,
-      android: REVENUECAT_ANDROID_KEY,
-    })
+  const apiKey = Platform.select({
+    ios: REVENUECAT_IOS_KEY,
+    android: REVENUECAT_ANDROID_KEY,
+  });
+
+  // Must have a key
+  if (!apiKey) return false;
+
+  // Check for placeholder values (from .env.example or default .env)
+  if (apiKey.includes('your-') || apiKey.includes('your_')) return false;
+
+  // iOS keys should be appl_ followed by actual characters
+  // Android keys should be goog_ followed by actual characters
+  const isValidFormat = (
+    (apiKey.startsWith('appl_') && apiKey.length > 10) ||
+    (apiKey.startsWith('goog_') && apiKey.length > 10)
   );
+
+  return isValidFormat;
 }
 
 /**
