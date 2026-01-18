@@ -74,7 +74,7 @@ export function generateInsights(input: InsightsInput): Insight[] {
   if (bestSupplierInsight) rotatingInsights.push(bestSupplierInsight);
 
   // Best pallet type/source
-  const bestSourceTypeInsight = getBestSourceTypeInsight(soldItems, pallets);
+  const bestSourceTypeInsight = getBestSourceTypeInsight(soldItems, pallets, items);
   if (bestSourceTypeInsight) rotatingInsights.push(bestSourceTypeInsight);
 
   // Fastest flip (specific item)
@@ -278,15 +278,16 @@ function getBestSupplierInsight(soldItems: Item[], pallets: Pallet[]): Insight |
 
 /**
  * Best pallet type/source (e.g., "Amazon Medium", "Target") by ROI
+ * Shows average retail value per pallet (what the community cares about)
  */
-function getBestSourceTypeInsight(soldItems: Item[], pallets: Pallet[]): Insight | null {
+function getBestSourceTypeInsight(soldItems: Item[], pallets: Pallet[], allItems: Item[]): Insight | null {
   // Group pallets by source_name
-  const sourceTypes: Record<string, { pallets: Pallet[]; revenue: number; cost: number; fees: number; count: number }> = {};
+  const sourceTypes: Record<string, { pallets: Pallet[]; revenue: number; cost: number; fees: number; retailValue: number; soldCount: number; totalItems: number }> = {};
 
   pallets.forEach(pallet => {
     const sourceName = pallet.source_name || pallet.source_type || 'Unknown';
     if (!sourceTypes[sourceName]) {
-      sourceTypes[sourceName] = { pallets: [], revenue: 0, cost: 0, fees: 0, count: 0 };
+      sourceTypes[sourceName] = { pallets: [], revenue: 0, cost: 0, fees: 0, retailValue: 0, soldCount: 0, totalItems: 0 };
     }
     sourceTypes[sourceName].pallets.push(pallet);
   });
@@ -294,13 +295,22 @@ function getBestSourceTypeInsight(soldItems: Item[], pallets: Pallet[]): Insight
   // Calculate stats for each source type
   Object.values(sourceTypes).forEach(source => {
     source.pallets.forEach(pallet => {
-      const palletItems = soldItems.filter(item => item.pallet_id === pallet.id);
-      if (palletItems.length > 0) {
+      // Get ALL items from this pallet (not just sold) for retail value
+      const palletAllItems = allItems.filter(item => item.pallet_id === pallet.id);
+      const palletSoldItems = soldItems.filter(item => item.pallet_id === pallet.id);
+
+      // Sum retail values from all items
+      palletAllItems.forEach(item => {
+        source.retailValue += item.retail_price ?? 0;
+        source.totalItems += 1;
+      });
+
+      if (palletSoldItems.length > 0) {
         source.cost += pallet.purchase_cost + (pallet.sales_tax ?? 0);
-        palletItems.forEach(item => {
+        palletSoldItems.forEach(item => {
           source.revenue += item.sale_price ?? 0;
           source.fees += (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
-          source.count += 1;
+          source.soldCount += 1;
         });
       }
     });
@@ -308,27 +318,28 @@ function getBestSourceTypeInsight(soldItems: Item[], pallets: Pallet[]): Insight
 
   let bestSource = '';
   let bestROI = -Infinity;
-  let avgRetail = 0;
+  let avgRetailPerPallet = 0;
 
   Object.entries(sourceTypes).forEach(([sourceName, stats]) => {
-    if (stats.count >= 3 && stats.cost > 0) {
+    if (stats.soldCount >= 3 && stats.cost > 0) {
       const totalCost = stats.cost + stats.fees;
       const roi = ((stats.revenue - totalCost) / totalCost) * 100;
       if (roi > bestROI) {
         bestROI = roi;
         bestSource = sourceName;
-        avgRetail = stats.revenue / stats.count;
+        // Average retail value per pallet
+        avgRetailPerPallet = stats.pallets.length > 0 ? stats.retailValue / stats.pallets.length : 0;
       }
     }
   });
 
-  if (bestSource && bestSource !== 'Unknown' && bestROI > 0) {
+  if (bestSource && bestSource !== 'Unknown' && bestROI > 0 && avgRetailPerPallet > 0) {
     return {
       id: 'best-source-type',
       type: 'success',
       icon: 'trending-up',
       title: 'Best Source',
-      message: `${bestSource} pallets avg $${Math.round(avgRetail)} sale, ${Math.round(bestROI)}% ROI`,
+      message: `${bestSource} pallets avg $${Math.round(avgRetailPerPallet)} retail, ${Math.round(bestROI)}% ROI`,
       priority: 74,
       navigation: { type: 'inventory' },
     };
