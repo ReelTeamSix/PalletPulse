@@ -152,10 +152,6 @@ function getStaleInventoryInsight(listedItems: Item[], thresholdDays: number): I
     return null;
   }
 
-  const totalValue = staleItems.reduce((sum, item) => {
-    return sum + (item.listing_price ?? item.purchase_cost ?? 0);
-  }, 0);
-
   return {
     id: 'stale-inventory',
     type: 'warning',
@@ -212,14 +208,6 @@ function getQuickFlipInsight(soldItems: Item[]): Insight | null {
  * Remind about unlisted items
  */
 function getUnlistedItemsInsight(unlistedItems: Item[]): Insight | null {
-  if (unlistedItems.length === 0) {
-    return null;
-  }
-
-  const totalValue = unlistedItems.reduce((sum, item) => {
-    return sum + (item.purchase_cost ?? 0);
-  }, 0);
-
   if (unlistedItems.length >= 5) {
     return {
       id: 'unlisted-items',

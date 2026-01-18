@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
-import { spacing } from '@/src/constants/spacing';
+import { spacing, fontSize } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
@@ -28,6 +28,14 @@ import {
   getUserStage,
   getEmptyStateContent,
 } from '@/src/features/dashboard/utils';
+
+// Get time-based greeting
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -204,7 +212,10 @@ export default function DashboardScreen() {
       }
     >
       <View style={styles.header}>
-        <Text style={styles.title}>Dashboard</Text>
+        <View>
+          <Text style={styles.title}>Dashboard</Text>
+          <Text style={styles.greeting}>{getGreeting()}</Text>
+        </View>
         <View style={styles.notificationButton}>
           <Ionicons name="notifications-outline" size={24} color={colors.textSecondary} />
         </View>
@@ -226,9 +237,9 @@ export default function DashboardScreen() {
           onPress={() => router.push('/(tabs)/inventory')}
         />
         <MetricCard
-          icon="wallet-outline"
+          icon="pricetags-outline"
           value={formatCurrency(allTimeMetrics.activeValue)}
-          label="Active Value"
+          label="Listed Inventory"
           color={colors.primary}
           onPress={() => router.push('/(tabs)/inventory')}
         />
@@ -271,6 +282,11 @@ const styles = StyleSheet.create({
   title: {
     ...typography.screenTitle,
     color: colors.textPrimary,
+  },
+  greeting: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
   },
   notificationButton: {
     width: 44,
