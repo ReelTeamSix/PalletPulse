@@ -12,7 +12,7 @@ import {
   Animated,
   ScrollView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -27,6 +27,7 @@ import { useItemsStore } from '@/src/stores/items-store';
 import { useExpensesStore } from '@/src/stores/expenses-store';
 import { PalletCard } from '@/src/features/pallets';
 import { ItemCard } from '@/src/features/items';
+import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { Pallet, Item, SalesPlatform } from '@/src/types/database';
 import {
   formatCurrency,
@@ -41,16 +42,19 @@ import {
 } from '@/src/features/sales/schemas/sale-form-schema';
 
 type SegmentType = 'pallets' | 'items';
-type FilterType = 'all' | 'listed' | 'sold' | 'unlisted';
+type FilterType = 'all' | 'listed' | 'sold' | 'unlisted' | 'stale';
 
 const SEGMENT_STORAGE_KEY = 'inventory_active_segment';
 
 export default function InventoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ filter?: string; segment?: string }>();
 
   // Stores
   const { pallets, isLoading: palletsLoading, error: palletsError, fetchPallets } = usePalletsStore();
+  const { settings } = useUserSettingsStore();
+  const staleThresholdDays = settings?.stale_threshold_days ?? 30;
   const { items, isLoading: itemsLoading, error: itemsError, fetchItems, markAsSold, deleteItem, fetchThumbnails } = useItemsStore();
   const { expenses, fetchExpenses, isLoading: expensesLoading } = useExpensesStore();
   const { getPalletById } = usePalletsStore();
@@ -101,6 +105,19 @@ export default function InventoryScreen() {
     };
     loadSegment();
   }, []);
+
+  // Handle URL params for filter and segment (from dashboard navigation)
+  useEffect(() => {
+    if (params.filter) {
+      const validFilters: FilterType[] = ['all', 'listed', 'sold', 'unlisted', 'stale'];
+      if (validFilters.includes(params.filter as FilterType)) {
+        setActiveFilter(params.filter as FilterType);
+      }
+    }
+    if (params.segment === 'items' || params.segment === 'pallets') {
+      setActiveSegment(params.segment);
+    }
+  }, [params.filter, params.segment]);
 
   // Save segment when it changes
   const handleSegmentChange = async (segment: SegmentType) => {
@@ -154,6 +171,15 @@ export default function InventoryScreen() {
     if (activeFilter !== 'all') {
       if (activeFilter === 'unlisted') {
         result = result.filter(i => i.status !== 'listed' && i.status !== 'sold');
+      } else if (activeFilter === 'stale') {
+        // Stale = listed items where listing_date is older than threshold
+        const now = new Date();
+        result = result.filter(i => {
+          if (i.status !== 'listed' || !i.listing_date) return false;
+          const listingDate = new Date(i.listing_date);
+          const daysSinceListed = Math.floor((now.getTime() - listingDate.getTime()) / (1000 * 60 * 60 * 24));
+          return daysSinceListed >= staleThresholdDays;
+        });
       } else {
         result = result.filter(i => i.status === activeFilter);
       }
@@ -172,7 +198,7 @@ export default function InventoryScreen() {
       });
     }
     return result;
-  }, [items, activeFilter, searchQuery, getPalletById]);
+  }, [items, activeFilter, searchQuery, getPalletById, staleThresholdDays]);
 
   // Navigation handlers
   const handleAddPallet = () => router.push('/pallets/new');
@@ -359,6 +385,15 @@ export default function InventoryScreen() {
   const totalPalletItems = items.filter(i => pallets.some(p => p.id === i.pallet_id)).length;
   const soldCount = items.filter(i => i.status === 'sold').length;
   const listedCount = items.filter(i => i.status === 'listed').length;
+  const staleCount = useMemo(() => {
+    const now = new Date();
+    return items.filter(i => {
+      if (i.status !== 'listed' || !i.listing_date) return false;
+      const listingDate = new Date(i.listing_date);
+      const daysSinceListed = Math.floor((now.getTime() - listingDate.getTime()) / (1000 * 60 * 60 * 24));
+      return daysSinceListed >= staleThresholdDays;
+    }).length;
+  }, [items, staleThresholdDays]);
 
   // Quick sell profit preview
   const quickSellPriceNum = parseFloat(quickSellPrice) || 0;
@@ -476,12 +511,13 @@ export default function InventoryScreen() {
               style={styles.filterContainer}
               contentContainerStyle={styles.filterContent}
             >
-              {(['all', 'listed', 'sold', 'unlisted'] as FilterType[]).map((filter) => (
+              {(['all', 'listed', 'sold', 'unlisted', 'stale'] as FilterType[]).map((filter) => (
                 <Pressable
                   key={filter}
                   style={[
                     styles.filterChip,
                     activeFilter === filter && styles.filterChipActive,
+                    filter === 'stale' && staleCount > 0 && activeFilter !== filter && styles.filterChipWarning,
                   ]}
                   onPress={() => setActiveFilter(filter)}
                 >
@@ -489,13 +525,15 @@ export default function InventoryScreen() {
                     style={[
                       styles.filterChipText,
                       activeFilter === filter && styles.filterChipTextActive,
+                      filter === 'stale' && staleCount > 0 && activeFilter !== filter && styles.filterChipTextWarning,
                     ]}
                   >
-                    {filter === 'all' ? 'All' : filter === 'unlisted' ? 'Unlisted' : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                    {filter === 'all' ? 'All' : filter === 'unlisted' ? 'Unlisted' : filter === 'stale' ? 'Stale' : filter.charAt(0).toUpperCase() + filter.slice(1)}
                     {filter === 'all' && ` (${items.length})`}
                     {filter === 'listed' && ` (${listedCount})`}
                     {filter === 'sold' && ` (${soldCount})`}
                     {filter === 'unlisted' && ` (${items.length - listedCount - soldCount})`}
+                    {filter === 'stale' && ` (${staleCount})`}
                   </Text>
                 </Pressable>
               ))}
@@ -823,6 +861,13 @@ const styles = StyleSheet.create({
   },
   filterChipTextActive: {
     color: colors.background,
+  },
+  filterChipWarning: {
+    backgroundColor: colors.warning + '15',
+    borderColor: colors.warning,
+  },
+  filterChipTextWarning: {
+    color: colors.warning,
   },
   // List
   listContent: {

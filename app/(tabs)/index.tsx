@@ -99,25 +99,30 @@ export default function DashboardScreen() {
     };
   }, [items, expenses, expenseTrackingEnabled, timePeriod]);
 
-  // All-time metrics (for metric cards - not filtered by period)
-  const allTimeMetrics = useMemo(() => {
-    const listedItems = items.filter(item => item.status === 'listed');
-    const soldItems = items.filter(item => item.status === 'sold');
-
-    // Calculate active inventory value (listed items at listing price)
-    const activeValue = listedItems.reduce((sum, item) => {
-      return sum + (item.listing_price ?? item.purchase_cost ?? 0);
-    }, 0);
-
-    return {
-      soldCount: soldItems.length,
-      activeValue,
-    };
-  }, [items]);
-
-  // Get stale threshold from user settings
+  // Get stale threshold from user settings (needed for metrics calculation)
   const { settings } = useUserSettingsStore();
   const staleThresholdDays = settings?.stale_threshold_days ?? 30;
+
+  // Actionable metrics for metric cards
+  const actionableMetrics = useMemo(() => {
+    const now = new Date();
+
+    // Pending to list: items with status 'unlisted' (added but not listed for sale)
+    const unlistedItems = items.filter(item => item.status === 'unlisted');
+
+    // Stale items: listed items where listing_date is older than threshold
+    const staleItems = items.filter(item => {
+      if (item.status !== 'listed' || !item.listing_date) return false;
+      const listingDate = new Date(item.listing_date);
+      const daysSinceListed = Math.floor((now.getTime() - listingDate.getTime()) / (1000 * 60 * 60 * 24));
+      return daysSinceListed >= staleThresholdDays;
+    });
+
+    return {
+      pendingToListCount: unlistedItems.length,
+      staleItemsCount: staleItems.length,
+    };
+  }, [items, staleThresholdDays]);
 
   // Generate smart insights and empty state content
   const { insights, emptyState } = useMemo(() => {
@@ -230,18 +235,18 @@ export default function DashboardScreen() {
 
       <MetricGrid>
         <MetricCard
-          icon="checkmark-done"
-          value={allTimeMetrics.soldCount}
-          label="Items Sold"
-          color={colors.profit}
-          onPress={() => router.push('/(tabs)/inventory')}
+          icon="layers-outline"
+          value={actionableMetrics.pendingToListCount}
+          label="Pending to List"
+          color={actionableMetrics.pendingToListCount > 0 ? colors.primary : colors.neutral}
+          onPress={() => router.push({ pathname: '/(tabs)/inventory', params: { filter: 'unlisted', segment: 'items' } })}
         />
         <MetricCard
-          icon="pricetags-outline"
-          value={formatCurrency(allTimeMetrics.activeValue)}
-          label="Listed Inventory"
-          color={colors.primary}
-          onPress={() => router.push('/(tabs)/inventory')}
+          icon="time-outline"
+          value={actionableMetrics.staleItemsCount}
+          label="Stale Items"
+          color={actionableMetrics.staleItemsCount > 0 ? colors.warning : colors.neutral}
+          onPress={() => router.push({ pathname: '/(tabs)/inventory', params: { filter: 'stale', segment: 'items' } })}
         />
       </MetricGrid>
 
