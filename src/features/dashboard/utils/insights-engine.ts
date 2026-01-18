@@ -81,39 +81,58 @@ export function generateInsights(input: InsightsInput): Insight[] {
 
 /**
  * Find the best performing source by average ROI
- * ROI calculation includes: allocated cost + platform fees + shipping costs
- * This matches the pallet detail screen calculation for consistency
+ * ROI calculation matches pallet detail screen:
+ * - For pallet items: uses pallet cost (purchase + tax) / item count
+ * - Profit = revenue - cost - platform fees - shipping costs
+ * - ROI = profit / cost * 100
  */
 function getBestSourceInsight(soldItems: Item[], pallets: Pallet[]): Insight | null {
   if (soldItems.length < 3) {
     return null; // Need at least 3 sales to make meaningful comparison
   }
 
-  // Group items by source (pallet name or "Individual")
-  const sourceStats: Record<string, { revenue: number; cost: number; count: number }> = {};
+  // Group items by source (pallet ID or "Individual")
+  // Also track pallet info for cost calculation
+  const sourceStats: Record<string, {
+    palletId: string | null;
+    revenue: number;
+    platformFees: number;
+    shippingCosts: number;
+    itemCosts: number; // For individual items only
+    count: number;
+  }> = {};
 
   soldItems.forEach(item => {
-    let sourceName = 'Individual';
+    let sourceKey = 'Individual';
+    let palletId: string | null = null;
+
     if (item.pallet_id) {
       const pallet = pallets.find(p => p.id === item.pallet_id);
       if (pallet) {
-        sourceName = pallet.name;
+        sourceKey = pallet.name;
+        palletId = pallet.id;
       }
     }
 
-    if (!sourceStats[sourceName]) {
-      sourceStats[sourceName] = { revenue: 0, cost: 0, count: 0 };
+    if (!sourceStats[sourceKey]) {
+      sourceStats[sourceKey] = {
+        palletId,
+        revenue: 0,
+        platformFees: 0,
+        shippingCosts: 0,
+        itemCosts: 0,
+        count: 0,
+      };
     }
 
-    // Revenue is the sale price
-    sourceStats[sourceName].revenue += item.sale_price ?? 0;
-    // Cost includes: allocated/purchase cost + platform fees + shipping costs
-    // This matches the pallet detail screen calculation
-    const baseCost = item.allocated_cost ?? item.purchase_cost ?? 0;
-    const platformFee = item.platform_fee ?? 0;
-    const shippingCost = item.shipping_cost ?? 0;
-    sourceStats[sourceName].cost += baseCost + platformFee + shippingCost;
-    sourceStats[sourceName].count += 1;
+    sourceStats[sourceKey].revenue += item.sale_price ?? 0;
+    sourceStats[sourceKey].platformFees += item.platform_fee ?? 0;
+    sourceStats[sourceKey].shippingCosts += item.shipping_cost ?? 0;
+    // For individual items, use purchase_cost
+    if (!item.pallet_id) {
+      sourceStats[sourceKey].itemCosts += item.purchase_cost ?? 0;
+    }
+    sourceStats[sourceKey].count += 1;
   });
 
   // Find source with best ROI (min 2 items)
@@ -121,8 +140,29 @@ function getBestSourceInsight(soldItems: Item[], pallets: Pallet[]): Insight | n
   let bestROI = -Infinity;
 
   Object.entries(sourceStats).forEach(([source, stats]) => {
-    if (stats.count >= 2 && stats.cost > 0) {
-      const roi = ((stats.revenue - stats.cost) / stats.cost) * 100;
+    if (stats.count < 2) return;
+
+    let baseCost = 0;
+
+    if (stats.palletId) {
+      // For pallet items, use the actual pallet cost
+      const pallet = pallets.find(p => p.id === stats.palletId);
+      if (pallet) {
+        baseCost = pallet.purchase_cost + (pallet.sales_tax ?? 0);
+      }
+    } else {
+      // For individual items, use sum of purchase costs
+      baseCost = stats.itemCosts;
+    }
+
+    // Total cost includes base cost + fees
+    const totalCost = baseCost + stats.platformFees + stats.shippingCosts;
+
+    if (totalCost > 0) {
+      // Profit = revenue - total cost
+      const profit = stats.revenue - totalCost;
+      const roi = (profit / totalCost) * 100;
+
       if (roi > bestROI) {
         bestROI = roi;
         bestSource = source;

@@ -257,7 +257,8 @@ export default function DashboardScreen() {
             if (pallet) {
               router.push(`/pallets/${pallet.id}`);
             } else {
-              router.push('/(tabs)/pallets');
+              // Fallback to inventory tab if pallet not found
+              router.push('/(tabs)/inventory');
             }
           } else if (insight.id === 'stale-inventory' || insight.id === 'unlisted-items') {
             router.push('/(tabs)/inventory');
