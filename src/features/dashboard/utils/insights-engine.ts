@@ -8,7 +8,13 @@
 import { Pallet, Item } from '@/src/types/database';
 
 export type InsightType = 'success' | 'warning' | 'info' | 'tip';
-export type InsightIcon = 'trophy' | 'alert-circle' | 'trending-up' | 'time' | 'bulb' | 'cart' | 'cash';
+export type InsightIcon = 'trophy' | 'alert-circle' | 'trending-up' | 'time' | 'bulb' | 'cart' | 'cash' | 'flash';
+
+// Navigation target for insights
+export interface InsightNavigation {
+  type: 'item' | 'pallet' | 'inventory';
+  id?: string; // Item or pallet ID
+}
 
 export interface Insight {
   id: string;
@@ -17,6 +23,7 @@ export interface Insight {
   title: string;
   message: string;
   priority: number; // Higher = more important, shown first
+  navigation?: InsightNavigation; // Where to navigate when tapped
 }
 
 interface InsightsInput {
@@ -27,157 +34,348 @@ interface InsightsInput {
 
 /**
  * Generate smart insights based on user's data
+ * Uses rotation to show varied insights each time
  */
 export function generateInsights(input: InsightsInput): Insight[] {
   const { pallets, items, staleThresholdDays = 30 } = input;
-  const insights: Insight[] = [];
 
   // Calculate basic stats
   const soldItems = items.filter(i => i.status === 'sold');
   const listedItems = items.filter(i => i.status === 'listed');
   const unlistedItems = items.filter(i => i.status === 'unlisted');
 
-  // Insight: Best performing source by ROI
-  const bestSourceInsight = getBestSourceInsight(soldItems, pallets);
-  if (bestSourceInsight) {
-    insights.push(bestSourceInsight);
-  }
+  // High priority insights (always shown if available)
+  const priorityInsights: Insight[] = [];
 
-  // Insight: Stale inventory warning
-  const staleInsight = getStaleInventoryInsight(listedItems, staleThresholdDays);
-  if (staleInsight) {
-    insights.push(staleInsight);
-  }
-
-  // Insight: Quick flip celebration
-  const quickFlipInsight = getQuickFlipInsight(soldItems);
-  if (quickFlipInsight) {
-    insights.push(quickFlipInsight);
-  }
-
-  // Insight: Unlisted items reminder
-  const unlistedInsight = getUnlistedItemsInsight(unlistedItems);
-  if (unlistedInsight) {
-    insights.push(unlistedInsight);
-  }
-
-  // Insight: First sale celebration
+  // First sale and milestones are always priority
   const firstSaleInsight = getFirstSaleInsight(soldItems);
-  if (firstSaleInsight) {
-    insights.push(firstSaleInsight);
-  }
+  if (firstSaleInsight) priorityInsights.push(firstSaleInsight);
 
-  // Insight: Milestone celebrations
   const milestoneInsight = getMilestoneInsight(soldItems);
-  if (milestoneInsight) {
-    insights.push(milestoneInsight);
-  }
+  if (milestoneInsight) priorityInsights.push(milestoneInsight);
 
-  // Sort by priority (highest first) and limit to top 3
-  return insights
+  // Stale inventory warning is high priority
+  const staleInsight = getStaleInventoryInsight(listedItems, staleThresholdDays);
+  if (staleInsight) priorityInsights.push(staleInsight);
+
+  // Rotating insights pool (varies each render)
+  const rotatingInsights: Insight[] = [];
+
+  // Best individual item
+  const bestItemInsight = getBestIndividualItemInsight(soldItems);
+  if (bestItemInsight) rotatingInsights.push(bestItemInsight);
+
+  // Best pallet (specific)
+  const bestPalletInsight = getBestPalletInsight(soldItems, pallets);
+  if (bestPalletInsight) rotatingInsights.push(bestPalletInsight);
+
+  // Best supplier
+  const bestSupplierInsight = getBestSupplierInsight(soldItems, pallets);
+  if (bestSupplierInsight) rotatingInsights.push(bestSupplierInsight);
+
+  // Best pallet type/source
+  const bestSourceTypeInsight = getBestSourceTypeInsight(soldItems, pallets);
+  if (bestSourceTypeInsight) rotatingInsights.push(bestSourceTypeInsight);
+
+  // Fastest flip (specific item)
+  const fastestFlipInsight = getFastestFlipInsight(soldItems);
+  if (fastestFlipInsight) rotatingInsights.push(fastestFlipInsight);
+
+  // Quick flips summary
+  const quickFlipInsight = getQuickFlipInsight(soldItems);
+  if (quickFlipInsight) rotatingInsights.push(quickFlipInsight);
+
+  // Unlisted items reminder
+  const unlistedInsight = getUnlistedItemsInsight(unlistedItems);
+  if (unlistedInsight) rotatingInsights.push(unlistedInsight);
+
+  // Rotate the insights pool based on current time (changes every few hours)
+  const rotationSeed = Math.floor(Date.now() / (1000 * 60 * 60 * 3)); // Changes every 3 hours
+  const shuffledRotating = shuffleWithSeed(rotatingInsights, rotationSeed);
+
+  // Combine priority + rotated insights, sort by priority, take top 3
+  const allInsights = [...priorityInsights, ...shuffledRotating];
+
+  return allInsights
     .sort((a, b) => b.priority - a.priority)
     .slice(0, 3);
 }
 
 /**
- * Find the best performing source by average ROI
- * ROI calculation matches pallet detail screen:
- * - For pallet items: uses pallet cost (purchase + tax) / item count
- * - Profit = revenue - cost - platform fees - shipping costs
- * - ROI = profit / cost * 100
+ * Shuffle array with a seed for consistent rotation
  */
-function getBestSourceInsight(soldItems: Item[], pallets: Pallet[]): Insight | null {
-  if (soldItems.length < 3) {
-    return null; // Need at least 3 sales to make meaningful comparison
+function shuffleWithSeed<T>(array: T[], seed: number): T[] {
+  const result = [...array];
+  let currentSeed = seed;
+
+  for (let i = result.length - 1; i > 0; i--) {
+    // Simple seeded random
+    currentSeed = (currentSeed * 1103515245 + 12345) & 0x7fffffff;
+    const j = currentSeed % (i + 1);
+    [result[i], result[j]] = [result[j], result[i]];
   }
 
-  // Group items by source (pallet ID or "Individual")
-  // Also track pallet info for cost calculation
-  const sourceStats: Record<string, {
-    palletId: string | null;
-    revenue: number;
-    platformFees: number;
-    shippingCosts: number;
-    itemCosts: number; // For individual items only
-    count: number;
-  }> = {};
+  return result;
+}
 
-  soldItems.forEach(item => {
-    let sourceKey = 'Individual';
-    let palletId: string | null = null;
+/**
+ * Best individual item (non-pallet) by ROI
+ */
+function getBestIndividualItemInsight(soldItems: Item[]): Insight | null {
+  const individualItems = soldItems.filter(item => !item.pallet_id && item.purchase_cost && item.purchase_cost > 0);
 
-    if (item.pallet_id) {
-      const pallet = pallets.find(p => p.id === item.pallet_id);
-      if (pallet) {
-        sourceKey = pallet.name;
-        palletId = pallet.id;
-      }
-    }
+  if (individualItems.length === 0) return null;
 
-    if (!sourceStats[sourceKey]) {
-      sourceStats[sourceKey] = {
-        palletId,
-        revenue: 0,
-        platformFees: 0,
-        shippingCosts: 0,
-        itemCosts: 0,
-        count: 0,
-      };
-    }
-
-    sourceStats[sourceKey].revenue += item.sale_price ?? 0;
-    sourceStats[sourceKey].platformFees += item.platform_fee ?? 0;
-    sourceStats[sourceKey].shippingCosts += item.shipping_cost ?? 0;
-    // For individual items, use purchase_cost
-    if (!item.pallet_id) {
-      sourceStats[sourceKey].itemCosts += item.purchase_cost ?? 0;
-    }
-    sourceStats[sourceKey].count += 1;
-  });
-
-  // Find source with best ROI (min 2 items)
-  let bestSource = '';
+  let bestItem: Item | null = null;
   let bestROI = -Infinity;
 
-  Object.entries(sourceStats).forEach(([source, stats]) => {
-    if (stats.count < 2) return;
-
-    let baseCost = 0;
-
-    if (stats.palletId) {
-      // For pallet items, use the actual pallet cost
-      const pallet = pallets.find(p => p.id === stats.palletId);
-      if (pallet) {
-        baseCost = pallet.purchase_cost + (pallet.sales_tax ?? 0);
-      }
-    } else {
-      // For individual items, use sum of purchase costs
-      baseCost = stats.itemCosts;
-    }
-
-    // Total cost includes base cost + fees
-    const totalCost = baseCost + stats.platformFees + stats.shippingCosts;
+  individualItems.forEach(item => {
+    const salePrice = item.sale_price ?? 0;
+    const cost = item.purchase_cost ?? 0;
+    const platformFee = item.platform_fee ?? 0;
+    const shippingCost = item.shipping_cost ?? 0;
+    const totalCost = cost + platformFee + shippingCost;
 
     if (totalCost > 0) {
-      // Profit = revenue - total cost
-      const profit = stats.revenue - totalCost;
-      const roi = (profit / totalCost) * 100;
-
+      const roi = ((salePrice - totalCost) / totalCost) * 100;
       if (roi > bestROI) {
         bestROI = roi;
-        bestSource = source;
+        bestItem = item;
       }
     }
   });
 
-  if (bestSource && bestROI > 0) {
+  if (bestItem && bestROI > 20) {
     return {
-      id: 'best-source',
+      id: 'best-individual-item',
       type: 'success',
       icon: 'trophy',
-      title: 'Top Performer',
-      message: `${bestSource} has your best ROI at ${Math.round(bestROI)}%`,
-      priority: 80,
+      title: 'Top Find',
+      message: `${bestItem.name} had ${Math.round(bestROI)}% ROI`,
+      priority: 75,
+      navigation: { type: 'item', id: bestItem.id },
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Best pallet by ROI (specific pallet)
+ */
+function getBestPalletInsight(soldItems: Item[], pallets: Pallet[]): Insight | null {
+  if (pallets.length === 0) return null;
+
+  // Group sold items by pallet
+  const palletStats: Record<string, { revenue: number; fees: number; count: number }> = {};
+
+  soldItems.forEach(item => {
+    if (!item.pallet_id) return;
+    if (!palletStats[item.pallet_id]) {
+      palletStats[item.pallet_id] = { revenue: 0, fees: 0, count: 0 };
+    }
+    palletStats[item.pallet_id].revenue += item.sale_price ?? 0;
+    palletStats[item.pallet_id].fees += (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
+    palletStats[item.pallet_id].count += 1;
+  });
+
+  let bestPallet: Pallet | null = null;
+  let bestROI = -Infinity;
+
+  Object.entries(palletStats).forEach(([palletId, stats]) => {
+    if (stats.count < 2) return; // Need at least 2 sales
+
+    const pallet = pallets.find(p => p.id === palletId);
+    if (!pallet) return;
+
+    const totalCost = pallet.purchase_cost + (pallet.sales_tax ?? 0) + stats.fees;
+    if (totalCost > 0) {
+      const profit = stats.revenue - totalCost;
+      const roi = (profit / totalCost) * 100;
+      if (roi > bestROI) {
+        bestROI = roi;
+        bestPallet = pallet;
+      }
+    }
+  });
+
+  if (bestPallet && bestROI > 0) {
+    return {
+      id: 'best-pallet',
+      type: 'success',
+      icon: 'trophy',
+      title: 'Best Pallet',
+      message: `${bestPallet.name} has ${Math.round(bestROI)}% ROI`,
+      priority: 78,
+      navigation: { type: 'pallet', id: bestPallet.id },
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Best supplier by average ROI across all their pallets
+ */
+function getBestSupplierInsight(soldItems: Item[], pallets: Pallet[]): Insight | null {
+  // Group pallets by supplier
+  const supplierPallets: Record<string, Pallet[]> = {};
+  pallets.forEach(pallet => {
+    if (!pallet.supplier) return;
+    if (!supplierPallets[pallet.supplier]) {
+      supplierPallets[pallet.supplier] = [];
+    }
+    supplierPallets[pallet.supplier].push(pallet);
+  });
+
+  if (Object.keys(supplierPallets).length === 0) return null;
+
+  // Calculate ROI per supplier
+  let bestSupplier = '';
+  let bestROI = -Infinity;
+
+  Object.entries(supplierPallets).forEach(([supplier, supplierPalletList]) => {
+    let totalRevenue = 0;
+    let totalCost = 0;
+    let totalFees = 0;
+    let soldCount = 0;
+
+    supplierPalletList.forEach(pallet => {
+      const palletItems = soldItems.filter(item => item.pallet_id === pallet.id);
+      palletItems.forEach(item => {
+        totalRevenue += item.sale_price ?? 0;
+        totalFees += (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
+        soldCount += 1;
+      });
+      if (palletItems.length > 0) {
+        totalCost += pallet.purchase_cost + (pallet.sales_tax ?? 0);
+      }
+    });
+
+    if (soldCount >= 3 && totalCost > 0) {
+      const roi = ((totalRevenue - totalCost - totalFees) / (totalCost + totalFees)) * 100;
+      if (roi > bestROI) {
+        bestROI = roi;
+        bestSupplier = supplier;
+      }
+    }
+  });
+
+  if (bestSupplier && bestROI > 0) {
+    return {
+      id: 'best-supplier',
+      type: 'success',
+      icon: 'trophy',
+      title: 'Top Supplier',
+      message: `${bestSupplier} pallets avg ${Math.round(bestROI)}% ROI`,
+      priority: 76,
+      navigation: { type: 'inventory' },
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Best pallet type/source (e.g., "Amazon Medium", "Target") by ROI
+ */
+function getBestSourceTypeInsight(soldItems: Item[], pallets: Pallet[]): Insight | null {
+  // Group pallets by source_name
+  const sourceTypes: Record<string, { pallets: Pallet[]; revenue: number; cost: number; fees: number; count: number }> = {};
+
+  pallets.forEach(pallet => {
+    const sourceName = pallet.source_name || pallet.source_type || 'Unknown';
+    if (!sourceTypes[sourceName]) {
+      sourceTypes[sourceName] = { pallets: [], revenue: 0, cost: 0, fees: 0, count: 0 };
+    }
+    sourceTypes[sourceName].pallets.push(pallet);
+  });
+
+  // Calculate stats for each source type
+  Object.values(sourceTypes).forEach(source => {
+    source.pallets.forEach(pallet => {
+      const palletItems = soldItems.filter(item => item.pallet_id === pallet.id);
+      if (palletItems.length > 0) {
+        source.cost += pallet.purchase_cost + (pallet.sales_tax ?? 0);
+        palletItems.forEach(item => {
+          source.revenue += item.sale_price ?? 0;
+          source.fees += (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
+          source.count += 1;
+        });
+      }
+    });
+  });
+
+  let bestSource = '';
+  let bestROI = -Infinity;
+  let avgRetail = 0;
+
+  Object.entries(sourceTypes).forEach(([sourceName, stats]) => {
+    if (stats.count >= 3 && stats.cost > 0) {
+      const totalCost = stats.cost + stats.fees;
+      const roi = ((stats.revenue - totalCost) / totalCost) * 100;
+      if (roi > bestROI) {
+        bestROI = roi;
+        bestSource = sourceName;
+        avgRetail = stats.revenue / stats.count;
+      }
+    }
+  });
+
+  if (bestSource && bestSource !== 'Unknown' && bestROI > 0) {
+    return {
+      id: 'best-source-type',
+      type: 'success',
+      icon: 'trending-up',
+      title: 'Best Source',
+      message: `${bestSource} pallets avg $${Math.round(avgRetail)} sale, ${Math.round(bestROI)}% ROI`,
+      priority: 74,
+      navigation: { type: 'inventory' },
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Fastest flip - item that sold quickest
+ */
+function getFastestFlipInsight(soldItems: Item[]): Insight | null {
+  // Look at recent sales (last 30 days)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const recentSales = soldItems.filter(item => {
+    if (!item.sale_date || !item.listing_date) return false;
+    return new Date(item.sale_date) >= thirtyDaysAgo;
+  });
+
+  if (recentSales.length === 0) return null;
+
+  let fastestItem: Item | null = null;
+  let fastestDays = Infinity;
+
+  recentSales.forEach(item => {
+    const listingDate = new Date(item.listing_date!);
+    const saleDate = new Date(item.sale_date!);
+    const daysToSell = Math.floor((saleDate.getTime() - listingDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysToSell < fastestDays) {
+      fastestDays = daysToSell;
+      fastestItem = item;
+    }
+  });
+
+  if (fastestItem && fastestDays <= 3) {
+    const dayText = fastestDays === 0 ? 'same day' : fastestDays === 1 ? '1 day' : `${fastestDays} days`;
+    return {
+      id: 'fastest-flip',
+      type: 'success',
+      icon: 'flash',
+      title: 'Speed Sell',
+      message: `${fastestItem.name} sold in ${dayText}!`,
+      priority: 72,
+      navigation: { type: 'item', id: fastestItem.id },
     };
   }
 

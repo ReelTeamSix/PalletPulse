@@ -249,20 +249,18 @@ export default function DashboardScreen() {
         insights={insights}
         emptyState={emptyState}
         onInsightPress={(insight) => {
-          // Navigate based on insight type
-          if (insight.id === 'best-source') {
-            // Find the pallet mentioned in the insight and navigate to it
-            const palletName = insight.message.split(' has')[0];
-            const pallet = pallets.find(p => p.name === palletName);
-            if (pallet) {
-              router.push(`/pallets/${pallet.id}`);
+          // Use navigation data if available
+          if (insight.navigation) {
+            const { type, id } = insight.navigation;
+            if (type === 'item' && id) {
+              router.push(`/items/${id}`);
+            } else if (type === 'pallet' && id) {
+              router.push(`/pallets/${id}`);
             } else {
-              // Fallback to inventory tab if pallet not found
               router.push('/(tabs)/inventory');
             }
-          } else if (insight.id === 'stale-inventory' || insight.id === 'unlisted-items') {
-            router.push('/(tabs)/inventory');
-          } else if (insight.id.startsWith('milestone') || insight.id === 'first-sale' || insight.id === 'quick-flips') {
+          } else {
+            // Fallback for insights without navigation data
             router.push('/(tabs)/inventory');
           }
         }}

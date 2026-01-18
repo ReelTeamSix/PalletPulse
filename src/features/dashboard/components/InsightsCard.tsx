@@ -24,6 +24,7 @@ const ICON_MAP: Record<InsightIcon, keyof typeof Ionicons.glyphMap> = {
   bulb: 'bulb-outline',
   cart: 'cart-outline',
   cash: 'cash-outline',
+  flash: 'flash',
 };
 
 export function InsightsCard({ insights, emptyState, onInsightPress }: InsightsCardProps) {
