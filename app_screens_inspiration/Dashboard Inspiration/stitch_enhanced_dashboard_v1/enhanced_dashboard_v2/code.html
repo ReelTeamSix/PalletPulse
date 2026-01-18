@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enhanced Dashboard V2</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#2563EB", // Royal Blue
+              secondary: "#10B981", // Emerald Green for success
+              danger: "#EF4444", // Red for negative values
+              "background-light": "#F3F4F6",
+              "background-dark": "#111827",
+              "card-light": "#FFFFFF",
+              "card-dark": "#1F2937",
+              "text-primary-light": "#111827",
+              "text-primary-dark": "#F9FAFB",
+              "text-secondary-light": "#6B7280",
+              "text-secondary-dark": "#9CA3AF",
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+              body: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.75rem", // 12px default
+              'xl': '1rem',
+              '2xl': '1.5rem',
+            },
+            boxShadow: {
+              'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+              'glow': '0 0 15px rgba(37, 99, 235, 0.3)',
+            }
+          },
+        },
+      };
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; }.no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-primary-light dark:text-text-primary-dark min-h-screen relative pb-24 transition-colors duration-200">
+<header class="sticky top-0 z-30 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md px-6 py-4 flex justify-between items-center">
+<div>
+<h1 class="text-2xl font-bold tracking-tight text-text-primary-light dark:text-text-primary-dark">Dashboard</h1>
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark">Welcome back, Alex</p>
+</div>
+<button class="p-2 rounded-full bg-white dark:bg-card-dark shadow-sm hover:shadow-md transition-shadow relative">
+<span class="material-icons-round text-text-secondary-light dark:text-text-secondary-dark">notifications</span>
+<span class="absolute top-2 right-2 w-2.5 h-2.5 bg-danger rounded-full border-2 border-white dark:border-card-dark"></span>
+</button>
+</header>
+<main class="px-6 space-y-6 mt-2">
+<section class="bg-card-light dark:bg-card-dark rounded-2xl p-6 shadow-soft relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+<div class="flex justify-between items-center relative z-10">
+<div>
+<h2 class="text-sm font-semibold uppercase tracking-wider text-text-secondary-light dark:text-text-secondary-dark mb-1">Account Health</h2>
+<div class="flex items-baseline space-x-2">
+<span class="text-3xl font-bold text-primary">160%</span>
+<span class="text-sm font-medium text-secondary flex items-center bg-secondary/10 px-2 py-0.5 rounded-full">
+<span class="material-icons-round text-[14px] mr-1">trending_up</span> ROI
+                         </span>
+</div>
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-2">Based on 8 sold items</p>
+</div>
+<div class="relative w-20 h-20 flex items-center justify-center">
+<svg class="transform -rotate-90 w-20 h-20">
+<circle class="text-gray-200 dark:text-gray-700" cx="40" cy="40" fill="transparent" r="32" stroke="currentColor" stroke-width="6"></circle>
+<circle class="text-primary" cx="40" cy="40" fill="transparent" r="32" stroke="currentColor" stroke-dasharray="200" stroke-dashoffset="40" stroke-linecap="round" stroke-width="6"></circle>
+</svg>
+<span class="material-icons-round text-primary absolute text-2xl">auto_graph</span>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-card-light dark:bg-card-dark rounded-2xl p-5 shadow-soft flex flex-col justify-between h-32">
+<div class="flex justify-between items-start">
+<div class="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center">
+<span class="material-icons-round text-danger text-xl">payments</span>
+</div>
+<span class="text-xs font-medium text-danger bg-danger/10 px-2 py-1 rounded-lg">-12%</span>
+</div>
+<div>
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark mb-1">Net Profit</p>
+<h3 class="text-xl font-bold text-danger">-$91.41</h3>
+</div>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-2xl p-5 shadow-soft flex flex-col justify-between h-32">
+<div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+<span class="material-icons-round text-primary text-xl">inventory_2</span>
+</div>
+<div>
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark mb-1">Active Value</p>
+<h3 class="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">$40.00</h3>
+</div>
+</div>
+</div>
+<div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-4 shadow-lg text-white flex items-center space-x-4">
+<div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm shrink-0">
+<span class="material-icons-round text-white">lightbulb</span>
+</div>
+<div class="flex-1">
+<h4 class="font-semibold text-sm">Top Performer</h4>
+<p class="text-xs text-indigo-100 mt-0.5">Pallet #2 is trending with best ROI.</p>
+</div>
+<button class="text-xs font-semibold bg-white text-indigo-600 px-3 py-1.5 rounded-lg shadow-sm">View</button>
+</div>
+<section>
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-lg font-bold text-text-primary-light dark:text-text-primary-dark">Recent Activity</h3>
+<a class="text-sm font-medium text-primary hover:text-blue-600" href="#">See All</a>
+</div>
+<div class="space-y-3">
+<div class="bg-card-light dark:bg-card-dark rounded-xl p-4 shadow-sm flex items-center">
+<div class="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0 mr-4">
+<span class="material-icons-round text-green-600 dark:text-green-400">check_circle</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark truncate">Nintendo Switch</h4>
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark">Sold on eBay</p>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-secondary">+$150.00</p>
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark">2h ago</p>
+</div>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-xl p-4 shadow-sm flex items-center">
+<div class="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0 mr-4">
+<span class="material-icons-round text-green-600 dark:text-green-400">check_circle</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark truncate">Vintage Pencil</h4>
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark">FB Marketplace</p>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-secondary">+$185.00</p>
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark">5h ago</p>
+</div>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-xl p-4 shadow-sm flex items-center">
+<div class="w-12 h-12 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center shrink-0 mr-4">
+<span class="material-icons-round text-orange-500">inventory</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-sm font-semibold text-text-primary-light dark:text-text-primary-dark truncate">Pallet #2</h4>
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark">New Inventory</p>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-text-primary-light dark:text-text-primary-dark">Added</p>
+<p class="text-xs text-text-secondary-light dark:text-text-secondary-dark">1d ago</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<button class="fixed right-6 bottom-24 w-14 h-14 bg-primary text-white rounded-full shadow-glow flex items-center justify-center hover:scale-105 transition-transform z-40">
+<span class="material-icons-round text-2xl">add</span>
+</button>
+<nav class="fixed bottom-0 w-full bg-card-light dark:bg-card-dark border-t border-gray-100 dark:border-gray-800 pb-safe pt-2 z-50">
+<div class="flex justify-around items-center px-2 pb-4 pt-2">
+<a class="flex flex-col items-center group" href="#">
+<span class="material-icons-round text-primary mb-1">dashboard</span>
+<span class="text-[10px] font-medium text-primary">Dashboard</span>
+</a>
+<a class="flex flex-col items-center group" href="#">
+<span class="material-icons-round text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary transition-colors mb-1">inventory</span>
+<span class="text-[10px] font-medium text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary transition-colors">Inventory</span>
+</a>
+<a class="flex flex-col items-center group" href="#">
+<span class="material-icons-round text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary transition-colors mb-1">analytics</span>
+<span class="text-[10px] font-medium text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary transition-colors">Analytics</span>
+</a>
+<a class="flex flex-col items-center group" href="#">
+<span class="material-icons-round text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary transition-colors mb-1">settings</span>
+<span class="text-[10px] font-medium text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary transition-colors">Settings</span>
+</a>
+</div>
+</nav>
+<div class="h-6 w-full"></div>
+
+</body></html>

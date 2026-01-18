@@ -24,6 +24,8 @@ import {
 import {
   TimePeriod,
   isWithinTimePeriod,
+  isWithinDateRange,
+  getPreviousPeriodRange,
   generateInsights,
   getUserStage,
   getEmptyStateContent,
@@ -61,6 +63,17 @@ export default function DashboardScreen() {
 
   const isLoading = palletsLoading || itemsLoading || (expenseTrackingEnabled && expensesLoading);
 
+  // Helper to calculate profit for a set of sold items and expenses
+  const calculatePeriodProfit = useCallback((
+    soldItems: typeof items,
+    periodExpensesAmount: number
+  ) => {
+    const revenue = soldItems.reduce((sum, item) => sum + (item.sale_price ?? 0), 0);
+    const cogs = soldItems.reduce((sum, item) => sum + (item.allocated_cost ?? item.purchase_cost ?? 0), 0);
+    const fees = soldItems.reduce((sum, item) => sum + (item.platform_fee ?? 0) + (item.shipping_cost ?? 0), 0);
+    return revenue - cogs - fees - periodExpensesAmount;
+  }, []);
+
   // Metrics filtered by time period (for hero card)
   const periodMetrics = useMemo(() => {
     // Filter sold items by sale date within the time period
@@ -68,36 +81,40 @@ export default function DashboardScreen() {
       item => item.status === 'sold' && isWithinTimePeriod(item.sale_date, timePeriod)
     );
 
-    // Revenue from items sold in this period
-    const periodRevenue = soldItemsInPeriod.reduce((sum, item) => {
-      return sum + (item.sale_price ?? 0);
-    }, 0);
-
-    // For period profit, we calculate cost of goods sold for items sold in this period
-    const periodCOGS = soldItemsInPeriod.reduce((sum, item) => {
-      return sum + (item.allocated_cost ?? item.purchase_cost ?? 0);
-    }, 0);
-
-    // Platform fees and shipping for items sold in this period
-    const periodFees = soldItemsInPeriod.reduce((sum, item) => {
-      return sum + (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
-    }, 0);
-
     // Expenses in this period (if expense tracking enabled)
-    const periodExpenses = expenseTrackingEnabled
+    const periodExpensesAmount = expenseTrackingEnabled
       ? expenses
           .filter(e => isWithinTimePeriod(e.expense_date, timePeriod))
           .reduce((sum, e) => sum + e.amount, 0)
       : 0;
 
-    const periodProfit = periodRevenue - periodCOGS - periodFees - periodExpenses;
+    const periodProfit = calculatePeriodProfit(soldItemsInPeriod, periodExpensesAmount);
+
+    // Calculate previous period profit for comparison
+    const { start: prevStart, end: prevEnd } = getPreviousPeriodRange(timePeriod);
+    let previousProfit: number | undefined;
+
+    if (prevStart && prevEnd) {
+      const soldItemsInPrevPeriod = items.filter(
+        item => item.status === 'sold' && isWithinDateRange(item.sale_date, prevStart, prevEnd)
+      );
+
+      const prevExpensesAmount = expenseTrackingEnabled
+        ? expenses
+            .filter(e => isWithinDateRange(e.expense_date, prevStart, prevEnd))
+            .reduce((sum, e) => sum + e.amount, 0)
+        : 0;
+
+      previousProfit = calculatePeriodProfit(soldItemsInPrevPeriod, prevExpensesAmount);
+    }
 
     return {
       profit: periodProfit,
       soldCount: soldItemsInPeriod.length,
       isProfitable: periodProfit >= 0,
+      previousProfit,
     };
-  }, [items, expenses, expenseTrackingEnabled, timePeriod]);
+  }, [items, expenses, expenseTrackingEnabled, timePeriod, calculatePeriodProfit]);
 
   // Get stale threshold from user settings (needed for metrics calculation)
   const { settings } = useUserSettingsStore();
@@ -231,6 +248,7 @@ export default function DashboardScreen() {
         soldCount={periodMetrics.soldCount}
         timePeriod={timePeriod}
         onTimePeriodChange={setTimePeriod}
+        previousPeriodProfit={periodMetrics.previousProfit}
       />
 
       <MetricGrid>

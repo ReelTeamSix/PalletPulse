@@ -1,0 +1,236 @@
+<html><head><meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enhanced Analytics V2</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          primary: "#2563EB", // Royal Blue
+          "background-light": "#F3F4F6", // Gray-100
+          "background-dark": "#111827", // Gray-900
+          "surface-light": "#FFFFFF",
+          "surface-dark": "#1F2937",
+          "accent-red": "#EF4444",
+          "accent-green": "#10B981",
+          "accent-yellow": "#F59E0B",
+        },
+        fontFamily: {
+          display: ["Inter", "sans-serif"],
+        },
+        borderRadius: {
+          DEFAULT: "0.75rem", // 12px
+          'xl': "1rem", // 16px
+          '2xl': "1.5rem", // 24px
+        },
+      },
+    },
+  };
+</script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-gray-100 antialiased selection:bg-primary selection:text-white">
+<div class="max-w-md mx-auto min-h-screen flex flex-col relative pb-24">
+<header class="px-6 pt-12 pb-4 sticky top-0 z-10 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm">
+<div class="flex justify-between items-center mb-1">
+<div>
+<h1 class="text-3xl font-bold tracking-tight">Analytics</h1>
+<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Track your business performance</p>
+</div>
+<div class="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden border border-gray-300 dark:border-gray-600">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCI-CzYzLWDqnpUp1KNN0ER8YmuSJpRfg5AHkXIEeNeLsATOrymdRbhZPDJPClu1-rt3FSmZRjTILEVFzBmlP16QVheQjsNJ3k2eXjLEoSXrpxEp00EMY4EGd2J4jeW4jAMimX2dn5fzb7uCKRu4Xzh2znXKSJ6QKbI1XfscbiM-ecIf8kGUlB1wkOKtlO-HFXj8jXMli9gLh9pAqQxe4__i68VDJGf2S0j-OlWzPyYCsOvdJrx1TQedE2lZX6arwYlsxnGeokWeE8"/>
+</div>
+</div>
+<div class="mt-6 flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
+<button class="px-4 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-sm font-medium whitespace-nowrap shadow-sm">Month</button>
+<button class="px-4 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-sm font-medium whitespace-nowrap shadow-sm">Q1</button>
+<button class="px-4 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-sm font-medium whitespace-nowrap shadow-sm">Q2</button>
+<button class="px-4 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-sm font-medium whitespace-nowrap shadow-sm">Q3</button>
+<button class="px-4 py-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-sm font-medium whitespace-nowrap shadow-sm">Q4</button>
+<button class="px-4 py-2 rounded-full bg-primary text-white text-sm font-medium whitespace-nowrap shadow-md">2026</button>
+</div>
+</header>
+<main class="flex-1 px-6 space-y-6">
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 shadow-lg border border-gray-100 dark:border-gray-800 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 dark:bg-primary/10 rounded-bl-full -mr-8 -mt-8 z-0"></div>
+<div class="relative z-10 flex flex-col items-center justify-center text-center py-4">
+<h2 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-6">Return on Investment</h2>
+<div class="relative w-40 h-40 flex items-center justify-center mb-4">
+<div class="absolute w-full h-full rounded-full border-[12px] border-gray-100 dark:border-gray-700"></div>
+<div class="absolute w-full h-full rounded-full border-[12px] border-accent-red border-t-transparent border-l-transparent border-r-transparent transform -rotate-45 opacity-80" style="clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);"></div>
+<div class="flex flex-col items-center">
+<span class="text-4xl font-bold text-gray-900 dark:text-white">-21.8%</span>
+<span class="text-xs font-medium text-accent-red mt-1 flex items-center">
+<span class="material-icons-round text-sm mr-1">trending_down</span>
+                    Avg ROI
+                </span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-8 w-full mt-2 border-t border-gray-100 dark:border-gray-700 pt-6">
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Profit</p>
+<p class="text-xl font-bold text-gray-900 dark:text-white">-$234.91</p>
+</div>
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Status</p>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                 Critical
+               </span>
+</div>
+</div>
+</div>
+</div>
+<div>
+<h3 class="text-lg font-semibold mb-3 px-1">Key Metrics</h3>
+<div class="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide snap-x">
+<div class="snap-start shrink-0 w-40 bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between h-32">
+<div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-primary mb-2">
+<span class="material-icons-round">shopping_cart</span>
+</div>
+<div>
+<p class="text-2xl font-bold">8</p>
+<p class="text-xs text-gray-500 dark:text-gray-400">Items Sold</p>
+</div>
+</div>
+<div class="snap-start shrink-0 w-40 bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between h-32">
+<div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-2">
+<span class="material-icons-round">inventory_2</span>
+</div>
+<div>
+<p class="text-2xl font-bold">$190.00</p>
+<p class="text-xs text-gray-500 dark:text-gray-400">Active Value</p>
+</div>
+</div>
+<div class="snap-start shrink-0 w-40 bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col justify-between h-32">
+<div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400 mb-2">
+<span class="material-icons-round">payments</span>
+</div>
+<div>
+<p class="text-2xl font-bold">$42.50</p>
+<p class="text-xs text-gray-500 dark:text-gray-400">Avg Price</p>
+</div>
+</div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-center mb-3 px-1">
+<h3 class="text-lg font-semibold">Top Pallets</h3>
+<a class="text-sm text-primary font-medium" href="#">View All</a>
+</div>
+<div class="space-y-4">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center shrink-0">
+<span class="text-2xl">🏆</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<div>
+<h4 class="font-semibold text-gray-900 dark:text-white truncate">Pallet #2</h4>
+<p class="text-xs text-gray-500 dark:text-gray-400">2/4 sold (50%)</p>
+</div>
+<div class="text-right">
+<p class="font-bold text-accent-red">-$1.00</p>
+<p class="text-xs text-accent-red bg-red-50 dark:bg-red-900/20 px-1.5 rounded">-0.4%</p>
+</div>
+</div>
+<div class="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full mt-2 overflow-hidden flex">
+<div class="h-full bg-accent-yellow w-1/2 rounded-full"></div>
+</div>
+</div>
+<span class="material-icons-round text-gray-400 dark:text-gray-600">chevron_right</span>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center shrink-0">
+<span class="text-2xl">🥈</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<div>
+<h4 class="font-semibold text-gray-900 dark:text-white truncate">Pallet #1</h4>
+<p class="text-xs text-gray-500 dark:text-gray-400">4/4 sold (100%)</p>
+</div>
+<div class="text-right">
+<p class="font-bold text-accent-red">-$327.66</p>
+<p class="text-xs text-accent-red bg-red-50 dark:bg-red-900/20 px-1.5 rounded">-41.3%</p>
+</div>
+</div>
+<div class="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full mt-2 overflow-hidden flex">
+<div class="h-full bg-gray-400 dark:bg-gray-500 w-full rounded-full"></div>
+</div>
+</div>
+<span class="material-icons-round text-gray-400 dark:text-gray-600">chevron_right</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 mb-8">
+<h3 class="text-lg font-semibold mb-6">Performance by Type</h3>
+<div class="flex flex-col sm:flex-row items-center gap-8">
+<div class="relative w-48 h-48 rounded-full" style="background: conic-gradient(#3B82F6 0% 75%, #F3F4F6 75% 100%);">
+<div class="absolute inset-0 rounded-full dark:hidden"></div>
+<div class="absolute inset-0 rounded-full hidden dark:block" style="background: conic-gradient(#3B82F6 0% 75%, #374151 75% 100%); opacity:0.2; pointer-events: none;"></div>
+<div class="absolute inset-4 bg-surface-light dark:bg-surface-dark rounded-full flex items-center justify-center flex-col">
+<span class="text-3xl font-bold text-gray-900 dark:text-white">75%</span>
+<span class="text-xs text-gray-500">Sell Rate</span>
+</div>
+</div>
+<div class="flex-1 w-full">
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-blue-500"></span>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">Other</span>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-accent-red">-31.2%</p>
+<p class="text-xs text-gray-400">ROI</p>
+</div>
+</div>
+<div class="w-full h-px bg-gray-100 dark:bg-gray-700"></div>
+<div class="flex items-center justify-between opacity-50">
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">Electronics</span>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-gray-400">-</p>
+<p class="text-xs text-gray-400">ROI</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<nav class="fixed bottom-0 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-gray-200 dark:border-gray-800 pb-safe pt-2 px-6 shadow-lg z-50">
+<div class="flex justify-between items-center h-16">
+<a class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 hover:text-primary transition-colors gap-1 group w-16" href="#">
+<span class="material-icons-round text-2xl group-hover:scale-110 transition-transform">home</span>
+<span class="text-[10px] font-medium">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 hover:text-primary transition-colors gap-1 group w-16" href="#">
+<span class="material-icons-round text-2xl group-hover:scale-110 transition-transform">inventory</span>
+<span class="text-[10px] font-medium">Inventory</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary gap-1 w-16 relative" href="#">
+<div class="absolute -top-10 bg-primary rounded-full p-3 shadow-lg border-4 border-background-light dark:border-background-dark">
+<span class="material-icons-round text-white text-2xl">bar_chart</span>
+</div>
+<span class="text-[10px] font-medium mt-6">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 hover:text-primary transition-colors gap-1 group w-16" href="#">
+<span class="material-icons-round text-2xl group-hover:scale-110 transition-transform">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</a>
+</div>
+<div class="h-6 w-full"></div>
+</nav>
+</div>
+
+</body></html>

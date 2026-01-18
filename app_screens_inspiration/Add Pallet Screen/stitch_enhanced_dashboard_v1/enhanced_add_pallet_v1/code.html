@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Add Pallet Enhanced</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#2563EB", // Royal Blue based on screenshot
+                        "primary-dark": "#1d4ed8",
+                        "background-light": "#F3F4F6", // Light grey for contrast with white inputs
+                        "background-dark": "#111827", // Dark grey/black
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1F2937",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                        body: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen text-gray-900 dark:text-gray-100 antialiased flex flex-col relative">
+<header class="sticky top-0 z-30 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 px-4 h-16 flex items-center shadow-sm">
+<button class="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-primary focus:outline-none" type="button">
+<span class="material-icons-round text-2xl">arrow_back</span>
+</button>
+<h1 class="text-xl font-bold text-primary ml-2">Add Pallet</h1>
+</header>
+<main class="flex-1 px-4 py-6 pb-32 max-w-lg mx-auto w-full">
+<form action="#" class="space-y-6" onsubmit="event.preventDefault();">
+<div class="space-y-5">
+<div>
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5" for="pallet-name">
+                        Pallet Name <span class="text-red-500">*</span>
+</label>
+<div class="relative">
+<input class="block w-full rounded-lg border-gray-300 bg-surface-light text-gray-900 shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-primary dark:focus:ring-primary sm:text-base py-3 px-4 transition-shadow ease-in-out duration-200" id="pallet-name" name="pallet-name" required="" type="text" value="Pallet #3"/>
+</div>
+</div>
+<div>
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5" for="supplier">
+                        Supplier
+                    </label>
+<input class="block w-full rounded-lg border-gray-300 bg-surface-light text-gray-900 shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary dark:focus:ring-primary sm:text-base py-3 px-4 transition-shadow ease-in-out duration-200" id="supplier" name="supplier" placeholder="e.g., GRPL, Liquidation Land, B-Stock" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5" for="source-type">
+                        Source / Type
+                    </label>
+<input class="block w-full rounded-lg border-gray-300 bg-surface-light text-gray-900 shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary dark:focus:ring-primary sm:text-base py-3 px-4 transition-shadow ease-in-out duration-200" id="source-type" name="source-type" placeholder="e.g., Amazon Monster, Walmart Medium..." type="text"/>
+<p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Describe the type of pallet (builds autocomplete over time)</p>
+</div>
+</div>
+<hr class="border-gray-200 dark:border-gray-700 my-6"/>
+<div class="space-y-5">
+<div>
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5" for="cost">
+                        Purchase Cost <span class="text-red-500">*</span>
+</label>
+<div class="relative rounded-lg shadow-sm">
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+<span class="text-gray-500 dark:text-gray-400 font-medium">$</span>
+</div>
+<input class="block w-full rounded-lg border-gray-300 bg-surface-light pl-8 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary dark:focus:ring-primary sm:text-base py-3 px-4 transition-shadow ease-in-out duration-200" id="cost" name="cost" placeholder="0.00" required="" step="0.01" type="number"/>
+</div>
+</div>
+<div>
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5" for="tax">
+                        Sales Tax
+                    </label>
+<div class="relative rounded-lg shadow-sm">
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+<span class="text-gray-500 dark:text-gray-400 font-medium">$</span>
+</div>
+<input class="block w-full rounded-lg border-gray-300 bg-surface-light pl-8 text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary dark:focus:ring-primary sm:text-base py-3 px-4 transition-shadow ease-in-out duration-200" id="tax" name="tax" placeholder="0.00" step="0.01" type="number"/>
+</div>
+<p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Leave blank if tax exempt</p>
+</div>
+</div>
+<hr class="border-gray-200 dark:border-gray-700 my-6"/>
+<div class="space-y-5">
+<div>
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5" for="date">
+                        Purchase Date <span class="text-red-500">*</span>
+</label>
+<div class="relative rounded-lg shadow-sm group">
+<input class="block w-full rounded-lg border-gray-300 bg-surface-light text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-primary dark:focus:ring-primary sm:text-base py-3 px-4 pr-10 cursor-pointer transition-shadow ease-in-out duration-200" id="date" name="date" readonly="" type="text" value="Fri, Jan 16, 2026"/>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+<span class="material-icons-round text-gray-400 group-hover:text-primary transition-colors">calendar_today</span>
+</div>
+</div>
+</div>
+<div>
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1.5" for="notes">
+                        Notes
+                    </label>
+<textarea class="block w-full rounded-lg border-gray-300 bg-surface-light text-gray-900 shadow-sm focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500 dark:focus:border-primary dark:focus:ring-primary sm:text-base py-3 px-4 transition-shadow ease-in-out duration-200" id="notes" name="notes" placeholder="Any additional details..." rows="3"></textarea>
+</div>
+</div>
+</form>
+</main>
+<div class="fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-gray-200 dark:border-gray-800 p-4 pb-6 z-20 shadow-lg">
+<div class="max-w-lg mx-auto flex gap-3">
+<button class="flex-1 bg-white dark:bg-transparent border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-semibold py-3.5 px-4 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all" type="button">
+                Cancel
+            </button>
+<button class="flex-1 bg-primary text-white font-bold py-3.5 px-4 rounded-lg shadow hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all" type="button">
+                Create Pallet
+            </button>
+</div>
+<div class="flex justify-center mt-3 gap-2 opacity-30 dark:opacity-20">
+<div class="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-gray-900 dark:bg-white"></div>
+</div>
+</div>
+<div class="fixed top-20 right-4 z-50">
+<button class="p-2 bg-gray-200 dark:bg-gray-700 rounded-full shadow-md text-gray-700 dark:text-gray-200" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-icons-round text-xl block dark:hidden">dark_mode</span>
+<span class="material-icons-round text-xl hidden dark:block">light_mode</span>
+</button>
+</div>
+
+</body></html>

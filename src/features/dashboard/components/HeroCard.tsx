@@ -18,6 +18,7 @@ interface HeroCardProps {
   soldCount: number;
   timePeriod: TimePeriod;
   onTimePeriodChange: (period: TimePeriod) => void;
+  previousPeriodProfit?: number;
 }
 
 export function HeroCard({
@@ -25,9 +26,22 @@ export function HeroCard({
   soldCount,
   timePeriod,
   onTimePeriodChange,
+  previousPeriodProfit,
 }: HeroCardProps) {
   const isProfitable = totalProfit >= 0;
   const displayValue = Math.abs(totalProfit);
+
+  // Calculate percentage change from previous period
+  const percentChange = (() => {
+    if (previousPeriodProfit === undefined || previousPeriodProfit === 0) {
+      // If no previous data, show change based on current profit
+      return totalProfit > 0 ? 100 : totalProfit < 0 ? -100 : 0;
+    }
+    return ((totalProfit - previousPeriodProfit) / Math.abs(previousPeriodProfit)) * 100;
+  })();
+
+  const isPositiveChange = percentChange >= 0;
+  const hasSignificantChange = Math.abs(percentChange) >= 0.1;
 
   return (
     <Card shadow="lg" padding="lg" style={styles.card}>
@@ -61,13 +75,21 @@ export function HeroCard({
         <Text style={styles.label}>{getTimePeriodLabel(timePeriod).toUpperCase()} PROFIT</Text>
         <View style={[
           styles.statusBadge,
-          { backgroundColor: isProfitable ? colors.profit + '15' : colors.loss + '15' }
+          { backgroundColor: isPositiveChange ? colors.profit + '15' : colors.loss + '15' }
         ]}>
           <Ionicons
-            name={isProfitable ? 'trending-up' : 'trending-down'}
-            size={16}
-            color={isProfitable ? colors.profit : colors.loss}
+            name={isPositiveChange ? 'trending-up' : 'trending-down'}
+            size={14}
+            color={isPositiveChange ? colors.profit : colors.loss}
           />
+          {hasSignificantChange && (
+            <Text style={[
+              styles.percentText,
+              { color: isPositiveChange ? colors.profit : colors.loss }
+            ]}>
+              {isPositiveChange ? '+' : ''}{Math.round(percentChange)}%
+            </Text>
+          )}
         </View>
       </View>
 
@@ -127,11 +149,16 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   statusBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: borderRadius.md,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    gap: 4,
+  },
+  percentText: {
+    fontSize: fontSize.sm,
+    fontWeight: '700',
   },
   value: {
     ...typography.heroValue,

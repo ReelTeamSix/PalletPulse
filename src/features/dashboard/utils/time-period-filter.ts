@@ -120,3 +120,65 @@ export function getTimePeriodShortLabel(period: TimePeriod): string {
   const option = TIME_PERIOD_OPTIONS.find(o => o.value === period);
   return option?.shortLabel ?? 'All';
 }
+
+/**
+ * Get the date range for the previous period (for comparison)
+ * Returns { start, end } dates for the previous period
+ */
+export function getPreviousPeriodRange(
+  period: TimePeriod,
+  referenceDate: Date = new Date()
+): { start: Date | null; end: Date | null } {
+  if (period === 'all') {
+    return { start: null, end: null };
+  }
+
+  const currentPeriodStart = getTimePeriodStartDate(period, referenceDate);
+  if (!currentPeriodStart) {
+    return { start: null, end: null };
+  }
+
+  // End of previous period is start of current period (minus 1ms)
+  const end = new Date(currentPeriodStart.getTime() - 1);
+
+  // Calculate start of previous period
+  const start = new Date(end);
+  start.setHours(0, 0, 0, 0);
+
+  switch (period) {
+    case 'week': {
+      // Go back 7 days from current period start
+      start.setDate(start.getDate() - 6);
+      return { start, end };
+    }
+    case 'month': {
+      // Go to first of previous month
+      start.setDate(1);
+      return { start, end };
+    }
+    case 'year': {
+      // Go to first of previous year
+      start.setMonth(0, 1);
+      return { start, end };
+    }
+    default:
+      return { start: null, end: null };
+  }
+}
+
+/**
+ * Check if a date string falls within a specific date range
+ */
+export function isWithinDateRange(
+  dateString: string | null | undefined,
+  start: Date | null,
+  end: Date | null
+): boolean {
+  if (!dateString || !start || !end) {
+    return false;
+  }
+
+  // Parse the date string as local date
+  const itemDate = new Date(dateString + 'T00:00:00');
+  return itemDate >= start && itemDate <= end;
+}
