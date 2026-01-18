@@ -81,6 +81,8 @@ export function generateInsights(input: InsightsInput): Insight[] {
 
 /**
  * Find the best performing source by average ROI
+ * ROI calculation includes: allocated cost + platform fees + shipping costs
+ * This matches the pallet detail screen calculation for consistency
  */
 function getBestSourceInsight(soldItems: Item[], pallets: Pallet[]): Insight | null {
   if (soldItems.length < 3) {
@@ -103,8 +105,14 @@ function getBestSourceInsight(soldItems: Item[], pallets: Pallet[]): Insight | n
       sourceStats[sourceName] = { revenue: 0, cost: 0, count: 0 };
     }
 
+    // Revenue is the sale price
     sourceStats[sourceName].revenue += item.sale_price ?? 0;
-    sourceStats[sourceName].cost += item.allocated_cost ?? item.purchase_cost ?? 0;
+    // Cost includes: allocated/purchase cost + platform fees + shipping costs
+    // This matches the pallet detail screen calculation
+    const baseCost = item.allocated_cost ?? item.purchase_cost ?? 0;
+    const platformFee = item.platform_fee ?? 0;
+    const shippingCost = item.shipping_cost ?? 0;
+    sourceStats[sourceName].cost += baseCost + platformFee + shippingCost;
     sourceStats[sourceName].count += 1;
   });
 

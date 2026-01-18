@@ -245,7 +245,27 @@ export default function DashboardScreen() {
         />
       </MetricGrid>
 
-      <InsightsCard insights={insights} emptyState={emptyState} />
+      <InsightsCard
+        insights={insights}
+        emptyState={emptyState}
+        onInsightPress={(insight) => {
+          // Navigate based on insight type
+          if (insight.id === 'best-source') {
+            // Find the pallet mentioned in the insight and navigate to it
+            const palletName = insight.message.split(' has')[0];
+            const pallet = pallets.find(p => p.name === palletName);
+            if (pallet) {
+              router.push(`/pallets/${pallet.id}`);
+            } else {
+              router.push('/(tabs)/pallets');
+            }
+          } else if (insight.id === 'stale-inventory' || insight.id === 'unlisted-items') {
+            router.push('/(tabs)/inventory');
+          } else if (insight.id.startsWith('milestone') || insight.id === 'first-sale' || insight.id === 'quick-flips') {
+            router.push('/(tabs)/inventory');
+          }
+        }}
+      />
 
       <ActionButtonPair
         primaryLabel="Add Pallet"
