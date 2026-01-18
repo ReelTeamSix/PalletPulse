@@ -32,16 +32,22 @@ export function HeroCard({
   const displayValue = Math.abs(totalProfit);
 
   // Calculate percentage change from previous period
-  const percentChange = (() => {
-    if (previousPeriodProfit === undefined || previousPeriodProfit === 0) {
-      // If no previous data, show change based on current profit
-      return totalProfit > 0 ? 100 : totalProfit < 0 ? -100 : 0;
-    }
-    return ((totalProfit - previousPeriodProfit) / Math.abs(previousPeriodProfit)) * 100;
-  })();
+  // Only show when we have meaningful comparison data:
+  // - Previous period data exists
+  // - Previous period had significant activity (> $1 profit/loss to avoid noise)
+  // - Not "All Time" period (no comparison possible)
+  const hasMeaningfulComparison =
+    previousPeriodProfit !== undefined &&
+    Math.abs(previousPeriodProfit) > 1 &&
+    timePeriod !== 'all';
 
-  const isPositiveChange = percentChange >= 0;
-  const hasSignificantChange = Math.abs(percentChange) >= 0.1;
+  const percentChange = hasMeaningfulComparison
+    ? ((totalProfit - previousPeriodProfit) / Math.abs(previousPeriodProfit)) * 100
+    : null;
+
+  const isPositiveChange = percentChange !== null ? percentChange >= 0 : isProfitable;
+  // Only show if there's a meaningful change (at least 1%)
+  const showPercentage = percentChange !== null && Math.abs(percentChange) >= 1;
 
   return (
     <Card shadow="lg" padding="lg" style={styles.card}>
@@ -75,19 +81,19 @@ export function HeroCard({
         <Text style={styles.label}>{getTimePeriodLabel(timePeriod).toUpperCase()} PROFIT</Text>
         <View style={[
           styles.statusBadge,
-          { backgroundColor: isPositiveChange ? colors.profit + '15' : colors.loss + '15' }
+          { backgroundColor: isProfitable ? colors.profit + '15' : colors.loss + '15' }
         ]}>
           <Ionicons
-            name={isPositiveChange ? 'trending-up' : 'trending-down'}
+            name={isProfitable ? 'trending-up' : 'trending-down'}
             size={14}
-            color={isPositiveChange ? colors.profit : colors.loss}
+            color={isProfitable ? colors.profit : colors.loss}
           />
-          {hasSignificantChange && (
+          {showPercentage && (
             <Text style={[
               styles.percentText,
               { color: isPositiveChange ? colors.profit : colors.loss }
             ]}>
-              {isPositiveChange ? '+' : ''}{Math.round(percentChange)}%
+              {isPositiveChange ? '+' : ''}{Math.round(percentChange!)}%
             </Text>
           )}
         </View>
