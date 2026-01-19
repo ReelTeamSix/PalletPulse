@@ -1573,4 +1573,59 @@ Lint: passes
 
 ---
 
+### 11F: Item Detail Page Redesign ✅
+**Completed:** Jan 18, 2026
+
+**Overview:**
+Comprehensive redesign of the Item Detail page to match the inspiration design, with hero image overlay, Financial Snapshot card with margin indicator, and enhanced Sale Details section.
+
+**Files Modified:**
+- `app/items/[id].tsx` - Complete redesign (~480 lines changed)
+
+**Key Features:**
+
+1. **Hero Image Section with Overlay**
+   - Dark gradient overlay at bottom of image
+   - Status badge (SOLD/LISTED/UNLISTED) with icon overlaid on image top-right
+   - Condition badge at bottom-left of image
+   - Item name and SKU overlaid on dark gradient
+   - Photo indicators positioned above text overlay
+
+2. **Financial Snapshot Card**
+   - Card with shadow on light gray background
+   - SALE PRICE and ALLOCATED COST in side-by-side gray boxes
+   - Dashed divider line
+   - Large Net Profit display
+   - Circular margin percentage indicator (e.g., 35% MARGIN)
+
+3. **Sale Details Section (for sold items)**
+   - Header with "Sale Details" and platform tag (e.g., "eBay Sale")
+   - Platform Fees row with icon container, fee description, and amount
+   - Shipping Costs row with icon container and amount
+   - Listed Date and Days to Sell displayed side-by-side
+
+4. **Updated Footer**
+   - Full-width "Edit Item" button with icon for sold items
+   - Edit/Mark as Sold split buttons for unsold items
+
+5. **Styling Updates**
+   - Light gray background (backgroundSecondary)
+   - White cards with shadows for depth
+   - Consistent with app-wide design system
+
+**Added Dependencies:**
+- `expo-linear-gradient` for hero image gradient overlay
+
+**Test Results:**
+```
+TypeScript: passes
+Lint: passes
+```
+
+**Commits:**
+- `feat(items): update Item Detail status indicator and condition badge`
+- `feat(items): comprehensive Item Detail screen redesign`
+
+---
+
 **Reply "approved" to continue, or provide feedback.**

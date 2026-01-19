@@ -4,7 +4,9 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { isUnlimited } from '@/src/constants/tier-limits';
 import { useItemsStore } from '@/src/stores/items-store';
+import { useSubscriptionStore } from '@/src/stores/subscription-store';
 import { ItemForm, ItemFormData } from '@/src/features/items';
 import { PhotoItem } from '@/src/components/ui/PhotoPicker';
 import { getPhotoUrl } from '@/src/lib/photo-utils';
@@ -24,7 +26,13 @@ export default function EditItemScreen() {
     uploadItemPhotos,
     deleteItemPhoto,
   } = useItemsStore();
+  const { getLimitForAction, getEffectiveTier } = useSubscriptionStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Get photo limit based on subscription tier
+  const photoLimit = getLimitForAction('photosPerItem') as number;
+  const maxPhotos = isUnlimited(photoLimit) ? 50 : photoLimit;
+  const effectiveTier = getEffectiveTier();
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [originalPhotos, setOriginalPhotos] = useState<ItemPhoto[]>([]);
   const [photosLoaded, setPhotosLoaded] = useState(false);
@@ -237,6 +245,8 @@ export default function EditItemScreen() {
           submitLabel="Save Changes"
           photos={photos}
           onPhotosChange={setPhotos}
+          maxPhotos={maxPhotos}
+          currentTier={effectiveTier}
         />
 
         {/* Error Modal */}

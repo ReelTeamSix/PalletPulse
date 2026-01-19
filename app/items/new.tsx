@@ -4,17 +4,19 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { colors } from '@/src/constants/colors';
 import { useItemsStore, ITEM_ERROR_CODES } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
+import { useSubscriptionStore } from '@/src/stores/subscription-store';
 import { ItemForm, ItemFormData } from '@/src/features/items';
 import { PhotoItem } from '@/src/components/ui/PhotoPicker';
 import { ConfirmationModal } from '@/src/components/ui';
 import { PaywallModal } from '@/src/components/subscription';
-import { SubscriptionTier } from '@/src/constants/tier-limits';
+import { SubscriptionTier, isUnlimited } from '@/src/constants/tier-limits';
 
 export default function NewItemScreen() {
   const { palletId } = useLocalSearchParams<{ palletId?: string }>();
   const router = useRouter();
   const { items, addItem, uploadItemPhotos, isLoading } = useItemsStore();
   const { getPalletById } = usePalletsStore();
+  const { getLimitForAction, getEffectiveTier } = useSubscriptionStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
@@ -29,6 +31,11 @@ export default function NewItemScreen() {
 
   // Get pallet name for display
   const pallet = palletId ? getPalletById(palletId) : null;
+
+  // Get photo limit based on subscription tier
+  const photoLimit = getLimitForAction('photosPerItem') as number;
+  const maxPhotos = isUnlimited(photoLimit) ? 50 : photoLimit; // Cap at 50 for unlimited
+  const effectiveTier = getEffectiveTier();
 
   const handleCancel = () => {
     router.dismiss();
@@ -109,6 +116,8 @@ export default function NewItemScreen() {
           submitLabel="Create Item"
           photos={photos}
           onPhotosChange={setPhotos}
+          maxPhotos={maxPhotos}
+          currentTier={effectiveTier}
         />
 
         {/* Error Modal */}
