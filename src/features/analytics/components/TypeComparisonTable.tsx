@@ -1,4 +1,5 @@
-// TypeComparisonTable - Compare performance by pallet source type
+// TypeComparisonTable - Compare performance by sourcing method
+// Useful for individual items from thrift, garage sales, retail arbitrage, etc.
 // Shows top 2 types for free tier with blur overlay for rest
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
@@ -27,12 +28,15 @@ export function TypeComparisonTable({
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Performance by Type</Text>
+          <View style={styles.headerIcon}>
+            <Ionicons name="cart-outline" size={18} color={colors.primary} />
+          </View>
+          <Text style={styles.title}>Sourcing Methods</Text>
         </View>
         <View style={styles.emptyState}>
-          <Ionicons name="layers-outline" size={24} color={colors.textSecondary} />
-          <Text style={styles.emptyText}>No type data yet</Text>
-          <Text style={styles.emptySubtext}>Add pallets with different source types</Text>
+          <Ionicons name="cart-outline" size={24} color={colors.textSecondary} />
+          <Text style={styles.emptyText}>No sourcing data yet</Text>
+          <Text style={styles.emptySubtext}>Add items from thrift, garage sales, etc.</Text>
         </View>
       </View>
     );
@@ -44,7 +48,10 @@ export function TypeComparisonTable({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Performance by Type</Text>
+        <View style={styles.headerIcon}>
+          <Ionicons name="cart-outline" size={18} color={colors.primary} />
+        </View>
+        <Text style={styles.title}>Sourcing Methods</Text>
       </View>
 
       {/* Table Header */}
@@ -80,7 +87,7 @@ export function TypeComparisonTable({
       {hasHiddenData && onUpgrade && (
         <UpgradeOverlay
           visible
-          message="Unlock full type comparison"
+          message="Unlock all sourcing methods"
           onUpgrade={onUpgrade}
           position="bottom"
           bottomHeight={50}
@@ -140,7 +147,18 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     marginBottom: spacing.md,
+  },
+  headerIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: fontSize.md,
