@@ -33,12 +33,15 @@ export function HeroCard({
 
   // Calculate percentage change from previous period
   // Only show when we have meaningful comparison data:
-  // - Previous period data exists
-  // - Previous period had significant activity (> $1 profit/loss to avoid noise)
+  // - Previous period data exists and had significant activity (> $1)
+  // - Current period also has activity (not showing % for $0 profit)
   // - Not "All Time" period (no comparison possible)
+  // - Actual change occurred (current != previous)
   const hasMeaningfulComparison =
     previousPeriodProfit !== undefined &&
     Math.abs(previousPeriodProfit) > 1 &&
+    Math.abs(totalProfit) > 0.01 &&
+    totalProfit !== previousPeriodProfit &&
     timePeriod !== 'all';
 
   const percentChange = hasMeaningfulComparison

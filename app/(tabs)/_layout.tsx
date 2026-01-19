@@ -2,6 +2,7 @@ import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/src/constants/colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -20,27 +21,34 @@ export default function TabLayout() {
   const isDark = colorScheme === 'dark';
   const { isExpenseTrackingEnabled } = useUserSettingsStore();
   const expensesEnabled = isExpenseTrackingEnabled();
+  const insets = useSafeAreaInsets();
+
+  // Calculate tab bar height accounting for safe area (Android nav bar)
+  const tabBarHeight = Platform.OS === 'ios' ? 88 : 60 + Math.max(insets.bottom, 8);
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: isDark ? colors.textSecondaryDark : colors.textDisabled,
+        tabBarShowLabel: true,
         tabBarStyle: {
           backgroundColor: isDark ? colors.surfaceDark : '#FFFFFF',
           borderTopWidth: 0,
-          elevation: 0,
+          elevation: 8,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.05,
+          shadowOpacity: 0.06,
           shadowRadius: 8,
-          paddingTop: 8,
-          height: Platform.OS === 'ios' ? 88 : 64,
+          paddingTop: 6,
+          paddingBottom: Platform.OS === 'android' ? Math.max(insets.bottom, 8) : 0,
+          height: tabBarHeight,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '500',
-          marginTop: 4,
+          marginTop: 2,
+          marginBottom: Platform.OS === 'android' ? 4 : 0,
         },
         headerShown: false,
       }}>
