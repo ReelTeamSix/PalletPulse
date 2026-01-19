@@ -136,6 +136,100 @@ describe('SubscriptionStore', () => {
       expect(getLimitForAction('photosPerItem')).toBe(1);
       expect(getLimitForAction('expenseTracking')).toBe(false);
     });
+
+    it('should return correct photo limits for each tier', () => {
+      // Free tier - 1 photo
+      useSubscriptionStore.setState({ tier: 'free' });
+      expect(useSubscriptionStore.getState().getLimitForAction('photosPerItem')).toBe(1);
+
+      // Starter tier - 3 photos
+      useSubscriptionStore.setState({ tier: 'starter' });
+      const onboardingStoreMock = jest.requireMock('../onboarding-store');
+      onboardingStoreMock.useOnboardingStore.getState.mockReturnValue({
+        trial: { isActive: false, trialTier: 'pro' },
+        currentTier: 'starter',
+        checkTrialStatus: jest.fn(() => false),
+      });
+      expect(useSubscriptionStore.getState().getLimitForAction('photosPerItem')).toBe(3);
+
+      // Pro tier - 10 photos
+      useSubscriptionStore.setState({ tier: 'pro' });
+      onboardingStoreMock.useOnboardingStore.getState.mockReturnValue({
+        trial: { isActive: false, trialTier: 'pro' },
+        currentTier: 'pro',
+        checkTrialStatus: jest.fn(() => false),
+      });
+      expect(useSubscriptionStore.getState().getLimitForAction('photosPerItem')).toBe(10);
+
+      // Enterprise tier - unlimited (-1)
+      useSubscriptionStore.setState({ tier: 'enterprise' });
+      onboardingStoreMock.useOnboardingStore.getState.mockReturnValue({
+        trial: { isActive: false, trialTier: 'pro' },
+        currentTier: 'enterprise',
+        checkTrialStatus: jest.fn(() => false),
+      });
+      expect(useSubscriptionStore.getState().getLimitForAction('photosPerItem')).toBe(-1);
+    });
+  });
+
+  describe('canPerform for photos', () => {
+    it('should allow photos under limit for free tier', () => {
+      // Reset to free tier and ensure onboarding mock returns free
+      useSubscriptionStore.setState({ tier: 'free' });
+      const onboardingStoreMock = jest.requireMock('../onboarding-store');
+      onboardingStoreMock.useOnboardingStore.getState.mockReturnValue({
+        trial: { isActive: false, trialTier: 'pro' },
+        currentTier: 'free',
+        checkTrialStatus: jest.fn(() => false),
+      });
+
+      const { canPerform } = useSubscriptionStore.getState();
+
+      expect(canPerform('photosPerItem', 0)).toBe(true);
+      expect(canPerform('photosPerItem', 1)).toBe(false); // At limit
+    });
+
+    it('should allow more photos for higher tiers', () => {
+      // Starter tier allows 3 photos
+      useSubscriptionStore.setState({ tier: 'starter' });
+      const onboardingStoreMock = jest.requireMock('../onboarding-store');
+      onboardingStoreMock.useOnboardingStore.getState.mockReturnValue({
+        trial: { isActive: false, trialTier: 'pro' },
+        currentTier: 'starter',
+        checkTrialStatus: jest.fn(() => false),
+      });
+
+      let { canPerform } = useSubscriptionStore.getState();
+      expect(canPerform('photosPerItem', 2)).toBe(true);
+      expect(canPerform('photosPerItem', 3)).toBe(false); // At limit
+
+      // Pro tier allows 10 photos
+      useSubscriptionStore.setState({ tier: 'pro' });
+      onboardingStoreMock.useOnboardingStore.getState.mockReturnValue({
+        trial: { isActive: false, trialTier: 'pro' },
+        currentTier: 'pro',
+        checkTrialStatus: jest.fn(() => false),
+      });
+
+      ({ canPerform } = useSubscriptionStore.getState());
+      expect(canPerform('photosPerItem', 9)).toBe(true);
+      expect(canPerform('photosPerItem', 10)).toBe(false); // At limit
+    });
+
+    it('should allow unlimited photos for enterprise tier', () => {
+      useSubscriptionStore.setState({ tier: 'enterprise' });
+      const onboardingStoreMock = jest.requireMock('../onboarding-store');
+      onboardingStoreMock.useOnboardingStore.getState.mockReturnValue({
+        trial: { isActive: false, trialTier: 'pro' },
+        currentTier: 'enterprise',
+        checkTrialStatus: jest.fn(() => false),
+      });
+
+      const { canPerform } = useSubscriptionStore.getState();
+      expect(canPerform('photosPerItem', 0)).toBe(true);
+      expect(canPerform('photosPerItem', 50)).toBe(true);
+      expect(canPerform('photosPerItem', 100)).toBe(true);
+    });
   });
 
   describe('getRequiredTierForAction', () => {
@@ -147,6 +241,15 @@ describe('SubscriptionStore', () => {
     });
 
     it('should return starter when free tier limit exceeded', () => {
+      // Ensure we're on free tier
+      useSubscriptionStore.setState({ tier: 'free' });
+      const onboardingStoreMock = jest.requireMock('../onboarding-store');
+      onboardingStoreMock.useOnboardingStore.getState.mockReturnValue({
+        trial: { isActive: false, trialTier: 'pro' },
+        currentTier: 'free',
+        checkTrialStatus: jest.fn(() => false),
+      });
+
       const { getRequiredTierForAction } = useSubscriptionStore.getState();
 
       // Free tier at 1 pallet needs upgrade
