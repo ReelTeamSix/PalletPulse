@@ -1538,4 +1538,39 @@ Lint: passes
 
 ---
 
+### 11E: ItemCard Redesign ✅
+**Completed:** Jan 18, 2026
+
+**Overview:**
+Improved ItemCard component with better status indicators and added FEES column for sold items to show platform fees.
+
+**Files Modified:**
+- `src/features/items/components/ItemCard.tsx` - Card redesign
+  - Replaced status pill badge with colored dot + uppercase text
+    - Green dot + "SOLD" for sold items
+    - Blue dot + "LISTED" for listed items
+    - Gray dot + "UNLISTED" for unlisted items
+  - Added FEES column for sold items with platform fees
+    - Shows platform fees in red (e.g., -$24.50)
+    - Helps users understand true profit margins
+  - Hide MSRP for sold items (LISTED/SOLD/FEES/PROFIT more relevant)
+  - Removed unused Badge import
+
+**Design Decisions:**
+Based on V1 inspiration design but kept meaningful changes only:
+- **Status dots:** More scannable when scrolling through item list
+- **FEES column:** Shows where money went (platform fees), helps understand margins
+- **Skipped:** ID overlay on thumbnail (no user value), action buttons (swipe gestures suffice)
+
+**Test Results:**
+```
+TypeScript: passes
+Lint: passes
+```
+
+**Commits:**
+- `feat(items): improve ItemCard status indicator and add fees column`
+
+---
+
 **Reply "approved" to continue, or provide feedback.**
