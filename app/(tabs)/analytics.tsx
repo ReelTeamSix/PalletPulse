@@ -34,6 +34,7 @@ import {
   calculatePalletLeaderboard,
   calculateTypeComparison,
   calculateSupplierComparison,
+  calculatePalletTypeComparison,
   getStaleItems,
   calculateProfitTrend,
 } from '@/src/features/analytics/utils/analytics-calculations';
@@ -54,6 +55,7 @@ import {
   PalletLeaderboard,
   TypeComparisonTable,
   SupplierRankingTable,
+  PalletTypeRankingTable,
   StaleInventoryList,
   TrendChartTeaser,
   TrendChart,
@@ -143,6 +145,11 @@ export default function AnalyticsScreen() {
     [pallets, items, expenses]
   );
 
+  const palletTypeComparison = useMemo(
+    () => calculatePalletTypeComparison(pallets, items, expenses),
+    [pallets, items, expenses]
+  );
+
   const staleThreshold = settings?.stale_threshold_days ?? 30;
   const staleItems = useMemo(
     () => getStaleItems(items, pallets, staleThreshold),
@@ -160,6 +167,7 @@ export default function AnalyticsScreen() {
     leaderboard: 3,
     typeComparison: 2,
     supplierComparison: 2,
+    palletTypeComparison: 2,
     staleItems: 3,
   };
 
@@ -175,6 +183,10 @@ export default function AnalyticsScreen() {
     ? supplierComparison
     : supplierComparison.slice(0, FREE_TIER_LIMITS.supplierComparison);
 
+  const visiblePalletTypeComparison = isPaidTier
+    ? palletTypeComparison
+    : palletTypeComparison.slice(0, FREE_TIER_LIMITS.palletTypeComparison);
+
   const visibleStaleItems = isPaidTier
     ? staleItems
     : staleItems.slice(0, FREE_TIER_LIMITS.staleItems);
@@ -182,6 +194,7 @@ export default function AnalyticsScreen() {
   // Check if there's hidden data
   const hasMoreTypeComparison = !isPaidTier && typeComparison.length > FREE_TIER_LIMITS.typeComparison;
   const hasMoreSupplierComparison = !isPaidTier && supplierComparison.length > FREE_TIER_LIMITS.supplierComparison;
+  const hasMorePalletTypeComparison = !isPaidTier && palletTypeComparison.length > FREE_TIER_LIMITS.palletTypeComparison;
   const hasMoreStaleItems = !isPaidTier && staleItems.length > FREE_TIER_LIMITS.staleItems;
   const hiddenLeaderboardCount = Math.max(0, leaderboard.length - FREE_TIER_LIMITS.leaderboard);
   const hiddenStaleCount = Math.max(0, staleItems.length - FREE_TIER_LIMITS.staleItems);
@@ -319,6 +332,15 @@ export default function AnalyticsScreen() {
         <SupplierRankingTable
           data={visibleSupplierComparison}
           blurred={hasMoreSupplierComparison}
+          onUpgrade={handleUpgrade}
+        />
+      )}
+
+      {/* Pallet Type Ranking */}
+      {palletTypeComparison.length > 0 && (
+        <PalletTypeRankingTable
+          data={visiblePalletTypeComparison}
+          blurred={hasMorePalletTypeComparison}
           onUpgrade={handleUpgrade}
         />
       )}

@@ -10,6 +10,7 @@ import type {
   PalletAnalytics,
   TypeComparison,
   SupplierComparison,
+  PalletTypeComparison,
   StaleItem,
   TrendDataPoint,
 } from '../types/analytics';
@@ -368,6 +369,96 @@ export function calculateSupplierComparison(
 
     return {
       supplier,
+      totalProfit,
+      totalCost,
+      avgROI,
+      avgProfitPerPallet,
+      palletCount,
+      totalItemsSold: totalSoldItems,
+      avgDaysToSell,
+      sellThroughRate,
+    };
+  });
+
+  // Sort by total profit descending
+  return comparisons.sort((a, b) => b.totalProfit - a.totalProfit);
+}
+
+/**
+ * Calculate aggregated metrics by pallet type (source_name).
+ * Groups pallets by source_name and includes mystery box indicator.
+ * @param pallets - All pallets
+ * @param items - All items
+ * @param expenses - All expenses (with pallet_ids)
+ * @returns Array of pallet type comparisons sorted by total profit descending
+ */
+export function calculatePalletTypeComparison(
+  pallets: Pallet[],
+  items: Item[],
+  expenses: ExpenseWithPallets[]
+): PalletTypeComparison[] {
+  // Get unique pallet types from pallets (normalize null/empty to "Unspecified")
+  const normalizePalletType = (sourceName: string | null): string => {
+    return sourceName && sourceName.trim() ? sourceName.trim() : 'Unspecified';
+  };
+
+  const palletTypes = [...new Set(pallets.map((p) => normalizePalletType(p.source_name)))];
+
+  const comparisons: PalletTypeComparison[] = palletTypes.map((palletType) => {
+    const typePallets = pallets.filter(
+      (p) => normalizePalletType(p.source_name) === palletType
+    );
+
+    // Check if ANY pallet in this group is a mystery box
+    const isMysteryBox = typePallets.some((p) => p.source_type === 'mystery_box');
+
+    let totalProfit = 0;
+    let totalCost = 0;
+    let totalItems = 0;
+    let totalSoldItems = 0;
+    let totalDaysToSell = 0;
+    let soldItemsWithDays = 0;
+
+    typePallets.forEach((pallet) => {
+      const palletItems = items.filter((item) => item.pallet_id === pallet.id);
+      const palletExpenses = expenses.filter(
+        (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
+      );
+
+      // Calculate split amounts for multi-pallet expenses
+      const splitExpenses: Expense[] = palletExpenses.map((exp) => ({
+        ...exp,
+        amount: exp.amount / (exp.pallet_ids?.length || 1),
+      }));
+
+      const result = calculatePalletProfit(pallet, palletItems, splitExpenses);
+      totalProfit += result.netProfit;
+      totalCost += result.totalCost;
+      totalItems += palletItems.length;
+      totalSoldItems += result.soldItemsCount;
+
+      // Sum days to sell for averaging
+      const soldItems = palletItems.filter(
+        (item) => item.status === 'sold' && item.listing_date && item.sale_date
+      );
+      soldItems.forEach((item) => {
+        const days = getDaysToSell(item);
+        if (days !== null) {
+          totalDaysToSell += days;
+          soldItemsWithDays++;
+        }
+      });
+    });
+
+    const palletCount = typePallets.length;
+    const avgROI = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
+    const avgProfitPerPallet = palletCount > 0 ? totalProfit / palletCount : 0;
+    const avgDaysToSell = soldItemsWithDays > 0 ? totalDaysToSell / soldItemsWithDays : null;
+    const sellThroughRate = totalItems > 0 ? (totalSoldItems / totalItems) * 100 : 0;
+
+    return {
+      palletType,
+      isMysteryBox,
       totalProfit,
       totalCost,
       avgROI,

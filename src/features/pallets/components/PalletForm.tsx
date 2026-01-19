@@ -22,6 +22,8 @@ import { shadows } from '@/src/constants/shadows';
 import {
   palletFormSchema,
   PalletFormData,
+  PalletSourceType,
+  PALLET_SOURCE_TYPE_OPTIONS,
   getUniqueSuppliers,
   getUniqueSourceNames,
   calculateSalesTaxFromRate,
@@ -80,6 +82,7 @@ export function PalletForm({
   } = useForm({
     resolver: zodResolver(palletFormSchema),
     defaultValues: {
+      source_type: pallet?.source_type ?? initialValues?.source_type ?? 'pallet',
       name: pallet?.name ?? initialValues?.name ?? '',
       supplier: pallet?.supplier ?? initialValues?.supplier ?? null,
       source_name: pallet?.source_name ?? initialValues?.source_name ?? null,
@@ -90,6 +93,8 @@ export function PalletForm({
       notes: pallet?.notes ?? initialValues?.notes ?? null,
     } as PalletFormData,
   });
+
+  const watchSourceType = watch('source_type');
 
   const watchSupplier = watch('supplier');
   const watchSourceName = watch('source_name');
@@ -151,6 +156,40 @@ export function PalletForm({
       >
         {/* Form Card Container */}
         <View style={[styles.formCard, shadows.sm]}>
+          {/* Pallet/Mystery Box Toggle */}
+          <View style={styles.sourceTypeContainer}>
+            <Text style={styles.sourceTypeLabel}>TYPE</Text>
+            <View style={styles.segmentedControl}>
+              {PALLET_SOURCE_TYPE_OPTIONS.map((option) => {
+                const isSelected = watchSourceType === option.value;
+                return (
+                  <Pressable
+                    key={option.value}
+                    style={[
+                      styles.segmentedOption,
+                      isSelected && styles.segmentedOptionSelected,
+                    ]}
+                    onPress={() => setValue('source_type', option.value as PalletSourceType)}
+                  >
+                    <Ionicons
+                      name={option.icon as keyof typeof Ionicons.glyphMap}
+                      size={18}
+                      color={isSelected ? colors.background : colors.textSecondary}
+                    />
+                    <Text
+                      style={[
+                        styles.segmentedOptionText,
+                        isSelected && styles.segmentedOptionTextSelected,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
           {/* Pallet Name */}
           <Controller
             control={control}
@@ -436,6 +475,44 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
+  },
+  sourceTypeContainer: {
+    marginBottom: spacing.lg,
+  },
+  sourceTypeLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+    letterSpacing: 0.5,
+  },
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    padding: spacing.xs,
+    gap: spacing.xs,
+  },
+  segmentedOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.sm,
+  },
+  segmentedOptionSelected: {
+    backgroundColor: colors.primary,
+  },
+  segmentedOptionText: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+  segmentedOptionTextSelected: {
+    color: colors.background,
   },
   fieldContainer: {
     marginBottom: spacing.md,

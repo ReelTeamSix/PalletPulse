@@ -5,6 +5,7 @@ import {
   calculatePalletLeaderboard,
   calculateTypeComparison,
   calculateSupplierComparison,
+  calculatePalletTypeComparison,
   getStaleItems,
   calculateProfitTrend,
   calculatePeriodSummary,
@@ -626,6 +627,153 @@ describe('calculateSupplierComparison', () => {
     ];
 
     const result = calculateSupplierComparison(pallets, items, expenses);
+
+    // Profit: 200 - 100 - 30 = 70
+    expect(result[0].totalProfit).toBe(70);
+  });
+});
+
+// ============================================================================
+// calculatePalletTypeComparison Tests
+// ============================================================================
+
+describe('calculatePalletTypeComparison', () => {
+  it('should return empty array for no pallets', () => {
+    const result = calculatePalletTypeComparison([], [], []);
+    expect(result).toHaveLength(0);
+  });
+
+  it('should group pallets by source_name', () => {
+    const pallets = [
+      createPallet({ id: 'p1', source_name: 'Amazon Monster', purchase_cost: 100, sales_tax: 0 }),
+      createPallet({ id: 'p2', source_name: 'Amazon Monster', purchase_cost: 100, sales_tax: 0 }),
+      createPallet({ id: 'p3', source_name: 'Target GM', purchase_cost: 50, sales_tax: 0 }),
+    ];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 150 }),
+      createItem({ id: 'i2', pallet_id: 'p2', status: 'sold', sale_price: 180 }),
+      createItem({ id: 'i3', pallet_id: 'p3', status: 'sold', sale_price: 100 }),
+    ];
+
+    const result = calculatePalletTypeComparison(pallets, items, []);
+
+    expect(result).toHaveLength(2);
+
+    const amazonMonster = result.find(p => p.palletType === 'Amazon Monster');
+    const targetGM = result.find(p => p.palletType === 'Target GM');
+
+    expect(amazonMonster).toBeDefined();
+    expect(targetGM).toBeDefined();
+    expect(amazonMonster!.palletCount).toBe(2);
+    expect(targetGM!.palletCount).toBe(1);
+  });
+
+  it('should sort by total profit descending', () => {
+    const pallets = [
+      createPallet({ id: 'p1', source_name: 'LowProfit Type', purchase_cost: 100, sales_tax: 0 }),
+      createPallet({ id: 'p2', source_name: 'HighProfit Type', purchase_cost: 100, sales_tax: 0 }),
+    ];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 120 }),
+      createItem({ id: 'i2', pallet_id: 'p2', status: 'sold', sale_price: 250 }),
+    ];
+
+    const result = calculatePalletTypeComparison(pallets, items, []);
+
+    expect(result[0].palletType).toBe('HighProfit Type');
+    expect(result[0].totalProfit).toBe(150); // 250 - 100
+    expect(result[1].palletType).toBe('LowProfit Type');
+    expect(result[1].totalProfit).toBe(20); // 120 - 100
+  });
+
+  it('should handle pallets with null/empty source_name', () => {
+    const pallets = [
+      createPallet({ id: 'p1', source_name: null, purchase_cost: 100, sales_tax: 0 }),
+      createPallet({ id: 'p2', source_name: '', purchase_cost: 100, sales_tax: 0 }),
+      createPallet({ id: 'p3', source_name: 'Amazon Monster', purchase_cost: 100, sales_tax: 0 }),
+    ];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 150 }),
+      createItem({ id: 'i2', pallet_id: 'p2', status: 'sold', sale_price: 150 }),
+      createItem({ id: 'i3', pallet_id: 'p3', status: 'sold', sale_price: 150 }),
+    ];
+
+    const result = calculatePalletTypeComparison(pallets, items, []);
+
+    // Should have 2 groups: "Unspecified" (for null/empty) and "Amazon Monster"
+    expect(result).toHaveLength(2);
+    const unspecified = result.find(p => p.palletType === 'Unspecified');
+    expect(unspecified).toBeDefined();
+    expect(unspecified!.palletCount).toBe(2);
+  });
+
+  it('should track mystery box indicator based on source_type', () => {
+    const pallets = [
+      createPallet({ id: 'p1', source_name: 'Target Mystery', source_type: 'mystery_box', purchase_cost: 50 }),
+      createPallet({ id: 'p2', source_name: 'Amazon Monster', source_type: 'pallet', purchase_cost: 100 }),
+    ];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 80 }),
+      createItem({ id: 'i2', pallet_id: 'p2', status: 'sold', sale_price: 150 }),
+    ];
+
+    const result = calculatePalletTypeComparison(pallets, items, []);
+
+    const mysteryBox = result.find(p => p.palletType === 'Target Mystery');
+    const pallet = result.find(p => p.palletType === 'Amazon Monster');
+
+    expect(mysteryBox!.isMysteryBox).toBe(true);
+    expect(pallet!.isMysteryBox).toBe(false);
+  });
+
+  it('should calculate sell-through rate correctly', () => {
+    const pallets = [createPallet({ id: 'p1', source_name: 'Test Type', purchase_cost: 100 })];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 50 }),
+      createItem({ id: 'i2', pallet_id: 'p1', status: 'sold', sale_price: 60 }),
+      createItem({ id: 'i3', pallet_id: 'p1', status: 'listed' }),
+      createItem({ id: 'i4', pallet_id: 'p1', status: 'listed' }),
+    ];
+
+    const result = calculatePalletTypeComparison(pallets, items, []);
+
+    expect(result[0].totalItemsSold).toBe(2);
+    expect(result[0].sellThroughRate).toBe(50); // 2/4 = 50%
+  });
+
+  it('should handle mixed source_types within same source_name', () => {
+    // Edge case: same source_name but different source_types
+    // Should group by source_name and use majority/first source_type
+    const pallets = [
+      createPallet({ id: 'p1', source_name: 'Target Mix', source_type: 'pallet', purchase_cost: 100, sales_tax: 0 }),
+      createPallet({ id: 'p2', source_name: 'Target Mix', source_type: 'mystery_box', purchase_cost: 100, sales_tax: 0 }),
+    ];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 150 }),
+      createItem({ id: 'i2', pallet_id: 'p2', status: 'sold', sale_price: 150 }),
+    ];
+
+    const result = calculatePalletTypeComparison(pallets, items, []);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].palletType).toBe('Target Mix');
+    expect(result[0].palletCount).toBe(2);
+    // isMysteryBox is true if ANY pallet in the group is a mystery box
+    expect(result[0].isMysteryBox).toBe(true);
+  });
+
+  it('should handle expenses correctly', () => {
+    const pallets = [
+      createPallet({ id: 'p1', source_name: 'Amazon Monster', purchase_cost: 100, sales_tax: 0 }),
+    ];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 200 }),
+    ];
+    const expenses = [
+      createExpense({ id: 'e1', amount: 30, pallet_ids: ['p1'] }),
+    ];
+
+    const result = calculatePalletTypeComparison(pallets, items, expenses);
 
     // Profit: 200 - 100 - 30 = 70
     expect(result[0].totalProfit).toBe(70);

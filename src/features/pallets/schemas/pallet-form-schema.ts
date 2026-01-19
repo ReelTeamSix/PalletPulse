@@ -2,6 +2,14 @@
 import { z } from 'zod';
 import { PalletStatus } from '@/src/types/database';
 
+// Pallet/Mystery Box type options
+export type PalletSourceType = 'pallet' | 'mystery_box';
+
+export const PALLET_SOURCE_TYPE_OPTIONS: { label: string; value: PalletSourceType; icon: string }[] = [
+  { label: 'Pallet', value: 'pallet', icon: 'cube-outline' },
+  { label: 'Mystery Box', value: 'mystery_box', icon: 'gift-outline' },
+];
+
 // Pallet status options (internal workflow)
 export const PALLET_STATUS_OPTIONS: { label: string; value: PalletStatus }[] = [
   { label: 'Unprocessed', value: 'unprocessed' },
@@ -11,6 +19,11 @@ export const PALLET_STATUS_OPTIONS: { label: string; value: PalletStatus }[] = [
 
 // Pallet form schema - simplified for flexibility
 export const palletFormSchema = z.object({
+  // Pallet or Mystery Box
+  source_type: z
+    .enum(['pallet', 'mystery_box'] as const)
+    .default('pallet'),
+
   name: z
     .string()
     .min(1, 'Pallet name is required')
@@ -96,6 +109,7 @@ export function getLocalDateString(date: Date = new Date()): string {
 // Default values for new pallet form (function to ensure fresh date each time)
 export function getDefaultPalletFormValues(): Partial<PalletFormData> {
   return {
+    source_type: 'pallet',
     name: '',
     supplier: null,
     source_name: null,
