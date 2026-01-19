@@ -231,6 +231,13 @@ export default function ItemDetailScreen() {
     return diffDays >= 0 ? diffDays : null;
   }, [hasSold, item.listing_date, item.sale_date]);
 
+  // Check if there's any sale detail content to show
+  const hasSaleDetails = hasSold && (
+    (item.platform_fee !== null && item.platform_fee > 0) ||
+    (item.shipping_cost !== null && item.shipping_cost > 0) ||
+    item.listing_date !== null
+  );
+
   return (
     <>
       <Stack.Screen
@@ -421,8 +428,8 @@ export default function ItemDetailScreen() {
             </View>
           )}
 
-          {/* Sale Details Section for Sold Items */}
-          {hasSold && (
+          {/* Sale Details Section for Sold Items - only show if there's content */}
+          {hasSaleDetails && (
             <View style={styles.section}>
               <View style={styles.saleDetailsHeader}>
                 <Text style={styles.sectionTitle}>Sale Details</Text>
