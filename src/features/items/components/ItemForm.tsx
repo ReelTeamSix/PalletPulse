@@ -14,9 +14,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Ionicons } from '@expo/vector-icons';
 import { Input, Button, PhotoPicker, PhotoItem } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { shadows } from '@/src/constants/shadows';
 import type { SalesPlatform } from '@/src/types/database';
 import {
   itemFormSchema,
@@ -247,9 +249,18 @@ export function ItemForm({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        {/* Inventory Source Section */}
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIconContainer}>
+            <Ionicons name="cube-outline" size={18} color={colors.primary} />
+          </View>
+          <Text style={styles.sectionLabel}>INVENTORY SOURCE</Text>
+        </View>
+
         {/* Pallet Link Banner (when pre-selected) */}
         {isPalletPreSelected && linkedPallet && (
           <View style={styles.palletBanner}>
+            <Ionicons name="link" size={16} color={colors.background} style={styles.palletBannerIcon} />
             <Text style={styles.palletBannerText}>
               Adding to: {linkedPallet.name}
             </Text>
@@ -259,7 +270,7 @@ export function ItemForm({
         {/* Pallet Selector (when NOT pre-selected and pallets exist) */}
         {!isPalletPreSelected && pallets.length > 0 && (
           <View style={styles.palletSelector}>
-            <Text style={styles.label}>Link to Pallet (Optional)</Text>
+            <Text style={styles.fieldLabel}>Link to Pallet</Text>
             <Controller
               control={control}
               name="pallet_id"
@@ -291,8 +302,13 @@ export function ItemForm({
                           setShowPalletPicker(false);
                         }}
                       >
-                        <Text style={styles.palletOptionText}>Individual Item (No Pallet)</Text>
-                        {!value && <Text style={styles.palletOptionCheck}>✓</Text>}
+                        <View style={styles.palletOptionContent}>
+                          <Ionicons name="cart-outline" size={18} color={!value ? colors.primary : colors.textSecondary} />
+                          <Text style={[styles.palletOptionText, !value && styles.palletOptionTextSelected]}>
+                            Individual Item (No Pallet)
+                          </Text>
+                        </View>
+                        {!value && <Ionicons name="checkmark" size={20} color={colors.primary} />}
                       </Pressable>
                       {pallets.map((p) => (
                         <Pressable
@@ -306,8 +322,13 @@ export function ItemForm({
                             setShowPalletPicker(false);
                           }}
                         >
-                          <Text style={styles.palletOptionText}>{p.name}</Text>
-                          {value === p.id && <Text style={styles.palletOptionCheck}>✓</Text>}
+                          <View style={styles.palletOptionContent}>
+                            <Ionicons name="cube" size={18} color={value === p.id ? colors.primary : colors.textSecondary} />
+                            <Text style={[styles.palletOptionText, value === p.id && styles.palletOptionTextSelected]}>
+                              {p.name}
+                            </Text>
+                          </View>
+                          {value === p.id && <Ionicons name="checkmark" size={20} color={colors.primary} />}
                         </Pressable>
                       ))}
                     </View>
@@ -319,7 +340,20 @@ export function ItemForm({
         )}
 
         {/* Photos Section */}
-        <Text style={styles.sectionTitle}>Photos</Text>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIconContainer}>
+            <Ionicons name="camera-outline" size={18} color={colors.primary} />
+          </View>
+          <Text style={styles.sectionLabel}>PHOTOS</Text>
+          <View style={styles.photoCountContainer}>
+            <Text style={styles.photoCount}>({localPhotos.length}/{maxPhotos})</Text>
+            {maxPhotos > 5 && (
+              <View style={styles.proBadge}>
+                <Text style={styles.proBadgeText}>PRO</Text>
+              </View>
+            )}
+          </View>
+        </View>
         <PhotoPicker
           photos={localPhotos}
           onPhotosChange={handlePhotosChange}
@@ -328,7 +362,12 @@ export function ItemForm({
         />
 
         {/* Basic Info Section */}
-        <Text style={styles.sectionTitle}>Basic Info</Text>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIconContainer}>
+            <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+          </View>
+          <Text style={styles.sectionLabel}>ITEM DETAILS</Text>
+        </View>
 
         {/* Item Name */}
         <Controller
@@ -366,84 +405,60 @@ export function ItemForm({
           )}
         />
 
-        {/* Quantity and Condition Row */}
-        <View style={styles.row}>
-          <View style={styles.halfField}>
-            <Controller
-              control={control}
-              name="quantity"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Quantity"
-                  placeholder="1"
-                  value={value?.toString() || '1'}
-                  onChangeText={(text) => {
-                    const num = parseInt(text, 10) || 1;
-                    onChange(num);
-                  }}
-                  onBlur={onBlur}
-                  error={errors.quantity?.message}
-                  keyboardType="number-pad"
-                />
-              )}
+        {/* Quantity */}
+        <Controller
+          control={control}
+          name="quantity"
+          render={({ field: { onChange, onBlur, value } }) => (
+            <Input
+              label="Quantity"
+              placeholder="1"
+              value={value?.toString() || '1'}
+              onChangeText={(text) => {
+                const num = parseInt(text, 10) || 1;
+                onChange(num);
+              }}
+              onBlur={onBlur}
+              error={errors.quantity?.message}
+              keyboardType="number-pad"
             />
-          </View>
-          <View style={styles.halfField}>
-            <Text style={styles.label}>Condition</Text>
-            <Controller
-              control={control}
-              name="condition"
-              render={({ field: { onChange, value } }) => (
-                <View style={styles.conditionPicker}>
-                  <Pressable
-                    style={styles.conditionButton}
-                    onPress={() => {
-                      // Cycle through conditions
-                      const currentIndex = ITEM_CONDITION_OPTIONS.findIndex(o => o.value === value);
-                      const nextIndex = (currentIndex + 1) % ITEM_CONDITION_OPTIONS.length;
-                      onChange(ITEM_CONDITION_OPTIONS[nextIndex].value);
-                    }}
-                  >
-                    <Text style={styles.conditionButtonText}>
-                      {ITEM_CONDITION_OPTIONS.find(o => o.value === value)?.label || 'Select'}
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-            />
-          </View>
+          )}
+        />
+
+        {/* Condition Pills */}
+        <Text style={styles.fieldLabel}>Condition</Text>
+        <View style={styles.conditionPillsContainer}>
+          {ITEM_CONDITION_OPTIONS.map((option) => {
+            const isSelected = watchCondition === option.value;
+            return (
+              <Pressable
+                key={option.value}
+                style={[
+                  styles.conditionPill,
+                  isSelected && styles.conditionPillSelected,
+                ]}
+                onPress={() => setValue('condition', option.value)}
+              >
+                <Text
+                  style={[
+                    styles.conditionPillText,
+                    isSelected && styles.conditionPillTextSelected,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
-        {/* Condition Options (scrollable) */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.conditionScroll}
-          contentContainerStyle={styles.conditionScrollContent}
-        >
-          {ITEM_CONDITION_OPTIONS.map((option) => (
-            <Pressable
-              key={option.value}
-              style={[
-                styles.conditionChip,
-                watchCondition === option.value && styles.conditionChipSelected,
-              ]}
-              onPress={() => setValue('condition', option.value)}
-            >
-              <Text
-                style={[
-                  styles.conditionChipText,
-                  watchCondition === option.value && styles.conditionChipTextSelected,
-                ]}
-              >
-                {option.label}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-
         {/* Pricing Section */}
-        <Text style={styles.sectionTitle}>Pricing</Text>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIconContainer}>
+            <Ionicons name="pricetag-outline" size={18} color={colors.primary} />
+          </View>
+          <Text style={styles.sectionLabel}>PRICING</Text>
+        </View>
 
         <View style={styles.row}>
           <View style={styles.halfField}>
@@ -540,7 +555,12 @@ export function ItemForm({
         )}
 
         {/* Organization Section */}
-        <Text style={styles.sectionTitle}>Organization</Text>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIconContainer}>
+            <Ionicons name="folder-outline" size={18} color={colors.primary} />
+          </View>
+          <Text style={styles.sectionLabel}>ORGANIZATION</Text>
+        </View>
 
         {/* Storage Location with autocomplete */}
         <View style={[styles.autocompleteContainer, { zIndex: 20 }]}>
@@ -906,22 +926,83 @@ export function ItemForm({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.backgroundSecondary,
   },
   content: {
     padding: spacing.lg,
-    paddingBottom: spacing.xxl * 2, // Extra padding so buttons can scroll above keyboard
+    paddingBottom: spacing.xxl * 2,
   },
-  palletBanner: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
+  // Section Headers
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.lg,
     marginBottom: spacing.md,
+  },
+  sectionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+    flex: 1,
+  },
+  fieldLabel: {
+    fontSize: fontSize.sm,
+    fontWeight: '500',
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+  },
+  // Photo count and PRO badge
+  photoCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  photoCount: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  proBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  proBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.background,
+    letterSpacing: 0.5,
+  },
+  // Pallet Banner
+  palletBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+    ...shadows.sm,
+  },
+  palletBannerIcon: {
+    marginRight: spacing.sm,
   },
   palletBannerText: {
     color: colors.background,
     fontSize: fontSize.sm,
     fontWeight: '600',
+    flex: 1,
   },
   saleDetailsSection: {
     backgroundColor: colors.surface,
@@ -963,12 +1044,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
+    ...shadows.sm,
   },
   palletPickerText: {
     fontSize: fontSize.md,
@@ -984,15 +1066,12 @@ const styles = StyleSheet.create({
   palletPickerDropdown: {
     marginTop: spacing.xs,
     backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 10,
-    maxHeight: 200,
+    ...shadows.lg,
+    maxHeight: 240,
+    overflow: 'hidden',
   },
   palletOption: {
     flexDirection: 'row',
@@ -1004,23 +1083,21 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   palletOptionSelected: {
-    backgroundColor: colors.primary + '10',
+    backgroundColor: colors.primaryLight,
+  },
+  palletOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
   },
   palletOptionText: {
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
-  palletOptionCheck: {
-    fontSize: fontSize.md,
+  palletOptionTextSelected: {
     color: colors.primary,
     fontWeight: '600',
-  },
-  sectionTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
   },
   label: {
     fontSize: fontSize.sm,
@@ -1039,47 +1116,32 @@ const styles = StyleSheet.create({
     minHeight: 60,
     textAlignVertical: 'top',
   },
-  conditionPicker: {
-    marginBottom: spacing.sm,
-  },
-  conditionButton: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    alignItems: 'center',
-  },
-  conditionButtonText: {
-    fontSize: fontSize.md,
-    color: colors.textPrimary,
-    fontWeight: '500',
-  },
-  conditionScroll: {
+  // Condition Pills
+  conditionPillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
     marginBottom: spacing.md,
   },
-  conditionScrollContent: {
-    paddingRight: spacing.md,
-    gap: spacing.sm,
-  },
-  conditionChip: {
+  conditionPill: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     borderRadius: borderRadius.full,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
+    ...shadows.sm,
   },
-  conditionChipSelected: {
+  conditionPillSelected: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  conditionChipText: {
+  conditionPillText: {
     fontSize: fontSize.sm,
     color: colors.textPrimary,
+    fontWeight: '500',
   },
-  conditionChipTextSelected: {
+  conditionPillTextSelected: {
     color: colors.background,
     fontWeight: '600',
   },
@@ -1120,15 +1182,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     padding: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
     backgroundColor: colors.background,
+    ...shadows.lg,
   },
   cancelButton: {
-    flex: 1,
+    flex: 0.4,
   },
   submitButton: {
-    flex: 1,
+    flex: 0.6,
   },
   // Status picker styles
   statusSelector: {
