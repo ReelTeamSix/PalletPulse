@@ -1496,4 +1496,46 @@ Tests:       829 passed, 829 total
 
 ---
 
+### 11D: Add Pallet Screen Redesign ✅
+**Completed:** Jan 18, 2026
+
+**Overview:**
+Redesigned the Add Pallet form to match inspiration designs with improved UI layout and user-buildable source type history.
+
+**Files Modified:**
+- `src/features/pallets/components/PalletForm.tsx` - Form redesign
+  - Added card container on gray background with shadow
+  - Changed labels to UPPERCASE with inline asterisks for required fields
+  - Made Purchase Cost and Sales Tax fields side-by-side
+  - Added quick-select chips from user's source history
+  - Added "Tap to reuse a previous source type" hint
+  - Added calendar icon to date picker
+  - Replaced text emoji checkmark with Ionicons checkmark
+  - Simplified placeholder text and hints
+
+- `app/pallets/new.tsx` - Updated background to `backgroundSecondary`
+
+**Features:**
+- **Card Container:** White elevated card on gray background
+- **UPPERCASE Labels:** All labels follow design system convention
+- **User History Chips:** Quick-select chips from user's previous source types (buildable list, not preset)
+- **Side-by-Side Cost Fields:** Purchase Cost and Sales Tax fields are adjacent
+- **Calendar Icon:** Date picker has calendar icon for better affordance
+- **Fixed Footer:** Cancel and Create Pallet buttons in fixed footer
+
+**Design Decision:**
+User requested buildable source list instead of preset options. The form now shows chips from the user's own pallet history using `getUniqueSourceNames(pallets)` helper. This allows users to reuse previous source types while building their own vocabulary over time.
+
+**Test Results:**
+```
+TypeScript: passes
+Lint: passes
+```
+
+**Commits:**
+- `feat(pallets): redesign Add Pallet form with improved UI`
+- `style(pallets): use backgroundSecondary in Add Pallet screen`
+
+---
+
 **Reply "approved" to continue, or provide feedback.**
