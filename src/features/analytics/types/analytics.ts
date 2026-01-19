@@ -12,6 +12,13 @@ export interface HeroMetrics {
   activeInventoryValue: number;
 }
 
+// Retail value metrics for deal quality analysis
+export interface RetailMetrics {
+  totalRetailValue: number;      // Σ item.retail_price
+  retailRecoveryRate: number;    // (Σ sale_price / Σ retail_price) × 100
+  costPerDollarRetail: number;   // purchase_cost / total_retail_value (lower = better deal)
+}
+
 // Individual pallet analytics for leaderboard
 export interface PalletAnalytics {
   id: string;
@@ -26,6 +33,8 @@ export interface PalletAnalytics {
   soldCount: number;
   avgDaysToSell: number | null;
   sellThroughRate: number;
+  // Retail metrics
+  retailMetrics: RetailMetrics | null;
 }
 
 // Aggregated metrics by pallet source type

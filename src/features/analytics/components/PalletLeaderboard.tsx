@@ -123,9 +123,16 @@ function LeaderboardItem({ pallet, rank, onPress }: LeaderboardItemProps) {
             <Text style={[styles.profitValue, { color: profitColor }]}>
               {formatCurrency(pallet.profit)}
             </Text>
-            <Text style={[styles.roiValue, { color: roiColor }]}>
-              {formatROI(pallet.roi)}
-            </Text>
+            <View style={styles.secondaryMetrics}>
+              <Text style={[styles.roiValue, { color: roiColor }]}>
+                {formatROI(pallet.roi)}
+              </Text>
+              {pallet.retailMetrics && pallet.retailMetrics.retailRecoveryRate > 0 && (
+                <Text style={styles.retailRecovery}>
+                  {Math.round(pallet.retailMetrics.retailRecoveryRate)}% retail
+                </Text>
+              )}
+            </View>
           </View>
 
           {onPress && (
@@ -232,9 +239,18 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
+  secondaryMetrics: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   roiValue: {
     fontSize: fontSize.xs,
     fontWeight: '500',
+  },
+  retailRecovery: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
   },
   // Progress bar styles
   progressContainer: {

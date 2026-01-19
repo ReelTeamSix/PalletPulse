@@ -6,6 +6,7 @@ import {
   calculateTypeComparison,
   calculateSupplierComparison,
   calculatePalletTypeComparison,
+  calculateRetailMetrics,
   getStaleItems,
   calculateProfitTrend,
   calculatePeriodSummary,
@@ -777,5 +778,100 @@ describe('calculatePalletTypeComparison', () => {
 
     // Profit: 200 - 100 - 30 = 70
     expect(result[0].totalProfit).toBe(70);
+  });
+});
+
+// ============================================================================
+// calculateRetailMetrics Tests
+// ============================================================================
+
+describe('calculateRetailMetrics', () => {
+  it('should return null when no items have retail prices', () => {
+    const items = [
+      createItem({ id: 'i1', retail_price: null }),
+      createItem({ id: 'i2', retail_price: null }),
+    ];
+
+    const result = calculateRetailMetrics(items, 100);
+
+    expect(result).toBeNull();
+  });
+
+  it('should return null when all retail prices are zero', () => {
+    const items = [
+      createItem({ id: 'i1', retail_price: 0 }),
+      createItem({ id: 'i2', retail_price: 0 }),
+    ];
+
+    const result = calculateRetailMetrics(items, 100);
+
+    expect(result).toBeNull();
+  });
+
+  it('should calculate total retail value correctly', () => {
+    const items = [
+      createItem({ id: 'i1', retail_price: 100 }),
+      createItem({ id: 'i2', retail_price: 150 }),
+      createItem({ id: 'i3', retail_price: 50 }),
+    ];
+
+    const result = calculateRetailMetrics(items, 100);
+
+    expect(result).not.toBeNull();
+    expect(result!.totalRetailValue).toBe(300);
+  });
+
+  it('should calculate retail recovery rate for sold items', () => {
+    const items = [
+      createItem({ id: 'i1', retail_price: 100, status: 'sold', sale_price: 80 }),
+      createItem({ id: 'i2', retail_price: 100, status: 'sold', sale_price: 60 }),
+      createItem({ id: 'i3', retail_price: 100, status: 'listed' }), // Not sold
+    ];
+
+    const result = calculateRetailMetrics(items, 100);
+
+    // Sold items: 80 + 60 = 140 sale total, 100 + 100 = 200 retail total
+    // Recovery rate: (140 / 200) * 100 = 70%
+    expect(result).not.toBeNull();
+    expect(result!.retailRecoveryRate).toBe(70);
+  });
+
+  it('should calculate cost per dollar retail correctly', () => {
+    const items = [
+      createItem({ id: 'i1', retail_price: 200 }),
+      createItem({ id: 'i2', retail_price: 300 }),
+    ];
+
+    // $100 cost / $500 retail = $0.20 per dollar
+    const result = calculateRetailMetrics(items, 100);
+
+    expect(result).not.toBeNull();
+    expect(result!.costPerDollarRetail).toBe(0.2);
+  });
+
+  it('should ignore items without retail prices in calculations', () => {
+    const items = [
+      createItem({ id: 'i1', retail_price: 200 }),
+      createItem({ id: 'i2', retail_price: null }), // Should be ignored
+      createItem({ id: 'i3', retail_price: 100 }),
+    ];
+
+    const result = calculateRetailMetrics(items, 150);
+
+    expect(result).not.toBeNull();
+    expect(result!.totalRetailValue).toBe(300);
+    expect(result!.costPerDollarRetail).toBe(0.5); // 150 / 300
+  });
+
+  it('should handle edge case of zero retail recovery when no sold items', () => {
+    const items = [
+      createItem({ id: 'i1', retail_price: 100, status: 'listed' }),
+      createItem({ id: 'i2', retail_price: 100, status: 'unlisted' }),
+    ];
+
+    const result = calculateRetailMetrics(items, 100);
+
+    expect(result).not.toBeNull();
+    expect(result!.retailRecoveryRate).toBe(0);
   });
 });

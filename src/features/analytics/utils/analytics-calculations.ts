@@ -8,6 +8,7 @@ import type { DateRange } from '@/src/components/ui/DateRangeFilter';
 import type {
   HeroMetrics,
   PalletAnalytics,
+  RetailMetrics,
   TypeComparison,
   SupplierComparison,
   PalletTypeComparison,
@@ -153,6 +154,58 @@ export function calculateHeroMetrics(
 // ============================================================================
 
 /**
+ * Calculate retail value metrics for a set of items.
+ * @param items - Items to calculate metrics for
+ * @param palletCost - Total pallet cost for cost per dollar retail calculation
+ * @returns RetailMetrics or null if no retail values exist
+ */
+export function calculateRetailMetrics(
+  items: Item[],
+  palletCost: number
+): RetailMetrics | null {
+  // Sum up retail values (only items with retail_price set)
+  const itemsWithRetail = items.filter((item) => item.retail_price !== null && item.retail_price > 0);
+
+  if (itemsWithRetail.length === 0) {
+    return null;
+  }
+
+  const totalRetailValue = itemsWithRetail.reduce(
+    (sum, item) => sum + (item.retail_price ?? 0),
+    0
+  );
+
+  // Calculate retail recovery rate (only for sold items)
+  const soldItemsWithRetail = itemsWithRetail.filter(
+    (item) => item.status === 'sold' && item.sale_price !== null
+  );
+
+  const soldRetailTotal = soldItemsWithRetail.reduce(
+    (sum, item) => sum + (item.retail_price ?? 0),
+    0
+  );
+  const soldSalePriceTotal = soldItemsWithRetail.reduce(
+    (sum, item) => sum + (item.sale_price ?? 0),
+    0
+  );
+
+  const retailRecoveryRate = soldRetailTotal > 0
+    ? (soldSalePriceTotal / soldRetailTotal) * 100
+    : 0;
+
+  // Calculate cost per dollar retail (lower = better deal)
+  const costPerDollarRetail = totalRetailValue > 0
+    ? palletCost / totalRetailValue
+    : 0;
+
+  return {
+    totalRetailValue,
+    retailRecoveryRate,
+    costPerDollarRetail,
+  };
+}
+
+/**
  * Calculate pallet analytics for leaderboard.
  * @param pallets - All pallets
  * @param items - All items
@@ -191,6 +244,9 @@ export function calculatePalletLeaderboard(
       ? (result.soldItemsCount / palletItems.length) * 100
       : 0;
 
+    // Calculate retail metrics
+    const retailMetrics = calculateRetailMetrics(palletItems, result.totalCost);
+
     return {
       id: pallet.id,
       name: pallet.name,
@@ -204,6 +260,7 @@ export function calculatePalletLeaderboard(
       soldCount: result.soldItemsCount,
       avgDaysToSell,
       sellThroughRate,
+      retailMetrics,
     };
   });
 
