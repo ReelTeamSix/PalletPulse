@@ -3,7 +3,6 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/src/components/ui/Card';
-import { Badge } from '@/src/components/ui/Badge';
 import { ThumbnailImage } from '@/src/components/ui/ThumbnailImage';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
@@ -23,10 +22,10 @@ interface ItemCardProps {
   thumbnailUri?: string | null;
 }
 
-const STATUS_CONFIG: Record<ItemStatus, { label: string; variant: 'default' | 'success' | 'warning' | 'info' }> = {
-  unlisted: { label: 'Unlisted', variant: 'default' },
-  listed: { label: 'Listed', variant: 'info' },
-  sold: { label: 'Sold', variant: 'success' },
+const STATUS_CONFIG: Record<ItemStatus, { label: string; color: string }> = {
+  unlisted: { label: 'UNLISTED', color: colors.neutral },
+  listed: { label: 'LISTED', color: colors.primary },
+  sold: { label: 'SOLD', color: colors.profit },
 };
 
 export function ItemCard({
@@ -54,6 +53,7 @@ export function ItemCard({
   const hasListing = item.listing_price !== null;
   const hasSale = hasSold && item.sale_price !== null;
   const hasCost = item.allocated_cost !== null || item.purchase_cost !== null;
+  const hasFees = hasSold && item.platform_fee !== null && item.platform_fee > 0;
 
   return (
     <Card shadow="sm" padding="md" onPress={onPress} style={styles.card}>
@@ -68,7 +68,12 @@ export function ItemCard({
             <Text style={styles.name} numberOfLines={1}>
               {item.name}
             </Text>
-            <Badge variant={statusConfig.variant} size="sm" label={statusConfig.label} />
+            <View style={styles.statusIndicator}>
+              <View style={[styles.statusDot, { backgroundColor: statusConfig.color }]} />
+              <Text style={[styles.statusText, { color: statusConfig.color }]}>
+                {statusConfig.label}
+              </Text>
+            </View>
           </View>
           <View style={styles.badgeRow}>
             <View style={[styles.conditionBadge, { backgroundColor: conditionColor + '20' }]}>
@@ -90,7 +95,7 @@ export function ItemCard({
       </View>
 
       <View style={styles.priceGrid}>
-        {hasRetail && (
+        {hasRetail && !hasSold && (
           <View style={styles.priceItem}>
             <Text style={styles.priceLabel}>MSRP</Text>
             <Text style={styles.priceValue}>{formatCurrency(item.retail_price!)}</Text>
@@ -107,6 +112,14 @@ export function ItemCard({
             <Text style={styles.priceLabel}>SOLD</Text>
             <Text style={[styles.priceValue, styles.soldValue]}>
               {formatCurrency(item.sale_price!)}
+            </Text>
+          </View>
+        )}
+        {hasFees && (
+          <View style={styles.priceItem}>
+            <Text style={styles.priceLabel}>FEES</Text>
+            <Text style={[styles.priceValue, styles.feesValue]}>
+              -{formatCurrency(item.platform_fee!)}
             </Text>
           </View>
         )}
@@ -170,6 +183,21 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: spacing.sm,
   },
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
   badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -229,6 +257,9 @@ const styles = StyleSheet.create({
   },
   soldValue: {
     color: colors.profit,
+  },
+  feesValue: {
+    color: colors.loss,
   },
   footer: {
     flexDirection: 'row',
