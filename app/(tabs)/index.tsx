@@ -1,25 +1,42 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
-import { spacing } from '@/src/constants/spacing';
+import { spacing, fontSize } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
 import { useExpensesStore } from '@/src/stores/expenses-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
-import { formatCurrency } from '@/src/lib/profit-utils';
 import {
   HeroCard,
   MetricCard,
   MetricGrid,
   ActionButtonPair,
   RecentActivityFeed,
+  InsightsCard,
   Activity,
 } from '@/src/features/dashboard/components';
+import {
+  TimePeriod,
+  isWithinTimePeriod,
+  isWithinDateRange,
+  getPreviousPeriodRange,
+  generateInsights,
+  getUserStage,
+  getEmptyStateContent,
+} from '@/src/features/dashboard/utils';
+
+// Get time-based greeting
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -27,55 +44,108 @@ export default function DashboardScreen() {
   const { pallets, fetchPallets, isLoading: palletsLoading } = usePalletsStore();
   const { items, fetchItems, isLoading: itemsLoading } = useItemsStore();
   const { expenses, fetchExpenses, isLoading: expensesLoading } = useExpensesStore();
-  const { isExpenseTrackingEnabled } = useUserSettingsStore();
-  const expenseTrackingEnabled = isExpenseTrackingEnabled();
+
+  // Time period filter for hero card
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
 
   useFocusEffect(
     useCallback(() => {
       fetchPallets();
       fetchItems();
-      if (expenseTrackingEnabled) {
-        fetchExpenses();
-      }
-    }, [expenseTrackingEnabled]) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
+      // Always fetch expenses for accurate profit calculation
+      // (even if user doesn't have access to expenses UI)
+      fetchExpenses();
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
   );
 
-  const isLoading = palletsLoading || itemsLoading || (expenseTrackingEnabled && expensesLoading);
+  const isLoading = palletsLoading || itemsLoading || expensesLoading;
 
-  const metrics = useMemo(() => {
-    const soldItems = items.filter(item => item.status === 'sold');
-    const listedItems = items.filter(item => item.status === 'listed');
+  // Helper to calculate profit for a set of sold items and expenses
+  const calculatePeriodProfit = useCallback((
+    soldItems: typeof items,
+    periodExpensesAmount: number
+  ) => {
+    const revenue = soldItems.reduce((sum, item) => sum + (item.sale_price ?? 0), 0);
+    const cogs = soldItems.reduce((sum, item) => sum + (item.allocated_cost ?? item.purchase_cost ?? 0), 0);
+    const fees = soldItems.reduce((sum, item) => sum + (item.platform_fee ?? 0) + (item.shipping_cost ?? 0), 0);
+    return revenue - cogs - fees - periodExpensesAmount;
+  }, []);
 
-    const totalRevenue = soldItems.reduce((sum, item) => {
-      return sum + (item.sale_price ?? 0);
-    }, 0);
+  // Metrics filtered by time period (for hero card)
+  const periodMetrics = useMemo(() => {
+    // Filter sold items by sale date within the time period
+    const soldItemsInPeriod = items.filter(
+      item => item.status === 'sold' && isWithinTimePeriod(item.sale_date, timePeriod)
+    );
 
-    const totalPalletCosts = pallets.reduce((sum, pallet) => {
-      return sum + pallet.purchase_cost + (pallet.sales_tax || 0);
-    }, 0);
+    // Always include expenses for accurate profit calculation
+    const periodExpensesAmount = expenses
+      .filter(e => isWithinTimePeriod(e.expense_date, timePeriod))
+      .reduce((sum, e) => sum + e.amount, 0);
 
-    const individualItemsCost = items
-      .filter(item => !item.pallet_id && item.purchase_cost)
-      .reduce((sum, item) => sum + (item.purchase_cost ?? 0), 0);
+    const periodProfit = calculatePeriodProfit(soldItemsInPeriod, periodExpensesAmount);
 
-    const totalExpenses = expenseTrackingEnabled
-      ? expenses.reduce((sum, e) => sum + e.amount, 0)
-      : 0;
+    // Calculate previous period profit for comparison
+    const { start: prevStart, end: prevEnd } = getPreviousPeriodRange(timePeriod);
+    let previousProfit: number | undefined;
 
-    const totalProfit = totalRevenue - totalPalletCosts - individualItemsCost - totalExpenses;
+    if (prevStart && prevEnd) {
+      const soldItemsInPrevPeriod = items.filter(
+        item => item.status === 'sold' && isWithinDateRange(item.sale_date, prevStart, prevEnd)
+      );
 
-    // Calculate active inventory value (listed items at listing price)
-    const activeValue = listedItems.reduce((sum, item) => {
-      return sum + (item.listing_price ?? item.purchase_cost ?? 0);
-    }, 0);
+      const prevExpensesAmount = expenses
+        .filter(e => isWithinDateRange(e.expense_date, prevStart, prevEnd))
+        .reduce((sum, e) => sum + e.amount, 0);
+
+      previousProfit = calculatePeriodProfit(soldItemsInPrevPeriod, prevExpensesAmount);
+    }
 
     return {
-      totalProfit,
-      soldCount: soldItems.length,
-      activeValue,
-      isProfitable: totalProfit >= 0,
+      profit: periodProfit,
+      soldCount: soldItemsInPeriod.length,
+      isProfitable: periodProfit >= 0,
+      previousProfit,
     };
-  }, [pallets, items, expenses, expenseTrackingEnabled]);
+  }, [items, expenses, timePeriod, calculatePeriodProfit]);
+
+  // Get stale threshold from user settings (needed for metrics calculation)
+  const { settings } = useUserSettingsStore();
+  const staleThresholdDays = settings?.stale_threshold_days ?? 30;
+
+  // Actionable metrics for metric cards
+  const actionableMetrics = useMemo(() => {
+    const now = new Date();
+
+    // Pending to list: items with status 'unlisted' (added but not listed for sale)
+    const unlistedItems = items.filter(item => item.status === 'unlisted');
+
+    // Stale items: listed items where listing_date is older than threshold
+    const staleItems = items.filter(item => {
+      if (item.status !== 'listed' || !item.listing_date) return false;
+      const listingDate = new Date(item.listing_date);
+      const daysSinceListed = Math.floor((now.getTime() - listingDate.getTime()) / (1000 * 60 * 60 * 24));
+      return daysSinceListed >= staleThresholdDays;
+    });
+
+    return {
+      pendingToListCount: unlistedItems.length,
+      staleItemsCount: staleItems.length,
+    };
+  }, [items, staleThresholdDays]);
+
+  // Generate smart insights and empty state content
+  const { insights, emptyState } = useMemo(() => {
+    const insightsInput = { pallets, items, staleThresholdDays };
+    const generatedInsights = generateInsights(insightsInput);
+    const userStage = getUserStage(insightsInput);
+    const emptyStateContent = getEmptyStateContent(userStage);
+
+    return {
+      insights: generatedInsights,
+      emptyState: emptyStateContent,
+    };
+  }, [pallets, items, staleThresholdDays]);
 
   // Build recent activity from sales, listings, and new pallets
   const recentActivity: Activity[] = useMemo(() => {
@@ -131,12 +201,8 @@ export default function DashboardScreen() {
   }, [items, pallets]);
 
   const handleRefresh = useCallback(async () => {
-    const promises = [fetchPallets(), fetchItems()];
-    if (expenseTrackingEnabled) {
-      promises.push(fetchExpenses());
-    }
-    await Promise.all(promises);
-  }, [expenseTrackingEnabled]); // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
+    await Promise.all([fetchPallets(), fetchItems(), fetchExpenses()]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
 
   const handleActivityPress = (activity: Activity) => {
     if (activity.type === 'sale' || activity.type === 'listed') {
@@ -157,33 +223,60 @@ export default function DashboardScreen() {
       }
     >
       <View style={styles.header}>
-        <Text style={styles.title}>Dashboard</Text>
+        <View>
+          <Text style={styles.title}>Dashboard</Text>
+          <Text style={styles.greeting}>{getGreeting()}</Text>
+        </View>
         <View style={styles.notificationButton}>
           <Ionicons name="notifications-outline" size={24} color={colors.textSecondary} />
         </View>
       </View>
 
       <HeroCard
-        totalProfit={metrics.totalProfit}
-        soldCount={metrics.soldCount}
+        totalProfit={periodMetrics.profit}
+        soldCount={periodMetrics.soldCount}
+        timePeriod={timePeriod}
+        onTimePeriodChange={setTimePeriod}
+        previousPeriodProfit={periodMetrics.previousProfit}
       />
 
       <MetricGrid>
         <MetricCard
-          icon="checkmark-done"
-          value={metrics.soldCount}
-          label="Items Sold"
-          color={colors.profit}
-          onPress={() => router.push('/(tabs)/inventory')}
+          icon="layers-outline"
+          value={actionableMetrics.pendingToListCount}
+          label="Pending to List"
+          color={actionableMetrics.pendingToListCount > 0 ? colors.primary : colors.neutral}
+          onPress={() => router.push({ pathname: '/(tabs)/inventory', params: { filter: 'unlisted', segment: 'items' } })}
         />
         <MetricCard
-          icon="wallet-outline"
-          value={formatCurrency(metrics.activeValue)}
-          label="Active Value"
-          color={colors.primary}
-          onPress={() => router.push('/(tabs)/inventory')}
+          icon="time-outline"
+          value={actionableMetrics.staleItemsCount}
+          label="Stale Items"
+          color={actionableMetrics.staleItemsCount > 0 ? colors.warning : colors.neutral}
+          onPress={() => router.push({ pathname: '/(tabs)/inventory', params: { filter: 'stale', segment: 'items' } })}
         />
       </MetricGrid>
+
+      <InsightsCard
+        insights={insights}
+        emptyState={emptyState}
+        onInsightPress={(insight) => {
+          // Use navigation data if available
+          if (insight.navigation) {
+            const { type, id } = insight.navigation;
+            if (type === 'item' && id) {
+              router.push(`/items/${id}`);
+            } else if (type === 'pallet' && id) {
+              router.push(`/pallets/${id}`);
+            } else {
+              router.push('/(tabs)/inventory');
+            }
+          } else {
+            // Fallback for insights without navigation data
+            router.push('/(tabs)/inventory');
+          }
+        }}
+      />
 
       <ActionButtonPair
         primaryLabel="Add Pallet"
@@ -220,6 +313,11 @@ const styles = StyleSheet.create({
   title: {
     ...typography.screenTitle,
     color: colors.textPrimary,
+  },
+  greeting: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
   },
   notificationButton: {
     width: 44,

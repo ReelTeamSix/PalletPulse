@@ -1,4 +1,4 @@
-// PalletPulse Subscription Tier Limits
+// Pallet Pro Subscription Tier Limits
 // Based on pricing tiers from PALLETPULSE_ONESHOT_CONTEXT.md
 
 export type SubscriptionTier = 'free' | 'starter' | 'pro' | 'enterprise';

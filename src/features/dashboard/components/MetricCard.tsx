@@ -3,14 +3,14 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/src/components/ui/Card';
 import { colors } from '@/src/constants/colors';
-import { spacing } from '@/src/constants/spacing';
-import { typography } from '@/src/constants/typography';
+import { spacing, borderRadius } from '@/src/constants/spacing';
 
 interface MetricCardProps {
   icon: keyof typeof Ionicons.glyphMap;
   value: string | number;
   label: string;
   color?: string;
+  trend?: number; // Optional percentage change
   onPress?: () => void;
 }
 
@@ -19,15 +19,29 @@ export function MetricCard({
   value,
   label,
   color = colors.primary,
+  trend,
   onPress,
 }: MetricCardProps) {
+  const trendColor = trend && trend >= 0 ? colors.profit : colors.loss;
+  const trendIcon = trend && trend >= 0 ? 'trending-up' : 'trending-down';
+
   const content = (
     <>
-      <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
-        <Ionicons name={icon} size={20} color={color} />
+      <View style={styles.topRow}>
+        <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
+          <Ionicons name={icon} size={22} color={color} />
+        </View>
+        {trend !== undefined && (
+          <View style={[styles.trendBadge, { backgroundColor: trendColor + '15' }]}>
+            <Ionicons name={trendIcon} size={12} color={trendColor} />
+            <Text style={[styles.trendText, { color: trendColor }]}>
+              {trend >= 0 ? '+' : ''}{trend}%
+            </Text>
+          </View>
+        )}
       </View>
-      <Text style={styles.value}>{value}</Text>
       <Text style={styles.label}>{label}</Text>
+      <Text style={styles.value}>{value}</Text>
     </>
   );
 
@@ -63,22 +77,43 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     flex: 1,
   },
-  iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    width: '100%',
     marginBottom: spacing.md,
   },
-  value: {
-    ...typography.metricValue,
-    color: colors.textPrimary,
-    marginBottom: spacing.xs,
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trendBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    gap: 2,
+  },
+  trendText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   label: {
-    ...typography.metricLabel,
+    fontSize: 13,
+    fontWeight: '500',
     color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  value: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    letterSpacing: -0.5,
   },
   grid: {
     flexDirection: 'row',

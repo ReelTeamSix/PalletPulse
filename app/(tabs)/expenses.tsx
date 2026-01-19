@@ -420,7 +420,7 @@ export default function ExpensesScreen() {
             <View style={styles.disclaimer}>
               <Ionicons name="information-circle" size={14} color={colors.textSecondary} />
               <Text style={styles.disclaimerText}>
-                Business expenses may be tax deductible. Consult a tax professional - PalletPulse is not tax advice.
+                Business expenses may be tax deductible. Consult a tax professional - Pallet Pro is not tax advice.
               </Text>
             </View>
           )}

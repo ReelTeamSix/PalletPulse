@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pallet Details V2</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#2563EB", // Royal Blue
+              "background-light": "#F3F4F6", // Gray 100
+              "background-dark": "#111827", // Gray 900
+              "surface-light": "#FFFFFF",
+              "surface-dark": "#1F2937", // Gray 800
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.75rem", // 12px
+            },
+          },
+        },
+      };
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-gray-100 antialiased selection:bg-primary selection:text-white transition-colors duration-200">
+<div class="max-w-md mx-auto min-h-screen relative pb-28">
+<header class="sticky top-0 z-20 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-4 flex items-center justify-between">
+<button class="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-primary">
+<span class="material-symbols-outlined text-2xl">arrow_back</span>
+</button>
+<h1 class="text-lg font-semibold text-primary">Pallet Details</h1>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-primary">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<button class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-red-500">
+<span class="material-symbols-outlined text-xl">delete</span>
+</button>
+</div>
+</header>
+<main class="px-5 space-y-6">
+<div>
+<h2 class="text-3xl font-bold text-gray-900 dark:text-white">Pallet #2</h2>
+</div>
+<section class="bg-white dark:bg-surface-dark rounded-3xl p-2 shadow-sm border border-gray-100 dark:border-gray-700">
+<div class="grid grid-cols-3 gap-2 mb-2">
+<div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-2xl text-center flex flex-col justify-center items-center shadow-sm">
+<span class="text-lg font-bold text-gray-900 dark:text-white">$242.50</span>
+<span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">Cost</span>
+</div>
+<div class="bg-green-50 dark:bg-green-900/30 p-4 rounded-2xl text-center flex flex-col justify-center items-center shadow-sm relative overflow-hidden">
+<div class="absolute top-0 right-0 w-8 h-8 bg-green-200 dark:bg-green-800 rounded-full -mr-4 -mt-4 opacity-50"></div>
+<span class="text-lg font-bold text-green-600 dark:text-green-400">$17.50</span>
+<span class="text-xs font-medium text-green-600/70 dark:text-green-400/70 uppercase tracking-wide mt-1">Profit</span>
+</div>
+<div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-2xl text-center flex flex-col justify-center items-center shadow-sm">
+<span class="text-lg font-bold text-green-600 dark:text-green-400">+7.2%</span>
+<span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mt-1">ROI</span>
+</div>
+</div>
+<div class="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 flex justify-between divide-x divide-gray-200 dark:divide-gray-600">
+<div class="flex-1 text-center px-1">
+<div class="text-xl font-bold text-gray-900 dark:text-white">2</div>
+<div class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase mt-0.5">Sold</div>
+</div>
+<div class="flex-1 text-center px-1">
+<div class="text-xl font-bold text-gray-900 dark:text-white">2</div>
+<div class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase mt-0.5">Unsold</div>
+</div>
+<div class="flex-1 text-center px-1">
+<div class="text-xl font-bold text-gray-900 dark:text-white">$260.00</div>
+<div class="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase mt-0.5">Revenue</div>
+</div>
+</div>
+</section>
+<section class="space-y-5">
+<div class="flex items-center justify-between px-1">
+<h3 class="text-xl font-bold text-gray-900 dark:text-white">Items (4)</h3>
+<button class="text-sm font-semibold text-primary hover:text-blue-700 transition-colors flex items-center gap-1">
+  Manage <span class="material-symbols-outlined text-sm">settings</span>
+</button>
+</div>
+<div class="space-y-4">
+<div class="group bg-white dark:bg-surface-dark p-3 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-primary/30 transition-all cursor-pointer">
+<div class="flex gap-4 h-28">
+<div class="relative w-28 h-28 flex-shrink-0">
+<img alt="Nintendo Switch" class="w-full h-full object-cover rounded-2xl shadow-inner bg-gray-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARtC7hHWdZTYZBZ4WIvUXnpjxLsn9GgsaaHEYLBERdMrWgGl_2R_nC5P5COhTlYsYx55xQgjRsm2441ytNa7gIOTwngiFIy-W--_jkHRPaJlSM8rbK9avVPcOZduOdk8RD1QapCbFa1WlYkqV0f7-BfVIWS598oiF-tJy561VuNu5uD6-n53V8NceX_VZgV86bnrqH1QmDtg4hSpeZy71m3vFdv0VpPbBpBtw2gMY6HlhTgdgtOfCdD-TbNes7u74C7kg2_ZZreLM"/>
+<div class="absolute top-2 left-2">
+<span class="bg-white/95 dark:bg-gray-900/90 backdrop-blur-md text-green-700 dark:text-green-400 text-[10px] font-bold px-2 py-1 rounded-lg border border-green-100 dark:border-green-800 shadow-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Sold
+</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col py-1 pr-1">
+<div class="flex justify-between items-start">
+<h4 class="text-lg font-bold text-gray-900 dark:text-white leading-tight line-clamp-2">Nintendo Switch</h4>
+<span class="material-symbols-outlined text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<div class="mt-auto pt-3 border-t border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Condition</span>
+<span class="text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">Used - Good</span>
+</div>
+<div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Price</span>
+<span class="text-lg font-bold text-gray-900 dark:text-white">$200.00</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark p-3 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-primary/30 transition-all cursor-pointer">
+<div class="flex gap-4 h-28">
+<div class="relative w-28 h-28 flex-shrink-0">
+<img alt="Bike" class="w-full h-full object-cover rounded-2xl shadow-inner bg-gray-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxuCdlA1aBjwZJi2ErPGY6euYHYS5VWWzXsmnDZcnFYNC7GCZq0OCulFLbf5X5tcZnw2w8d9WzAo2WXonmj3J_aE52oti4muMw7_UVYsflNscOuaAz6B9itklm3UUO5ULdXjuQHq_SPdiZ45-Nm4PLgbqlUiVYowGglSxeShC8LAn4nGadFS8pO5v0gYmYvJoN4LobxFitEhPEMVswdNhZ3HJOB2sa0z1usQ-GmjgpeKs8ufB6V2QB4urRWcbSD82434Xq-HZQWlQ"/>
+<div class="absolute top-2 left-2">
+<span class="bg-white/95 dark:bg-gray-900/90 backdrop-blur-md text-gray-600 dark:text-gray-300 text-[10px] font-bold px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Unlisted
+</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col py-1 pr-1">
+<div class="flex justify-between items-start">
+<h4 class="text-lg font-bold text-gray-900 dark:text-white leading-tight line-clamp-2">Mountain Bike</h4>
+<span class="material-symbols-outlined text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<div class="mt-auto pt-3 border-t border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Condition</span>
+<span class="text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">Used - Good</span>
+</div>
+<div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Price</span>
+<span class="text-lg font-bold text-gray-900 dark:text-white">$80.00</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark p-3 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-primary/30 transition-all cursor-pointer">
+<div class="flex gap-4 h-28">
+<div class="relative w-28 h-28 flex-shrink-0">
+<img alt="Tricycle" class="w-full h-full object-cover rounded-2xl shadow-inner bg-gray-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeBVzT8udCwiXEh0LSa8SdwZDpOL3rC2G43iRyeHTQ6nAFNOzQem68I6ssY3pmaOqfyO32m33UFHv5RAUO8g6DrILLYgAef0H0hlR-fK8Oae5UzC6Z9a3IgplsFRvR3faGTl_4a2zJNaf6IZaL5Lp-OBrvqDoKQ4_rpoI8OOMlCuQDHorb5CVGmMzAy2iwpBm1CSa9Co9VzWqUC9dXChQfMAjtjm0rDhAOsGkOy797Jpe3_yR9z3j1h_LpfMIAG5ctA7AvqoqRiIE"/>
+<div class="absolute top-2 left-2">
+<span class="bg-white/95 dark:bg-gray-900/90 backdrop-blur-md text-blue-600 dark:text-blue-400 text-[10px] font-bold px-2 py-1 rounded-lg border border-blue-100 dark:border-blue-900/50 shadow-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> Listed
+</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col py-1 pr-1">
+<div class="flex justify-between items-start">
+<h4 class="text-lg font-bold text-gray-900 dark:text-white leading-tight line-clamp-2">Kids Tricycle</h4>
+<span class="material-symbols-outlined text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<div class="mt-auto pt-3 border-t border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Condition</span>
+<span class="text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">Used - Good</span>
+</div>
+<div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Price</span>
+<span class="text-lg font-bold text-gray-900 dark:text-white">$40.00</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark p-3 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-primary/30 transition-all cursor-pointer">
+<div class="flex gap-4 h-28">
+<div class="relative w-28 h-28 flex-shrink-0">
+<img alt="Kids Balance Bike" class="w-full h-full object-cover rounded-2xl shadow-inner bg-gray-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjulDWa02939ULhe8tUKk8fBeR-0z25xpH8FFt2NT7OrwA6YbHEhEnExd1t22_tAOt_jO5RXKNGJPyWHxei_94FQMh6eF5Ov--vWu8e0aaCzIPGpE7YRUowDnqw8Kd-9vx-iSYVTlBA0a-c5fWrWbJZO98mUBN7-xiO8zYCcKICG6pSfI3AonnNvYAIVUS7FVfTIzT69t5zhQGKhIfkdu8ODvGQL2KA6_aDQkf5aQbRZNkAu0n9hH88J5yqHi-XH5F1CrAurporUs"/>
+<div class="absolute top-2 left-2">
+<span class="bg-white/95 dark:bg-gray-900/90 backdrop-blur-md text-green-700 dark:text-green-400 text-[10px] font-bold px-2 py-1 rounded-lg border border-green-100 dark:border-green-800 shadow-sm flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Sold
+</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col py-1 pr-1">
+<div class="flex justify-between items-start">
+<h4 class="text-lg font-bold text-gray-900 dark:text-white leading-tight line-clamp-2">Balance Bike</h4>
+<span class="material-symbols-outlined text-gray-300 dark:text-gray-600 group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<div class="mt-auto pt-3 border-t border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Condition</span>
+<span class="text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">Used - Good</span>
+</div>
+<div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2"></div>
+<div class="flex flex-col items-end">
+<span class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">Price</span>
+<span class="text-lg font-bold text-gray-900 dark:text-white">$60.00</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="pb-6">
+<details class="group bg-white dark:bg-surface-dark rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden open:ring-1 open:ring-primary/20 transition-all">
+<summary class="list-none flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gray-400">info</span>
+<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Details</h3>
+</div>
+<span class="material-symbols-outlined text-gray-400 transition-transform duration-300 group-open:rotate-180">expand_more</span>
+</summary>
+<div class="px-5 pb-5 pt-0 space-y-3 border-t border-gray-100 dark:border-gray-700/50">
+<div class="flex justify-between items-center py-3 border-b border-gray-50 dark:border-gray-800">
+<span class="text-sm text-gray-500 dark:text-gray-400">Supplier</span>
+<span class="font-medium text-gray-900 dark:text-white">None</span>
+</div>
+<div class="flex justify-between items-center py-3 border-b border-gray-50 dark:border-gray-800">
+<span class="text-sm text-gray-500 dark:text-gray-400">Source / Type</span>
+<span class="font-medium text-gray-900 dark:text-white">Not set</span>
+</div>
+<div class="flex justify-between items-center py-2 pt-3">
+<span class="text-sm text-gray-500 dark:text-gray-400">Purchase Cost</span>
+<span class="font-medium text-gray-900 dark:text-white">$200.00</span>
+</div>
+</div>
+</details>
+</section>
+</main>
+<button class="fixed bottom-6 right-6 bg-primary hover:bg-blue-700 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg shadow-blue-500/30 transition-transform active:scale-95 z-50">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</div>
+
+</body></html>

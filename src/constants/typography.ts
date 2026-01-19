@@ -1,4 +1,4 @@
-// PalletPulse Typography System
+// Pallet Pro Typography System
 // Consistent text styles across the app
 
 import { TextStyle } from 'react-native';

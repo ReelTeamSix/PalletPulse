@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enhanced Items Inventory V1</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#2563EB", // Deep Blue
+              "primary-dark": "#1d4ed8",
+              "background-light": "#F3F4F6", // Gray 100
+              "background-dark": "#111827", // Gray 900
+              "surface-light": "#FFFFFF",
+              "surface-dark": "#1F2937", // Gray 800
+              "text-primary-light": "#111827",
+              "text-primary-dark": "#F9FAFB",
+              "text-secondary-light": "#6B7280",
+              "text-secondary-dark": "#9CA3AF",
+              "success-light": "#10B981",
+              "success-dark": "#34D399",
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+              sans: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+              "xl": "1rem",
+              "2xl": "1.5rem",
+            },
+            boxShadow: {
+                'soft': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
+            }
+          },
+        },
+      };
+    </script>
+<style>.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-sans text-text-primary-light dark:text-text-primary-dark transition-colors duration-200 min-h-screen pb-24 relative">
+<header class="px-5 pt-8 pb-4 sticky top-0 z-10 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm transition-colors duration-200">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Inventory</h1>
+<p class="text-sm text-text-secondary-light dark:text-text-secondary-dark mt-1 font-medium">13 items · 1 listed · 8 sold</p>
+</div>
+<div class="text-xs text-text-secondary-light dark:text-text-secondary-dark italic mt-2">
+                &lt;- Delete | Sell -&gt;
+            </div>
+</div>
+<div class="bg-gray-200 dark:bg-gray-700 p-1 rounded-xl flex mt-6 shadow-inner">
+<button class="flex-1 flex items-center justify-center py-2 px-4 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 transition-all hover:bg-gray-100 dark:hover:bg-gray-600">
+<span class="material-icons text-lg mr-2">inventory_2</span>
+                Pallets (2)
+            </button>
+<button class="flex-1 flex items-center justify-center py-2 px-4 rounded-lg text-sm font-medium bg-primary text-white shadow-sm transition-all">
+<span class="material-icons text-lg mr-2">local_offer</span>
+                Items (13)
+            </button>
+</div>
+<div class="mt-4 relative group">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-icons text-gray-400 dark:text-gray-500">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-3 border-none rounded-xl bg-white dark:bg-surface-dark text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary shadow-sm text-sm transition-colors duration-200" placeholder="Search by name, barcode, notes..." type="text"/>
+</div>
+<div class="mt-4 flex space-x-2 overflow-x-auto no-scrollbar pb-1">
+<button class="flex-shrink-0 px-4 py-1.5 bg-primary text-white text-sm font-medium rounded-full shadow-sm">
+                All (13)
+            </button>
+<button class="flex-shrink-0 px-4 py-1.5 bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 text-sm font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                Listed (1)
+            </button>
+<button class="flex-shrink-0 px-4 py-1.5 bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 text-sm font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                Sold (8)
+            </button>
+<button class="flex-shrink-0 px-4 py-1.5 bg-white dark:bg-surface-dark text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 text-sm font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                Unlisted (4)
+            </button>
+</div>
+</header>
+<main class="px-5 space-y-4">
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-soft border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors duration-200">
+<div class="p-4 flex items-start space-x-4">
+<div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0 text-gray-400 dark:text-gray-500">
+<span class="material-icons text-3xl">inventory_2</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="text-base font-semibold text-gray-900 dark:text-white truncate">Nintendo Switch</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            Sold
+                        </span>
+</div>
+<div class="mt-1 flex flex-wrap gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300">
+                            Used - Good
+                        </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+<span class="material-icons text-[10px] mr-1">inventory_2</span> Pallet #2
+                        </span>
+</div>
+</div>
+</div>
+<div class="bg-gray-50 dark:bg-gray-800/50 p-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-3 gap-2">
+<div class="text-center">
+<p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Listed</p>
+<p class="text-sm font-bold text-gray-900 dark:text-white">$200.00</p>
+</div>
+<div class="text-center border-l border-gray-200 dark:border-gray-700">
+<p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Sold</p>
+<p class="text-sm font-bold text-success-light dark:text-success-dark">$200.00</p>
+</div>
+<div class="text-center border-l border-gray-200 dark:border-gray-700">
+<p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Profit</p>
+<p class="text-sm font-bold text-success-light dark:text-success-dark">+$113.50</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-soft border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors duration-200">
+<div class="p-4 flex items-start space-x-4">
+<div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700 relative">
+<img alt="Bike in room" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBE-Jkw7oK6J7CtHCVBLhaXJV7wUZFDS_IBfUbBD8lRyGFBWM4rAAaKppVw4xzKx1QMdfeNn1OtTmwMD_XKIiGvaky-UEocDpJ79kPYVj_wWy-gVGsWuKQqc-7Bp9PaTkfijEqPPNdxWXzKJcbMW79-MuBOM0mwbM0GpfmqPbX49SUQhFgB3y8sOxQLkQUNjWyccRrQXu1eGLB_oRbdGgwnGIl9uOSqc713kQhM6cyTB0m2_irLoMVs3tmcxtBAPoaV4HX-vhal2wQ"/>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="text-base font-semibold text-gray-900 dark:text-white truncate">Bike</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                            Unlisted
+                        </span>
+</div>
+<div class="mt-1 flex flex-wrap gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300">
+                            Used - Good
+                        </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+<span class="material-icons text-[10px] mr-1">inventory_2</span> Pallet #2
+                        </span>
+</div>
+</div>
+</div>
+<div class="bg-gray-50 dark:bg-gray-800/50 p-4 border-t border-gray-100 dark:border-gray-700 flex justify-center">
+<div class="text-center">
+<p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Estimated List Price</p>
+<p class="text-sm font-bold text-gray-900 dark:text-white">$80.00</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-soft border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors duration-200">
+<div class="p-4 flex items-start space-x-4">
+<div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0 text-gray-400 dark:text-gray-500">
+<span class="material-icons text-3xl">inventory_2</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="text-base font-semibold text-gray-900 dark:text-white truncate">Tricycle</h3>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-primary dark:bg-primary/20 dark:text-blue-300">
+                            Listed
+                        </span>
+</div>
+<div class="mt-1 flex flex-wrap gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300">
+                            Used - Good
+                        </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+<span class="material-icons text-[10px] mr-1">inventory_2</span> Pallet #2
+                        </span>
+</div>
+</div>
+</div>
+<div class="bg-gray-50 dark:bg-gray-800/50 p-4 border-t border-gray-100 dark:border-gray-700 flex justify-center">
+<div class="text-center">
+<p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-0.5">Listed Price</p>
+<p class="text-sm font-bold text-gray-900 dark:text-white">$40.00</p>
+</div>
+</div>
+</div>
+<div class="h-16"></div>
+</main>
+<div class="fixed bottom-24 right-5 z-20">
+<button class="bg-primary hover:bg-primary-dark text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary dark:ring-offset-gray-900">
+<span class="material-icons text-2xl">add</span>
+</button>
+</div>
+<nav class="fixed bottom-0 w-full bg-surface-dark text-white border-t border-gray-800 z-30 pb-safe">
+<div class="flex justify-around items-center h-16 px-2">
+<a class="flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400 hover:text-white transition-colors" href="#">
+<span class="material-icons text-xl">home</span>
+<span class="text-[10px] font-medium">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full space-y-1 text-primary" href="#">
+<span class="material-icons text-xl">inventory</span>
+<span class="text-[10px] font-medium">Inventory</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400 hover:text-white transition-colors" href="#">
+<span class="material-icons text-xl">bar_chart</span>
+<span class="text-[10px] font-medium">Analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400 hover:text-white transition-colors" href="#">
+<span class="material-icons text-xl">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</a>
+</div>
+<div class="h-1 w-full flex justify-center pb-2 bg-surface-dark">
+<div class="w-1/3 h-1 bg-gray-500 rounded-full"></div>
+</div>
+</nav>
+<script>
+        // Check for saved theme preference or system preference
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+        // To manually toggle for testing, you could add a hidden button or console command:
+        // document.documentElement.classList.toggle('dark')
+    </script>
+
+</body></html>

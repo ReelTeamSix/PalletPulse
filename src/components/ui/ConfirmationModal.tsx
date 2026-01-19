@@ -95,8 +95,10 @@ export function ConfirmationModal({
       >
         <Pressable style={styles.backdrop} onPress={onClose || handleSecondary} />
         <View style={[styles.modal, shadows.xl]}>
+          {/* Glow effect behind icon */}
+          <View style={[styles.iconGlow, { backgroundColor: config.iconColor + '20' }]} />
           <View style={[styles.iconContainer, { backgroundColor: config.iconBg }]}>
-            <Ionicons name={config.icon} size={32} color={config.iconColor} />
+            <Ionicons name={config.icon} size={36} color={config.iconColor} />
           </View>
 
           <Text style={styles.title}>{title}</Text>
@@ -105,8 +107,8 @@ export function ConfirmationModal({
           {infoText && (
             <View style={styles.infoBox}>
               <Ionicons
-                name="information-circle"
-                size={18}
+                name="bulb-outline"
+                size={20}
                 color={colors.primary}
                 style={styles.infoIcon}
               />
@@ -123,7 +125,7 @@ export function ConfirmationModal({
             </Pressable>
 
             <Pressable
-              style={[styles.button, styles.secondaryButton]}
+              style={styles.secondaryButton}
               onPress={handleSecondary}
             >
               <Text style={styles.secondaryButtonText}>{secondaryLabel}</Text>
@@ -147,19 +149,29 @@ const styles = StyleSheet.create({
   },
   modal: {
     backgroundColor: colors.card,
-    borderRadius: borderRadius.xl,
+    borderRadius: 28,
     padding: spacing.xl,
     width: '85%',
     maxWidth: 340,
     alignItems: 'center',
   },
+  iconGlow: {
+    position: 'absolute',
+    top: spacing.xl - 8,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    opacity: 0.6,
+  },
   iconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
+    borderWidth: 3,
+    borderColor: colors.card,
   },
   title: {
     fontSize: fontSize.xl,
@@ -205,6 +217,11 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     // backgroundColor set dynamically
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   primaryButtonText: {
     fontSize: fontSize.md,
@@ -212,13 +229,13 @@ const styles = StyleSheet.create({
     color: colors.background,
   },
   secondaryButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   secondaryButtonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: colors.textSecondary,
   },
 });

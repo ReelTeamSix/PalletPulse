@@ -1,8 +1,8 @@
-# PalletPulse Development Progress
+# Pallet Pro Development Progress
 
-## Current Phase: Phase 10 - Subscription
-**Status:** In Progress (10A-10E Complete, 10F Pending)
-**Branch:** feature/subscription
+## Current Phase: Phase 11 - Polish
+**Status:** In Progress (Logging & Diagnostics Complete)
+**Branch:** feature/polish
 
 ---
 
@@ -16,8 +16,8 @@
 - [x] Phase 7: Sales & Profit (approved)
 - [x] Phase 8: Expense System Redesign (approved)
 - [x] Phase 9: Analytics (approved)
-- [ ] Phase 10: Subscription ← **IN PROGRESS**
-- [ ] Phase 11: Polish
+- [x] Phase 10: Subscription (approved)
+- [ ] Phase 11: Polish ← **IN PROGRESS**
 
 ---
 
@@ -138,7 +138,7 @@ ALTER TABLE user_settings ADD COLUMN user_type text DEFAULT 'hobby'; -- hobby, s
 **Legal Disclaimers Added:**
 - Added comprehensive liability disclaimer section to PALLETPULSE_ONESHOT_CONTEXT.md
 - Disclaimers required at: first expense tracking enable, onboarding, settings, mileage log, tax export, ToS
-- Key message: "PalletPulse is an inventory tracking tool, not tax software"
+- Key message: "Pallet Pro is an inventory tracking tool, not tax software"
 - Users responsible for consulting tax professionals
 
 ---
@@ -1286,20 +1286,76 @@ Phase 8 will include:
 
 ---
 
+## Phase 11: Polish - IN PROGRESS
+
+### 11A: Logging & Diagnostics ✅
+**Completed:** Jan 16, 2026
+
+**Overview:**
+Implemented centralized logging utility with Sentry integration for production error tracking.
+
+**Files Created:**
+- `src/lib/logger.ts` - Centralized logging utility
+  - Log levels: debug, info, warn, error
+  - Sentry integration for breadcrumbs and error tracking
+  - `createLogger()` factory for scoped loggers
+  - `setGlobalContext()` / `clearGlobalContext()` for user context
+  - `getBreadcrumbs()` / `clearBreadcrumbs()` for diagnostics export
+  - Dev-only console output for debug/info levels
+
+- `src/lib/sentry.ts` - Sentry configuration
+  - `initializeSentry()` - Initialize with environment-specific settings
+  - `isSentryConfigured()` - Check if DSN is set
+  - `setSentryUser()` / `clearSentryUser()` - User context management
+  - `captureException()` - Manual error capture
+  - Filters sensitive data (auth tokens, passwords) from breadcrumbs
+  - Ignores expected errors (network failures, user cancellations)
+
+- `src/components/ui/ErrorFallback.tsx` - Error boundary fallback
+  - User-friendly error display
+  - Retry button
+  - Error details in dev mode
+
+**Files Modified:**
+- `app/_layout.tsx` - Initialize Sentry on app start, set user context on auth
+- `src/lib/supabase.ts` - Replaced console.* with logger
+- `src/lib/storage.ts` - Replaced console.* with scoped logger
+- `src/lib/revenuecat.ts` - Replaced console.* with scoped logger
+- `src/stores/auth-store.ts` - Replaced console.* with scoped logger
+- `src/stores/admin-store.ts` - Replaced console.* with scoped logger
+- `src/stores/subscription-store.ts` - Replaced console.* with scoped logger
+- `src/components/subscription/PaywallModal.tsx` - Replaced console.* with scoped logger
+- `src/components/ui/index.ts` - Export ErrorFallback
+- `src/constants/colors.ts` - Added error state colors
+- `jest.setup.js` - Added Sentry mock for tests
+
+**Features:**
+- Scoped loggers with preset context (screen, action)
+- Automatic breadcrumb trail for debugging
+- Sentry error tracking in production
+- Error boundaries with user-friendly fallback UI
+- Filtered sensitive data in error reports
+- Console output only in development
+
+**Test Results:**
+```
+Test Suites: 20 passed, 20 total
+Tests:       783 passed, 783 total
+```
+
+**Commits:**
+- `feat(diagnostics): add centralized logging and Sentry error tracking`
+
+---
+
 ## Phase 11 Backlog (Polish)
 
 ### Must Have
-- [ ] Logging & diagnostics system
+- [x] Logging & diagnostics system ✅
 
 ### Should Add
-- [ ] Dashboard time period slider (Week/Month/All-Time profit)
-  - Swipeable hero card showing profit for different periods
-  - Good fit with Analytics phase but adds dashboard value
-- [ ] Smart insights on dashboard (rules-based)
-  - "Your best ROI source is X - avg Y% ROI"
-  - "X items listed 30+ days - consider repricing"
-  - "Inventory at X% of normal level"
-  - No API cost, just well-crafted conditionals
+- [x] Dashboard time period selector (Week/Month/Year/All-Time profit) ✅
+- [x] Smart insights on dashboard (rules-based) ✅
 - [ ] AI-powered deep analysis (Premium feature)
   - LLM-generated insights on request
   - Analyze trends, suggest actions
@@ -1312,4 +1368,132 @@ Phase 8 will include:
 
 ---
 
-**Reply "approved" to continue to Phase 8, or provide feedback.**
+## 🗺️ Post-MVP Roadmap
+
+Features captured for future development after MVP launch. Prioritization based on user feedback.
+
+### Goals System (v1.1+)
+
+**Purpose:** Help users set and track business targets for motivation and accountability.
+
+**Potential Features:**
+- Profit targets (weekly/monthly/quarterly)
+- Sales volume goals (items sold per period)
+- Listing targets (items to list per day/week)
+- ROI targets (maintain minimum ROI)
+- Progress tracking on dashboard (progress bars, percentage)
+- Goal history and achievement tracking
+- Notifications when goals are met or at risk
+
+**Implementation Notes:**
+- New `goals` table: `id, user_id, type, target_value, period, start_date, end_date, status`
+- Dashboard widget showing goal progress
+- InsightsCard integration for goal-related tips
+- Consider gamification (streaks, badges)
+
+### Categories System (v1.1+)
+
+**Purpose:** Better organize inventory and enable category-based analytics.
+
+**Potential Features:**
+- Item categorization (Electronics, Apparel, Home Goods, Toys, Sports, etc.)
+- Category-based analytics ("Electronics have 80% ROI, Apparel has 40%")
+- Filter inventory by category
+- Track which pallet sources yield best items per category
+- Category performance trends over time
+- Best/worst performing categories report
+
+**Implementation Notes:**
+- Add `category` field to items table
+- Predefined categories with "Other/Custom" option
+- Category dropdown in item form
+- New analytics section for category breakdown
+- Consider allowing user-defined categories (Pro feature?)
+
+### Other Post-MVP Ideas
+
+- [ ] Barcode scanning for faster item entry
+- [ ] Bulk item import from CSV/spreadsheet
+- [ ] Multi-user support (Enterprise tier)
+- [ ] Inventory location tracking (bins, shelves)
+- [ ] Marketplace listing integration (auto-post to FB/eBay)
+- [ ] Customer CRM (track buyers, repeat customers)
+- [ ] Profit forecasting based on historical data
+- [ ] Mobile widgets for quick stats
+
+---
+
+### 11B: Dashboard Improvements ✅
+**Completed:** Jan 16, 2026
+
+**Overview:**
+Added time period filtering and smart insights to the dashboard for better profit tracking and actionable tips.
+
+**Files Created:**
+- `src/features/dashboard/utils/time-period-filter.ts` - Time period filtering utilities
+- `src/features/dashboard/utils/insights-engine.ts` - Rules-based insights generator
+- `src/features/dashboard/utils/index.ts` - Utility exports
+- `src/features/dashboard/components/InsightsCard.tsx` - Insights display component
+- `src/features/dashboard/utils/__tests__/time-period-filter.test.ts` - 26 tests
+- `src/features/dashboard/utils/__tests__/insights-engine.test.ts` - 20 tests
+
+**Files Modified:**
+- `app/(tabs)/index.tsx` - Added time period state, filtered metrics, insights generation
+- `src/features/dashboard/components/HeroCard.tsx` - Added time period selector pills
+- `src/features/dashboard/components/index.ts` - Export InsightsCard
+
+**Features:**
+- **Time Period Selector:** Week | Month | Year | All pill selector in HeroCard
+- **Filtered Metrics:** Profit, sold count filtered by selected period
+- **Smart Insights:** Rules-based tips including:
+  - Best performing source by ROI
+  - Stale inventory warnings (configurable threshold)
+  - Quick flip celebrations (items sold within 7 days)
+  - Unlisted items reminders (5+ items)
+  - First sale celebration
+  - Milestone celebrations (10, 25, 50, 100 sales)
+
+**Test Results:**
+```
+Test Suites: 22 passed, 22 total
+Tests:       829 passed, 829 total
+```
+
+**Commits:**
+- `feat(dashboard): add time period filter and smart insights`
+
+---
+
+### 11C: Pallet Detail Redesign ✅
+**Completed:** Jan 18, 2026
+
+**Overview:**
+Redesigned the pallet detail screen to match inspiration designs with item thumbnails, progress bar, and improved item card layout.
+
+**Files Modified:**
+- `app/pallets/[id].tsx` - Complete item card redesign
+  - Added thumbnail images for items (with placeholder for items without photos)
+  - Status overlay badges (Sold/Unlisted/Listed) on thumbnails
+  - Progress bar showing inventory sold percentage
+  - Updated item card layout with CONDITION and PRICE columns
+  - Integrated `fetchThumbnails` from items store
+
+**Features:**
+- Item thumbnails display first photo or placeholder icon
+- Status badges overlay on thumbnail (green Sold, blue Listed, gray Unlisted)
+- Progress bar with "X% Inventory Sold" label
+- Cleaner item card layout matching inspiration design
+
+**Test Results:**
+```
+Test Suites: 22 passed, 22 total
+Tests:       829 passed, 829 total
+```
+
+**Commits:**
+- `feat(pallets): redesign pallet detail screen with thumbnails and progress bar`
+- `fix(pallets): correct ProgressBar props in pallet detail screen`
+
+---
+
+**Reply "approved" to continue, or provide feedback.**

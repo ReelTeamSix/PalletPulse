@@ -1569,6 +1569,64 @@ When faced with technical decisions, prioritize in this order:
 
 ---
 
+## 🗺️ Post-MVP Roadmap
+
+Features captured for future development. Prioritization will be based on user feedback from beta/launch.
+
+### Goals System (v1.1+)
+
+Enable users to set and track business targets:
+
+| Goal Type | Example | Dashboard Display |
+|-----------|---------|-------------------|
+| Profit Target | "Make $500 this month" | Progress bar with % complete |
+| Sales Volume | "Sell 20 items this week" | Items sold vs target |
+| Listing Target | "List 10 items per day" | Daily/weekly listing count |
+| ROI Target | "Maintain 50%+ ROI" | Current ROI vs target |
+
+**Key Features:**
+- Goal creation wizard
+- Progress tracking widgets on dashboard
+- Notifications when goals are met or at risk
+- Historical goal tracking (hit rate over time)
+- Integration with InsightsCard for motivation
+
+### Categories System (v1.1+)
+
+Organize inventory and unlock category-based analytics:
+
+| Category | Examples |
+|----------|----------|
+| Electronics | Phones, tablets, headphones, chargers |
+| Apparel | Clothing, shoes, accessories |
+| Home Goods | Kitchen, decor, bedding, furniture |
+| Toys & Games | Kids toys, board games, puzzles |
+| Sports & Outdoors | Equipment, apparel, camping |
+| Health & Beauty | Cosmetics, skincare, supplements |
+| Other | Miscellaneous items |
+
+**Key Features:**
+- Category dropdown in item form
+- Category filter on inventory screen
+- Analytics: ROI by category, best/worst performers
+- Track category performance by pallet source
+- User-defined categories (Pro tier)
+
+### Other Roadmap Ideas
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| Barcode Scanning | Scan items for faster entry | High |
+| Bulk Import | CSV/spreadsheet upload | Medium |
+| Multi-User | Team accounts for Enterprise | Low |
+| Location Tracking | Bins, shelves, rooms | Medium |
+| Marketplace Integration | Auto-post listings | Low |
+| Customer CRM | Track buyers, repeats | Low |
+| Profit Forecasting | ML-based predictions | Low |
+| Mobile Widgets | Quick stats on home screen | Medium |
+
+---
+
 ## 🏁 Final Notes for Claude Code
 
 **This document is comprehensive, but not exhaustive.** Use your best judgment for:

@@ -6,7 +6,7 @@ import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { ProgressBar } from '@/src/components/ui/ProgressBar';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize } from '@/src/constants/spacing';
+import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { Pallet, PalletStatus } from '@/src/types/database';
 import { formatCurrency } from '@/src/lib/profit-utils';
 
@@ -18,10 +18,15 @@ interface PalletCardProps {
   onPress: () => void;
 }
 
-const STATUS_CONFIG: Record<PalletStatus, { label: string; variant: 'default' | 'success' | 'warning' | 'info' }> = {
-  unprocessed: { label: 'Unprocessed', variant: 'default' },
-  processing: { label: 'In Progress', variant: 'warning' },
-  completed: { label: 'Completed', variant: 'success' },
+// Status configuration for badges and colors
+const STATUS_CONFIG: Record<PalletStatus, {
+  label: string;
+  variant: 'default' | 'success' | 'warning' | 'info';
+  accentColor: string;
+}> = {
+  unprocessed: { label: 'Unprocessed', variant: 'default', accentColor: colors.primary },
+  processing: { label: 'In Progress', variant: 'warning', accentColor: colors.warning },
+  completed: { label: 'Completed', variant: 'success', accentColor: colors.profit },
 };
 
 export function PalletCard({
@@ -46,70 +51,81 @@ export function PalletCard({
     });
   };
 
+  // Only show accent bar for "In Progress" status
+  const showAccentBar = pallet.status === 'processing';
+
   return (
-    <Card shadow="sm" padding="md" onPress={onPress} style={styles.card}>
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
-          <View style={styles.titleRow}>
-            <Text style={styles.name} numberOfLines={1}>
-              {pallet.name}
+    <Card shadow="sm" padding={0} onPress={onPress} style={styles.card}>
+      {/* Status accent bar at top of card - only for In Progress */}
+      {showAccentBar && (
+        <View style={[styles.accentBar, { backgroundColor: statusConfig.accentColor }]} />
+      )}
+
+      {/* Card content with padding */}
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <View style={styles.titleRow}>
+              <Text style={styles.name} numberOfLines={1}>
+                {pallet.name}
+              </Text>
+              <Badge variant={statusConfig.variant} size="sm" label={statusConfig.label} />
+            </View>
+            <Text style={styles.date}>
+              Purchased {formatDate(pallet.purchase_date)}
             </Text>
-            <Badge variant={statusConfig.variant} size="sm" label={statusConfig.label} />
           </View>
-          <Text style={styles.date}>
-            Purchased {formatDate(pallet.purchase_date)}
-          </Text>
         </View>
+
+        <View style={styles.statsRow}>
+          <View style={styles.stat}>
+            <Text style={styles.statLabel}>Cost</Text>
+            <Text style={styles.statValue}>{formatCurrency(totalCost)}</Text>
+          </View>
+          <View style={styles.stat}>
+            <Text style={styles.statLabel}>Profit</Text>
+            <Text
+              style={[
+                styles.statValue,
+                { color: isProfitable ? colors.profit : colors.loss },
+              ]}
+            >
+              {isProfitable ? '+' : ''}{formatCurrency(totalProfit)}
+            </Text>
+          </View>
+          <View style={styles.stat}>
+            <Text style={styles.statLabel}>ROI</Text>
+            <Text
+              style={[
+                styles.statValue,
+                { color: isProfitable ? colors.profit : colors.loss },
+              ]}
+            >
+              {roi}%
+            </Text>
+          </View>
+        </View>
+
+        {itemCount > 0 && (
+          <View style={styles.progressSection}>
+            <ProgressBar
+              current={processedCount}
+              total={itemCount}
+              label="Items Listed"
+              color={statusConfig.accentColor}
+            />
+          </View>
+        )}
+
+        {pallet.supplier && (
+          <View style={styles.footer}>
+            <Ionicons name="business-outline" size={12} color={colors.textDisabled} />
+            <Text style={styles.supplierText} numberOfLines={1}>
+              {pallet.supplier}
+            </Text>
+          </View>
+        )}
       </View>
-
-      <View style={styles.statsRow}>
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>Cost</Text>
-          <Text style={styles.statValue}>{formatCurrency(totalCost)}</Text>
-        </View>
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>Profit</Text>
-          <Text
-            style={[
-              styles.statValue,
-              { color: isProfitable ? colors.profit : colors.loss },
-            ]}
-          >
-            {isProfitable ? '+' : ''}{formatCurrency(totalProfit)}
-          </Text>
-        </View>
-        <View style={styles.stat}>
-          <Text style={styles.statLabel}>ROI</Text>
-          <Text
-            style={[
-              styles.statValue,
-              { color: isProfitable ? colors.profit : colors.loss },
-            ]}
-          >
-            {roi}%
-          </Text>
-        </View>
-      </View>
-
-      {itemCount > 0 && (
-        <View style={styles.progressSection}>
-          <ProgressBar
-            current={processedCount}
-            total={itemCount}
-            label="Items Processed"
-            color={pallet.status === 'completed' ? colors.profit : colors.primary}
-          />
-        </View>
-      )}
-
-      {pallet.supplier && (
-        <View style={styles.footer}>
-          <Ionicons name="business-outline" size={12} color={colors.textDisabled} />
-          <Text style={styles.supplierText} numberOfLines={1}>
-            {pallet.supplier}
-          </Text>
-        </View>
-      )}
     </Card>
   );
 }
@@ -117,6 +133,14 @@ export function PalletCard({
 const styles = StyleSheet.create({
   card: {
     marginBottom: spacing.md,
+    overflow: 'hidden',
+  },
+  accentBar: {
+    height: 4,
+    width: '100%',
+  },
+  content: {
+    padding: spacing.md,
   },
   header: {
     marginBottom: spacing.md,
@@ -131,14 +155,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   name: {
-    fontSize: fontSize.lg,
-    fontWeight: '600',
+    fontSize: fontSize.xl,
+    fontWeight: '700',
     color: colors.textPrimary,
     flex: 1,
     marginRight: spacing.sm,
   },
   date: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.md,
     color: colors.textSecondary,
   },
   statsRow: {
@@ -154,13 +178,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statLabel: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.textDisabled,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: 2,
   },
   statValue: {
-    fontSize: fontSize.md,
+    fontSize: fontSize.lg,
     fontWeight: '700',
     color: colors.textPrimary,
   },

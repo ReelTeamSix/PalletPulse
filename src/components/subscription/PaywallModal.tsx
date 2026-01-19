@@ -21,6 +21,9 @@ import { shadows } from '@/src/constants/shadows';
 import { SubscriptionTier, TIER_LIMITS, TIER_PRICING } from '@/src/constants/tier-limits';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
 import { Button } from '@/src/components/ui';
+import logger from '@/src/lib/logger';
+
+const log = logger.createLogger({ screen: 'PaywallModal' });
 
 interface PaywallModalProps {
   visible: boolean;
@@ -109,7 +112,7 @@ export function PaywallModal({
   const handlePurchase = async (tier: 'starter' | 'pro') => {
     const pkg = getPackage(tier, billingCycle);
     if (!pkg) {
-      console.error('Package not found for', tier, billingCycle);
+      log.error('Package not found', { action: 'handlePurchase', tier, billingCycle });
       return;
     }
 

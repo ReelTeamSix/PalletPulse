@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PalletPulse Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#1d7dfc", // Blue derived from screenshot
+                        "background-light": "#f3f5f9", // Light grey background
+                        "background-dark": "#121212", // Dark mode background
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e1e1e",
+                        "text-light": "#1f2937",
+                        "text-dark": "#e5e7eb",
+                        "text-secondary-light": "#6b7280",
+                        "text-secondary-dark": "#9ca3af",
+                        "divider-light": "#e5e7eb",
+                        "divider-dark": "#374151",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                        "xl": "1rem",
+                        "2xl": "1.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #1d7dfc;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #1d7dfc;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark min-h-screen flex flex-col antialiased">
+<header class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-divider-light dark:border-divider-dark px-4 py-3 flex items-center justify-between">
+<div class="w-8"></div> 
+<h1 class="text-xl font-bold">Settings</h1>
+<div class="w-8"></div> 
+</header>
+<main class="flex-1 px-4 py-6 space-y-6 max-w-lg mx-auto w-full">
+<section class="space-y-2">
+<h2 class="text-sm font-semibold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider ml-1">Account</h2>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-divider-light dark:border-divider-dark overflow-hidden">
+<button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<div class="flex items-center space-x-4">
+<div class="h-12 w-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 flex items-center justify-center text-primary font-bold text-lg">
+                            JD
+                        </div>
+<div class="text-left">
+<div class="font-semibold text-base">John Doe</div>
+<div class="text-sm text-text-secondary-light dark:text-text-secondary-dark">john.doe@example.com</div>
+</div>
+</div>
+<span class="bg-primary/10 text-primary text-xs font-bold px-2.5 py-1 rounded-full border border-primary/20">PRO</span>
+</button>
+<div class="h-px bg-divider-light dark:bg-divider-dark mx-4"></div>
+<button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<span class="text-sm font-medium">Subscription Management</span>
+<span class="material-icons-round text-text-secondary-light dark:text-text-secondary-dark text-xl">chevron_right</span>
+</button>
+</div>
+</section>
+<section class="space-y-2">
+<h2 class="text-sm font-semibold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider ml-1">App Settings</h2>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-divider-light dark:border-divider-dark overflow-hidden divide-y divide-divider-light dark:divide-divider-dark">
+<button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+<div class="flex flex-col items-start">
+<span class="text-sm font-medium">Stale Inventory Threshold</span>
+<span class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-0.5">Alert when item unsold for X days</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="text-sm text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary transition-colors">30 days</span>
+<span class="material-icons-round text-text-secondary-light dark:text-text-secondary-dark text-xl">chevron_right</span>
+</div>
+</button>
+<button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+<div class="flex flex-col items-start">
+<span class="text-sm font-medium">Default Sales Tax</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="text-sm text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary transition-colors">6.25%</span>
+<span class="material-icons-round text-text-secondary-light dark:text-text-secondary-dark text-xl">chevron_right</span>
+</div>
+</button>
+<div class="w-full flex items-center justify-between p-4">
+<div class="flex flex-col">
+<span class="text-sm font-medium">Enable Expense Tracking</span>
+<span class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-0.5">Track mileage, supplies, and more</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input checked="" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 dark:border-gray-600 checked:right-0 checked:border-primary focus:ring-0 focus:ring-offset-0" id="toggle-expenses" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 dark:bg-gray-700 cursor-pointer" for="toggle-expenses"></label>
+</div>
+</div>
+</div>
+</section>
+<section class="space-y-2">
+<h2 class="text-sm font-semibold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wider ml-1">Business Settings</h2>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-divider-light dark:border-divider-dark overflow-hidden divide-y divide-divider-light dark:divide-divider-dark">
+<button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+<div class="flex flex-col items-start">
+<span class="text-sm font-medium">IRS Mileage Rate</span>
+<span class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-0.5">2024 Standard</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="text-sm text-text-secondary-light dark:text-text-secondary-dark group-hover:text-primary transition-colors">$0.67/mi</span>
+<span class="material-icons-round text-text-secondary-light dark:text-text-secondary-dark text-xl">chevron_right</span>
+</div>
+</button>
+<button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+<div class="flex flex-col items-start">
+<span class="text-sm font-medium">Platform Fee Presets</span>
+<span class="text-xs text-text-secondary-light dark:text-text-secondary-dark mt-0.5">eBay, Mercari, Poshmark</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="material-icons-round text-text-secondary-light dark:text-text-secondary-dark text-xl">chevron_right</span>
+</div>
+</button>
+</div>
+</section>
+<section class="space-y-2 pt-2">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-divider-light dark:border-divider-dark overflow-hidden divide-y divide-divider-light dark:divide-divider-dark">
+<button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<span class="text-sm font-medium">Help &amp; Support</span>
+<span class="material-icons-round text-text-secondary-light dark:text-text-secondary-dark text-xl">open_in_new</span>
+</button>
+<button class="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<span class="text-sm font-medium">Privacy Policy</span>
+<span class="material-icons-round text-text-secondary-light dark:text-text-secondary-dark text-xl">chevron_right</span>
+</button>
+</div>
+</section>
+<div class="pt-4 pb-8">
+<button class="w-full bg-surface-light dark:bg-surface-dark border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 font-semibold py-3.5 rounded-xl shadow-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center space-x-2">
+<span class="material-icons-round text-lg">logout</span>
+<span>Log Out</span>
+</button>
+<p class="text-center text-xs text-text-secondary-light dark:text-text-secondary-dark mt-6">
+                PalletPulse v2.4.1 (Build 8902)
+            </p>
+</div>
+</main>
+<nav class="sticky bottom-0 bg-surface-light dark:bg-surface-dark border-t border-divider-light dark:border-divider-dark pb-safe">
+<div class="flex justify-around items-center h-16 px-2">
+<button class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-secondary-light dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-icons-round text-2xl">home</span>
+<span class="text-[10px] font-medium">Dashboard</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-secondary-light dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-icons-round text-2xl">inventory_2</span>
+<span class="text-[10px] font-medium">Inventory</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-secondary-light dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-icons-round text-2xl">attach_money</span>
+<span class="text-[10px] font-medium">Expenses</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full h-full space-y-1 text-text-secondary-light dark:text-text-secondary-dark hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-icons-round text-2xl">analytics</span>
+<span class="text-[10px] font-medium">Analytics</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full h-full space-y-1 text-primary dark:text-primary transition-colors">
+<span class="material-icons-round text-2xl">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</button>
+</div>
+</nav>
+<div class="h-6 bg-surface-light dark:bg-surface-dark"></div> 
+
+</body></html>

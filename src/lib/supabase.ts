@@ -3,16 +3,16 @@
 
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import logger from './logger';
 
 // Environment variables - must be set in .env file
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  // eslint-disable-next-line no-console -- intentional startup warning
-  console.warn(
-    'Supabase URL or Anon Key is missing. ' +
-    'Make sure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set in your .env file.'
+  logger.warn(
+    'Supabase URL or Anon Key is missing. Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in .env',
+    { screen: 'supabase' }
   );
 }
 
@@ -36,8 +36,7 @@ export const supabase = createClient(
 export async function getCurrentUser() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error) {
-    // eslint-disable-next-line no-console -- intentional error logging
-    console.error('Error getting current user:', error);
+    logger.error('Error getting current user', { screen: 'supabase', action: 'getUser' }, error);
     return null;
   }
   return user;
@@ -47,8 +46,7 @@ export async function getCurrentUser() {
 export async function getCurrentSession() {
   const { data: { session }, error } = await supabase.auth.getSession();
   if (error) {
-    // eslint-disable-next-line no-console -- intentional error logging
-    console.error('Error getting current session:', error);
+    logger.error('Error getting current session', { screen: 'supabase', action: 'getSession' }, error);
     return null;
   }
   return session;

@@ -58,7 +58,7 @@ export default function LoginScreen() {
           </View>
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>
-            Sign in to continue to <Text style={styles.brandText}>PalletPulse</Text>
+            Sign in to continue to <Text style={styles.brandText}>Pallet Pro</Text>
           </Text>
         </View>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/src/components/ui/Card';
 import { SectionHeader } from '@/src/components/ui/SectionHeader';
@@ -95,46 +95,40 @@ export function RecentActivityFeed({
     <View>
       <SectionHeader
         title="Recent Activity"
-        actionLabel={onViewAll ? 'View All' : undefined}
+        actionLabel={onViewAll ? 'See All' : undefined}
         onAction={onViewAll}
       />
-      <Card shadow="sm" padding={0}>
-        {activities.map((activity, index) => (
-          <ActivityRow
+      <View style={styles.activityList}>
+        {activities.map((activity) => (
+          <ActivityCard
             key={activity.id}
             activity={activity}
             onPress={() => onActivityPress(activity)}
-            isLast={index === activities.length - 1}
           />
         ))}
-      </Card>
+      </View>
     </View>
   );
 }
 
-interface ActivityRowProps {
+interface ActivityCardProps {
   activity: Activity;
   onPress: () => void;
-  isLast: boolean;
 }
 
-function ActivityRow({ activity, onPress, isLast }: ActivityRowProps) {
+function ActivityCard({ activity, onPress }: ActivityCardProps) {
   const config = activityConfig[activity.type];
+  const isProfit = activity.type === 'sale' && activity.value !== undefined && activity.value >= 0;
+  const isLoss = activity.type === 'sale' && activity.value !== undefined && activity.value < 0;
+  const showStatusText = activity.type === 'pallet';
 
   return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.row,
-        !isLast && styles.rowBorder,
-        pressed && styles.rowPressed,
-      ]}
-      onPress={onPress}
-    >
+    <Card shadow="sm" padding="md" style={styles.activityCard} onPress={onPress}>
       {activity.imageUri ? (
         <Image source={{ uri: activity.imageUri }} style={styles.thumbnail} />
       ) : (
         <View style={[styles.iconContainer, { backgroundColor: config.color + '15' }]}>
-          <Ionicons name={config.icon} size={20} color={config.color} />
+          <Ionicons name={config.icon} size={22} color={config.color} />
         </View>
       )}
 
@@ -143,22 +137,37 @@ function ActivityRow({ activity, onPress, isLast }: ActivityRowProps) {
         <Text style={styles.subtitle} numberOfLines={1}>{activity.subtitle}</Text>
       </View>
 
-      <View style={styles.right}>
+      <View style={styles.rightContent}>
         {activity.value !== undefined && (
-          <Text style={[styles.value, { color: config.color }]}>
+          <Text style={[
+            styles.value,
+            isProfit && styles.valueProfit,
+            isLoss && styles.valueLoss,
+            activity.type !== 'sale' && { color: colors.textPrimary },
+          ]}>
             {config.valuePrefix}{formatCurrency(Math.abs(activity.value))}
           </Text>
         )}
+        {showStatusText && (
+          <Text style={styles.statusText}>Added</Text>
+        )}
         <Text style={styles.time}>{formatTimeAgo(activity.timestamp)}</Text>
       </View>
-    </Pressable>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
+  activityList: {
+    gap: spacing.sm,
+  },
+  activityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: spacing.lg,
+    paddingVertical: spacing.xl,
   },
   emptyText: {
     fontSize: fontSize.md,
@@ -171,35 +180,22 @@ const styles = StyleSheet.create({
     color: colors.textDisabled,
     marginTop: spacing.xs,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-  },
-  rowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  rowPressed: {
-    backgroundColor: colors.surface,
-  },
   thumbnail: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.md,
+    width: 52,
+    height: 52,
+    borderRadius: borderRadius.lg,
     backgroundColor: colors.surface,
   },
   iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.md,
+    width: 52,
+    height: 52,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   content: {
     flex: 1,
     marginLeft: spacing.md,
-    marginRight: spacing.sm,
   },
   title: {
     fontSize: fontSize.md,
@@ -211,12 +207,25 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textSecondary,
   },
-  right: {
+  rightContent: {
     alignItems: 'flex-end',
+    marginLeft: spacing.sm,
   },
   value: {
     fontSize: fontSize.md,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  valueProfit: {
+    color: colors.profit,
+  },
+  valueLoss: {
+    color: colors.loss,
+  },
+  statusText: {
+    fontSize: fontSize.sm,
     fontWeight: '600',
+    color: colors.textPrimary,
     marginBottom: 2,
   },
   time: {

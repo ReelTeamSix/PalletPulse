@@ -8,3 +8,4 @@ export * from './SectionHeader';
 export * from './ConfirmationModal';
 export * from './ThumbnailImage';
 export * from './ProgressBar';
+export * from './ErrorFallback';
