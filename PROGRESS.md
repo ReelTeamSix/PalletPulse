@@ -1368,6 +1368,61 @@ Tests:       783 passed, 783 total
 
 ---
 
+## 🗺️ Post-MVP Roadmap
+
+Features captured for future development after MVP launch. Prioritization based on user feedback.
+
+### Goals System (v1.1+)
+
+**Purpose:** Help users set and track business targets for motivation and accountability.
+
+**Potential Features:**
+- Profit targets (weekly/monthly/quarterly)
+- Sales volume goals (items sold per period)
+- Listing targets (items to list per day/week)
+- ROI targets (maintain minimum ROI)
+- Progress tracking on dashboard (progress bars, percentage)
+- Goal history and achievement tracking
+- Notifications when goals are met or at risk
+
+**Implementation Notes:**
+- New `goals` table: `id, user_id, type, target_value, period, start_date, end_date, status`
+- Dashboard widget showing goal progress
+- InsightsCard integration for goal-related tips
+- Consider gamification (streaks, badges)
+
+### Categories System (v1.1+)
+
+**Purpose:** Better organize inventory and enable category-based analytics.
+
+**Potential Features:**
+- Item categorization (Electronics, Apparel, Home Goods, Toys, Sports, etc.)
+- Category-based analytics ("Electronics have 80% ROI, Apparel has 40%")
+- Filter inventory by category
+- Track which pallet sources yield best items per category
+- Category performance trends over time
+- Best/worst performing categories report
+
+**Implementation Notes:**
+- Add `category` field to items table
+- Predefined categories with "Other/Custom" option
+- Category dropdown in item form
+- New analytics section for category breakdown
+- Consider allowing user-defined categories (Pro feature?)
+
+### Other Post-MVP Ideas
+
+- [ ] Barcode scanning for faster item entry
+- [ ] Bulk item import from CSV/spreadsheet
+- [ ] Multi-user support (Enterprise tier)
+- [ ] Inventory location tracking (bins, shelves)
+- [ ] Marketplace listing integration (auto-post to FB/eBay)
+- [ ] Customer CRM (track buyers, repeat customers)
+- [ ] Profit forecasting based on historical data
+- [ ] Mobile widgets for quick stats
+
+---
+
 ### 11B: Dashboard Improvements ✅
 **Completed:** Jan 16, 2026
 
