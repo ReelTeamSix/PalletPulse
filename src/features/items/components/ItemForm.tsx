@@ -32,6 +32,7 @@ import { Item } from '@/src/types/database';
 import { PLATFORM_PRESETS } from '@/src/features/sales/schemas/sale-form-schema';
 import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
+import { SubscriptionTier } from '@/src/constants/tier-limits';
 
 interface ItemFormProps {
   initialValues?: Partial<ItemFormData>;
@@ -44,6 +45,7 @@ interface ItemFormProps {
   photos?: PhotoItem[]; // Current photos
   onPhotosChange?: (photos: PhotoItem[]) => void; // Photo update callback
   maxPhotos?: number; // Max photos allowed (tier-based)
+  currentTier?: SubscriptionTier; // Current subscription tier for badge display
 }
 
 export function ItemForm({
@@ -57,6 +59,7 @@ export function ItemForm({
   photos = [],
   onPhotosChange,
   maxPhotos = 5,
+  currentTier = 'free',
 }: ItemFormProps) {
   const insets = useSafeAreaInsets();
   const [keyboardKey, setKeyboardKey] = useState(0);
@@ -347,9 +350,16 @@ export function ItemForm({
           <Text style={styles.sectionLabel}>PHOTOS</Text>
           <View style={styles.photoCountContainer}>
             <Text style={styles.photoCount}>({localPhotos.length}/{maxPhotos})</Text>
-            {maxPhotos > 5 && (
-              <View style={styles.proBadge}>
-                <Text style={styles.proBadgeText}>PRO</Text>
+            {currentTier !== 'free' && (
+              <View style={[
+                styles.tierBadge,
+                currentTier === 'pro' && styles.tierBadgePro,
+                currentTier === 'enterprise' && styles.tierBadgeEnterprise,
+                currentTier === 'starter' && styles.tierBadgeStarter,
+              ]}>
+                <Text style={styles.tierBadgeText}>
+                  {currentTier === 'enterprise' ? 'ENT' : currentTier.toUpperCase()}
+                </Text>
               </View>
             )}
           </View>
@@ -972,13 +982,21 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: '500',
   },
-  proBadge: {
-    backgroundColor: colors.primary,
+  tierBadge: {
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: borderRadius.sm,
   },
-  proBadgeText: {
+  tierBadgeStarter: {
+    backgroundColor: colors.primary,
+  },
+  tierBadgePro: {
+    backgroundColor: '#8B5CF6', // Purple for premium feel
+  },
+  tierBadgeEnterprise: {
+    backgroundColor: '#D97706', // Amber/gold for top tier
+  },
+  tierBadgeText: {
     fontSize: 10,
     fontWeight: '700',
     color: colors.background,
