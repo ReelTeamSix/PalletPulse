@@ -52,7 +52,7 @@ export default function InventoryScreen() {
   const params = useLocalSearchParams<{ filter?: string; segment?: string }>();
 
   // Stores
-  const { pallets, isLoading: palletsLoading, error: palletsError, fetchPallets } = usePalletsStore();
+  const { pallets, isLoading: palletsLoading, error: palletsError, fetchPallets, markAsCompleted, dismissCompletionPrompt } = usePalletsStore();
   const { settings } = useUserSettingsStore();
   const staleThresholdDays = settings?.stale_threshold_days ?? 30;
   const { items, isLoading: itemsLoading, error: itemsError, fetchItems, markAsSold, deleteItem, fetchThumbnails } = useItemsStore();
@@ -86,6 +86,9 @@ export default function InventoryScreen() {
     title: '',
     message: '',
   });
+
+  // Completion prompt modal state
+  const [completionPromptPallet, setCompletionPromptPallet] = useState<Pallet | null>(null);
 
   // Thumbnail state for item images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
@@ -152,18 +155,37 @@ export default function InventoryScreen() {
 
   // Calculate pallet metrics
   const palletMetrics = useMemo(() => {
-    const metrics: Record<string, { itemCount: number; profit: number }> = {};
+    const metrics: Record<string, { itemCount: number; listedCount: number; profit: number }> = {};
     pallets.forEach(pallet => {
       const palletItems = items.filter(item => item.pallet_id === pallet.id);
       const palletExpenses = expenses.filter(expense => expense.pallet_id === pallet.id);
       const profitResult = calculatePalletProfit(pallet, palletItems, palletExpenses);
+      // Count items that are listed or sold (not unlisted/unprocessed)
+      const listedItems = palletItems.filter(item => item.status === 'listed' || item.status === 'sold');
       metrics[pallet.id] = {
         itemCount: palletItems.length,
+        listedCount: listedItems.length,
         profit: profitResult.netProfit,
       };
     });
     return metrics;
   }, [pallets, items, expenses]);
+
+  // Filter pallets - hide completed pallets from the list
+  const activePallets = useMemo(() => {
+    return pallets.filter(pallet => pallet.status !== 'completed');
+  }, [pallets]);
+
+  // Find pallets ready to be completed (all items listed/sold, not dismissed)
+  const palletsReadyToComplete = useMemo(() => {
+    return activePallets.filter(pallet => {
+      if (pallet.status !== 'processing') return false;
+      if (pallet.completion_prompt_dismissed) return false;
+      const metrics = palletMetrics[pallet.id];
+      if (!metrics || metrics.itemCount === 0) return false;
+      return metrics.listedCount === metrics.itemCount; // All items are listed or sold
+    });
+  }, [activePallets, palletMetrics]);
 
   // Filter and search items
   const filteredItems = useMemo(() => {
@@ -267,6 +289,22 @@ export default function InventoryScreen() {
     setDeleteModalItem(null);
   };
 
+  // Completion prompt handlers
+  const handleMarkPalletComplete = async () => {
+    if (!completionPromptPallet) return;
+    const result = await markAsCompleted(completionPromptPallet.id);
+    if (!result.success) {
+      setErrorModal({ visible: true, title: 'Error', message: result.error || 'Failed to mark pallet as completed.' });
+    }
+    setCompletionPromptPallet(null);
+  };
+
+  const handleDismissCompletionPrompt = async () => {
+    if (!completionPromptPallet) return;
+    await dismissCompletionPrompt(completionPromptPallet.id);
+    setCompletionPromptPallet(null);
+  };
+
   // Get item cost for profit calculation
   const getItemCost = useCallback((item: Item) => {
     if (item.allocated_cost !== null) return item.allocated_cost;
@@ -315,11 +353,12 @@ export default function InventoryScreen() {
 
   // Render functions
   const renderPalletCard = ({ item }: { item: Pallet }) => {
-    const metrics = palletMetrics[item.id] || { itemCount: 0, profit: 0 };
+    const metrics = palletMetrics[item.id] || { itemCount: 0, listedCount: 0, profit: 0 };
     return (
       <PalletCard
         pallet={item}
         itemCount={metrics.itemCount}
+        processedCount={metrics.listedCount}
         totalProfit={metrics.profit}
         onPress={() => handlePalletPress(item)}
       />
@@ -347,6 +386,32 @@ export default function InventoryScreen() {
           thumbnailUri={thumbnailUri}
         />
       </Swipeable>
+    );
+  };
+
+  // Render completion prompt banner
+  const renderCompletionPromptBanner = () => {
+    if (palletsReadyToComplete.length === 0) return null;
+    const firstPallet = palletsReadyToComplete[0];
+    const metrics = palletMetrics[firstPallet.id];
+    return (
+      <Pressable
+        style={styles.completionBanner}
+        onPress={() => setCompletionPromptPallet(firstPallet)}
+      >
+        <View style={styles.completionBannerIcon}>
+          <Ionicons name="checkmark-circle" size={24} color={colors.profit} />
+        </View>
+        <View style={styles.completionBannerContent}>
+          <Text style={styles.completionBannerTitle}>
+            {firstPallet.name} is ready!
+          </Text>
+          <Text style={styles.completionBannerText}>
+            All {metrics?.itemCount} items have been listed. Mark as completed?
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+      </Pressable>
     );
   };
 
@@ -429,8 +494,8 @@ export default function InventoryScreen() {
         </View>
         <Text style={styles.subtitle}>
           {activeSegment === 'pallets'
-            ? pallets.length > 0
-              ? `${pallets.length} pallet${pallets.length === 1 ? '' : 's'} - ${totalPalletItems} items`
+            ? activePallets.length > 0
+              ? `${activePallets.length} pallet${activePallets.length === 1 ? '' : 's'} - ${totalPalletItems} items`
               : 'Manage your pallet inventory'
             : items.length > 0
               ? `${items.length} item${items.length === 1 ? '' : 's'} - ${listedCount} listed - ${soldCount} sold`
@@ -449,7 +514,7 @@ export default function InventoryScreen() {
             <Ionicons
               name="cube-outline"
               size={18}
-              color={activeSegment === 'pallets' ? colors.background : colors.textSecondary}
+              color={activeSegment === 'pallets' ? colors.background : colors.textPrimary}
               style={styles.segmentIcon}
             />
             <Text
@@ -458,7 +523,7 @@ export default function InventoryScreen() {
                 activeSegment === 'pallets' && styles.segmentTextActive,
               ]}
             >
-              Pallets ({pallets.length})
+              Pallets ({activePallets.length})
             </Text>
           </Pressable>
           <Pressable
@@ -471,7 +536,7 @@ export default function InventoryScreen() {
             <Ionicons
               name="pricetag-outline"
               size={18}
-              color={activeSegment === 'items' ? colors.background : colors.textSecondary}
+              color={activeSegment === 'items' ? colors.background : colors.textPrimary}
               style={styles.segmentIcon}
             />
             <Text
@@ -543,25 +608,26 @@ export default function InventoryScreen() {
       </View>
 
       {/* Content */}
-      {isLoading && (activeSegment === 'pallets' ? pallets.length === 0 : items.length === 0) ? (
+      {isLoading && (activeSegment === 'pallets' ? activePallets.length === 0 : items.length === 0) ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>
             Loading {activeSegment === 'pallets' ? 'pallets' : 'items'}...
           </Text>
         </View>
-      ) : error && (activeSegment === 'pallets' ? pallets.length === 0 : items.length === 0) ? (
+      ) : error && (activeSegment === 'pallets' ? activePallets.length === 0 : items.length === 0) ? (
         renderErrorState()
       ) : activeSegment === 'pallets' ? (
-        pallets.length === 0 ? (
+        activePallets.length === 0 ? (
           renderEmptyPallets()
         ) : (
           <FlatList
-            data={pallets}
+            data={activePallets}
             renderItem={renderPalletCard}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            ListHeaderComponent={renderCompletionPromptBanner}
             refreshControl={
               <RefreshControl
                 refreshing={isLoading}
@@ -753,6 +819,20 @@ export default function InventoryScreen() {
         onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
         onClose={() => setErrorModal({ ...errorModal, visible: false })}
       />
+
+      {/* Completion Prompt Modal */}
+      <ConfirmationModal
+        visible={completionPromptPallet !== null}
+        type="success"
+        title={`Complete ${completionPromptPallet?.name || 'Pallet'}?`}
+        message="All items have been listed or sold. Would you like to mark this pallet as completed?"
+        infoText="Completed pallets are hidden from the inventory list but remain in your analytics."
+        primaryLabel="Mark Completed"
+        secondaryLabel="Not Now"
+        onPrimary={handleMarkPalletComplete}
+        onSecondary={handleDismissCompletionPrompt}
+        onClose={() => setCompletionPromptPallet(null)}
+      />
     </GestureHandlerRootView>
   );
 }
@@ -790,29 +870,28 @@ const styles = StyleSheet.create({
   segmentedControl: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.xl,
     padding: spacing.xs,
-    gap: spacing.xs,
   },
   segmentButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.sm,
-    gap: spacing.xs,
+    paddingVertical: spacing.sm + 2,
+    borderRadius: borderRadius.lg,
+    gap: spacing.sm,
   },
   segmentButtonActive: {
     backgroundColor: colors.primary,
   },
   segmentIcon: {
-    marginRight: 2,
+    marginRight: 0,
   },
   segmentText: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.md,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: colors.textPrimary,
   },
   segmentTextActive: {
     color: colors.background,
@@ -868,6 +947,33 @@ const styles = StyleSheet.create({
   },
   filterChipTextWarning: {
     color: colors.warning,
+  },
+  // Completion Banner
+  completionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.profit + '15',
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.profit + '30',
+  },
+  completionBannerIcon: {
+    marginRight: spacing.md,
+  },
+  completionBannerContent: {
+    flex: 1,
+  },
+  completionBannerTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  completionBannerText: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
   },
   // List
   listContent: {

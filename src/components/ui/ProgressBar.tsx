@@ -28,9 +28,11 @@ export function ProgressBar({
         <View style={styles.header}>
           {label && <Text style={styles.label}>{label}</Text>}
           {showCount && (
-            <Text style={styles.count}>
-              {current}/{total}
-            </Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.count}>
+                {current}/{total}
+              </Text>
+            </View>
           )}
         </View>
       )}
@@ -64,6 +66,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.textSecondary,
+  },
+  countBadge: {
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
   },
   count: {
     fontSize: fontSize.sm,

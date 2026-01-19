@@ -216,6 +216,32 @@ export const useItemsStore = create<ItemsState>()(
           if (error) throw error;
           const item = data as Item;
           set(state => ({ items: [item, ...state.items], isLoading: false }));
+
+          // Auto-transition: If this is the first item added to an "unprocessed" pallet,
+          // automatically change pallet status to "processing"
+          if (itemData.pallet_id) {
+            const { data: pallet } = await supabase
+              .from('pallets')
+              .select('status')
+              .eq('id', itemData.pallet_id)
+              .single();
+
+            if (pallet && pallet.status === 'unprocessed') {
+              // Update pallet status to "processing"
+              await supabase
+                .from('pallets')
+                .update({ status: 'processing' })
+                .eq('id', itemData.pallet_id);
+
+              // Update the pallets store
+              // eslint-disable-next-line @typescript-eslint/no-require-imports -- circular dependency workaround
+              const { usePalletsStore } = require('./pallets-store');
+              const palletsStore = usePalletsStore.getState();
+              // Refresh pallets to get the updated status
+              palletsStore.fetchPallets();
+            }
+          }
+
           return { success: true, data: item };
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to add item';

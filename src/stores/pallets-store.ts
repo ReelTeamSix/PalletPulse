@@ -53,6 +53,8 @@ export interface PalletsState {
   addPallet: (pallet: PalletInsert) => Promise<AddPalletResult>;
   updatePallet: (id: string, updates: PalletUpdate) => Promise<{ success: boolean; error?: string }>;
   deletePallet: (id: string) => Promise<{ success: boolean; error?: string }>;
+  markAsCompleted: (id: string) => Promise<{ success: boolean; error?: string }>;
+  dismissCompletionPrompt: (id: string) => Promise<{ success: boolean; error?: string }>;
   setSelectedPallet: (id: string | null) => void;
   clearError: () => void;
   clearPallets: () => void;
@@ -157,6 +159,48 @@ export const usePalletsStore = create<PalletsState>()(
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to delete pallet';
           set({ error: message, isLoading: false });
+          return { success: false, error: message };
+        }
+      },
+
+      markAsCompleted: async (id: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const currentPallet = get().pallets.find(p => p.id === id);
+          if (!currentPallet) throw new Error('Pallet not found');
+          const { data, error } = await supabase
+            .from('pallets')
+            .update({ status: 'completed', version: currentPallet.version + 1 } as any)
+            .eq('id', id)
+            .eq('version', currentPallet.version)
+            .select()
+            .single();
+          if (error) throw error;
+          set(state => ({ pallets: state.pallets.map(p => p.id === id ? (data as Pallet) : p), isLoading: false }));
+          return { success: true };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to mark pallet as completed';
+          set({ error: message, isLoading: false });
+          return { success: false, error: message };
+        }
+      },
+
+      dismissCompletionPrompt: async (id: string) => {
+        try {
+          const currentPallet = get().pallets.find(p => p.id === id);
+          if (!currentPallet) throw new Error('Pallet not found');
+          const { data, error } = await supabase
+            .from('pallets')
+            .update({ completion_prompt_dismissed: true, version: currentPallet.version + 1 } as any)
+            .eq('id', id)
+            .eq('version', currentPallet.version)
+            .select()
+            .single();
+          if (error) throw error;
+          set(state => ({ pallets: state.pallets.map(p => p.id === id ? (data as Pallet) : p) }));
+          return { success: true };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to dismiss prompt';
           return { success: false, error: message };
         }
       },

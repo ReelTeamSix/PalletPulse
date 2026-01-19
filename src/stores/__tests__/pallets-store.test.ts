@@ -32,6 +32,7 @@ const mockPallet = {
   purchase_date: '2024-01-15',
   status: 'unprocessed' as const,
   notes: null,
+  completion_prompt_dismissed: false,
   version: 1,
   created_at: '2024-01-15T00:00:00Z',
   updated_at: '2024-01-15T00:00:00Z',
@@ -178,6 +179,73 @@ describe('PalletsStore', () => {
       expect(result.success).toBe(true);
       expect(usePalletsStore.getState().pallets).toHaveLength(0);
       expect(usePalletsStore.getState().selectedPalletId).toBe(null);
+    });
+  });
+
+  describe('markAsCompleted', () => {
+    beforeEach(() => {
+      const processingPallet = { ...mockPallet, status: 'processing' as const };
+      usePalletsStore.setState({ pallets: [processingPallet] });
+    });
+
+    it('should mark pallet as completed successfully', async () => {
+      const completedPallet = { ...mockPallet, status: 'completed', version: 2 };
+
+      const mockUpdate = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: completedPallet, error: null }),
+            }),
+          }),
+        }),
+      });
+      (supabase.from as jest.Mock).mockReturnValue({ update: mockUpdate });
+
+      const result = await usePalletsStore.getState().markAsCompleted('pallet-1');
+
+      expect(result.success).toBe(true);
+      expect(usePalletsStore.getState().pallets[0].status).toBe('completed');
+    });
+
+    it('should fail when pallet not found', async () => {
+      const result = await usePalletsStore.getState().markAsCompleted('non-existent');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Pallet not found');
+    });
+  });
+
+  describe('dismissCompletionPrompt', () => {
+    beforeEach(() => {
+      usePalletsStore.setState({ pallets: [mockPallet] });
+    });
+
+    it('should dismiss completion prompt successfully', async () => {
+      const dismissedPallet = { ...mockPallet, completion_prompt_dismissed: true, version: 2 };
+
+      const mockUpdate = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: dismissedPallet, error: null }),
+            }),
+          }),
+        }),
+      });
+      (supabase.from as jest.Mock).mockReturnValue({ update: mockUpdate });
+
+      const result = await usePalletsStore.getState().dismissCompletionPrompt('pallet-1');
+
+      expect(result.success).toBe(true);
+      expect(usePalletsStore.getState().pallets[0].completion_prompt_dismissed).toBe(true);
+    });
+
+    it('should fail when pallet not found', async () => {
+      const result = await usePalletsStore.getState().dismissCompletionPrompt('non-existent');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Pallet not found');
     });
   });
 

@@ -29,6 +29,16 @@ jest.mock('../subscription-store', () => ({
   },
 }));
 
+// Mock pallets store for auto-transition tests
+const mockFetchPallets = jest.fn();
+jest.mock('../pallets-store', () => ({
+  usePalletsStore: {
+    getState: () => ({
+      fetchPallets: mockFetchPallets,
+    }),
+  },
+}));
+
 const mockItem = {
   id: 'item-1',
   user_id: 'user-123',
@@ -222,6 +232,64 @@ describe('ItemsStore', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('User not authenticated');
+    });
+
+    it('should auto-transition pallet from unprocessed to processing when item added', async () => {
+      (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+        data: { user: { id: 'user-123' } },
+      });
+
+      // Track update calls
+      const updateCalls: { table: string; data: Record<string, unknown> }[] = [];
+
+      // Mock different responses for different tables
+      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+        if (table === 'pallets') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: { purchase_cost: 100, sales_tax: 10, status: 'unprocessed' },
+                  error: null,
+                }),
+              }),
+            }),
+            update: jest.fn().mockImplementation((data) => {
+              updateCalls.push({ table, data });
+              return {
+                eq: jest.fn().mockResolvedValue({ error: null }),
+              };
+            }),
+          };
+        }
+        if (table === 'items') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({ count: 0, error: null }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: mockItem, error: null }),
+              }),
+            }),
+            update: jest.fn().mockReturnValue({
+              eq: jest.fn().mockResolvedValue({ error: null }),
+            }),
+          };
+        }
+        return {};
+      });
+
+      await useItemsStore.getState().addItem({
+        name: 'Test Item',
+        pallet_id: 'pallet-1',
+      });
+
+      // Verify that the pallet status was updated to 'processing'
+      const palletUpdate = updateCalls.find(c => c.table === 'pallets');
+      expect(palletUpdate).toBeDefined();
+      expect(palletUpdate?.data.status).toBe('processing');
+      expect(mockFetchPallets).toHaveBeenCalled();
     });
   });
 

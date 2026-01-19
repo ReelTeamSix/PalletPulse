@@ -66,6 +66,7 @@ export interface Pallet {
   purchase_date: string
   status: PalletStatus
   notes: string | null
+  completion_prompt_dismissed: boolean // Track if user dismissed the "mark as completed" prompt
   version: number
   created_at: string
   updated_at: string
