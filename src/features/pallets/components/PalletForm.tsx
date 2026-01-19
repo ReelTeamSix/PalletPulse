@@ -14,9 +14,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Ionicons } from '@expo/vector-icons';
 import { Input, Button } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { shadows } from '@/src/constants/shadows';
 import {
   palletFormSchema,
   PalletFormData,
@@ -147,239 +149,258 @@ export function PalletForm({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-      {/* Pallet Name */}
-      <Controller
-        control={control}
-        name="name"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <Input
-            label="Pallet Name *"
-            placeholder="e.g., Pallet #1, Amazon Monster Pallet"
-            value={value}
-            onChangeText={onChange}
-            onBlur={onBlur}
-            error={errors.name?.message}
-            autoCapitalize="words"
+        {/* Form Card Container */}
+        <View style={[styles.formCard, shadows.sm]}>
+          {/* Pallet Name */}
+          <Controller
+            control={control}
+            name="name"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="PALLET NAME *"
+                placeholder="e.g., Pallet #1, Amazon Monster Pallet"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={errors.name?.message}
+                autoCapitalize="words"
+              />
+            )}
           />
-        )}
-      />
 
-      {/* Supplier with autocomplete from history */}
-      <View style={[styles.autocompleteContainer, { zIndex: 20 }]}>
-        <Controller
-          control={control}
-          name="supplier"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Supplier"
-              placeholder="e.g., GRPL, Liquidation Land, B-Stock"
-              value={value || ''}
-              onChangeText={(text) => {
-                onChange(text);
-                setShowSupplierSuggestions(true);
-              }}
-              onBlur={() => {
-                onBlur();
-                setTimeout(() => setShowSupplierSuggestions(false), 200);
-              }}
-              onFocus={() => setShowSupplierSuggestions(true)}
-              error={errors.supplier?.message}
-              autoCapitalize="words"
+          {/* Supplier with autocomplete from history */}
+          <View style={[styles.autocompleteContainer, { zIndex: 20 }]}>
+            <Controller
+              control={control}
+              name="supplier"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="SUPPLIER"
+                  placeholder="e.g., GRPL, Liquidation Land, B-Stock"
+                  value={value || ''}
+                  onChangeText={(text) => {
+                    onChange(text);
+                    setShowSupplierSuggestions(true);
+                  }}
+                  onBlur={() => {
+                    onBlur();
+                    setTimeout(() => setShowSupplierSuggestions(false), 200);
+                  }}
+                  onFocus={() => setShowSupplierSuggestions(true)}
+                  error={errors.supplier?.message}
+                  autoCapitalize="words"
+                />
+              )}
             />
-          )}
-        />
-        {showSupplierSuggestions && filteredSupplierSuggestions.length > 0 && (
-          <View style={styles.suggestions}>
-            {filteredSupplierSuggestions.slice(0, 4).map((suggestion) => (
-              <Pressable
-                key={suggestion}
-                style={styles.suggestionItem}
-                onPress={() => {
-                  setValue('supplier', suggestion);
-                  setShowSupplierSuggestions(false);
-                }}
-              >
-                <Text style={styles.suggestionText}>{suggestion}</Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </View>
-
-      {/* Source/Type with autocomplete from history */}
-      <View style={[styles.autocompleteContainer, { zIndex: 10 }]}>
-        <Controller
-          control={control}
-          name="source_name"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Source / Type"
-              placeholder="e.g., Amazon Monster, Walmart Medium, Target Returns"
-              value={value || ''}
-              onChangeText={(text) => {
-                onChange(text);
-                setShowSourceSuggestions(true);
-              }}
-              onBlur={() => {
-                onBlur();
-                setTimeout(() => setShowSourceSuggestions(false), 200);
-              }}
-              onFocus={() => setShowSourceSuggestions(true)}
-              error={errors.source_name?.message}
-              autoCapitalize="words"
-              hint="Describe the type of pallet (builds autocomplete over time)"
-            />
-          )}
-        />
-        {showSourceSuggestions && filteredSourceSuggestions.length > 0 && (
-          <View style={styles.suggestions}>
-            {filteredSourceSuggestions.slice(0, 4).map((suggestion) => (
-              <Pressable
-                key={suggestion}
-                style={styles.suggestionItem}
-                onPress={() => {
-                  setValue('source_name', suggestion);
-                  setShowSourceSuggestions(false);
-                }}
-              >
-                <Text style={styles.suggestionText}>{suggestion}</Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </View>
-
-      {/* Purchase Cost */}
-      <Controller
-        control={control}
-        name="purchase_cost"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <Input
-            label="Purchase Cost *"
-            placeholder="0.00"
-            value={value > 0 ? value.toString() : ''}
-            onChangeText={(text) => {
-              const num = parseFloat(text) || 0;
-              handlePurchaseCostChange(num);
-            }}
-            onBlur={onBlur}
-            error={errors.purchase_cost?.message}
-            keyboardType="decimal-pad"
-            leftIcon="dollar"
-          />
-        )}
-      />
-
-      {/* Sales Tax Section */}
-      <View style={styles.taxSection}>
-        {defaultTaxRate !== null && defaultTaxRate > 0 && (
-          <View style={styles.taxToggleRow}>
-            <Pressable
-              style={styles.taxToggle}
-              onPress={() => {
-                setUseAutoTax(!useAutoTax);
-                if (!useAutoTax && watchPurchaseCost > 0) {
-                  const calculatedTax = calculateSalesTaxFromRate(watchPurchaseCost, defaultTaxRate);
-                  setValue('sales_tax', calculatedTax);
-                }
-              }}
-            >
-              <View style={[styles.checkbox, useAutoTax && styles.checkboxChecked]}>
-                {useAutoTax && <Text style={styles.checkmark}>{"✓"}</Text>}
+            {showSupplierSuggestions && filteredSupplierSuggestions.length > 0 && (
+              <View style={styles.suggestions}>
+                {filteredSupplierSuggestions.slice(0, 4).map((suggestion) => (
+                  <Pressable
+                    key={suggestion}
+                    style={styles.suggestionItem}
+                    onPress={() => {
+                      setValue('supplier', suggestion);
+                      setShowSupplierSuggestions(false);
+                    }}
+                  >
+                    <Text style={styles.suggestionText}>{suggestion}</Text>
+                  </Pressable>
+                ))}
               </View>
-              <Text style={styles.taxToggleText}>
-                Auto-calculate ({defaultTaxRate}% rate)
-              </Text>
-            </Pressable>
+            )}
           </View>
-        )}
 
-        <Controller
-          control={control}
-          name="sales_tax"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <Input
-              label="Sales Tax"
-              placeholder="0.00"
-              value={value !== null && value !== undefined ? value.toString() : ''}
-              onChangeText={(text) => {
-                const num = parseFloat(text) || null;
-                onChange(num);
-                // Disable auto-tax if user manually edits
-                if (useAutoTax) setUseAutoTax(false);
-              }}
-              onBlur={onBlur}
-              error={errors.sales_tax?.message}
-              keyboardType="decimal-pad"
-              leftIcon="dollar"
-              hint={defaultTaxRate === null || defaultTaxRate === 0
-                ? "Leave blank if tax exempt"
-                : useAutoTax
-                  ? "Auto-calculated from your default rate"
-                  : "Leave blank if tax exempt"
-              }
+          {/* Source/Type with autocomplete from history */}
+          <View style={[styles.autocompleteContainer, { zIndex: 10 }]}>
+            <Controller
+              control={control}
+              name="source_name"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="SOURCE / TYPE"
+                  placeholder="e.g., Amazon Monster, Walmart Medium"
+                  value={value || ''}
+                  onChangeText={(text) => {
+                    onChange(text);
+                    setShowSourceSuggestions(true);
+                  }}
+                  onBlur={() => {
+                    onBlur();
+                    setTimeout(() => setShowSourceSuggestions(false), 200);
+                  }}
+                  onFocus={() => setShowSourceSuggestions(true)}
+                  error={errors.source_name?.message}
+                  autoCapitalize="words"
+                />
+              )}
             />
-          )}
-        />
-
-        {/* Total Cost Display */}
-        {(watchPurchaseCost > 0 || (watchSalesTax && watchSalesTax > 0)) && (
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total Cost:</Text>
-            <Text style={styles.totalValue}>${totalCost.toFixed(2)}</Text>
+            {showSourceSuggestions && filteredSourceSuggestions.length > 0 && (
+              <View style={styles.suggestions}>
+                {filteredSourceSuggestions.slice(0, 4).map((suggestion) => (
+                  <Pressable
+                    key={suggestion}
+                    style={styles.suggestionItem}
+                    onPress={() => {
+                      setValue('source_name', suggestion);
+                      setShowSourceSuggestions(false);
+                    }}
+                  >
+                    <Text style={styles.suggestionText}>{suggestion}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
           </View>
-        )}
-      </View>
 
-      {/* Purchase Date */}
-      <View style={styles.fieldContainer}>
-        <Text style={styles.label}>Purchase Date *</Text>
-        <Pressable
-          style={styles.dateButton}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <Text style={styles.dateText}>
-            {watchPurchaseDate ? formatDisplayDate(watchPurchaseDate) : 'Select date'}
-          </Text>
-        </Pressable>
-        {errors.purchase_date && (
-          <Text style={styles.error}>{errors.purchase_date.message}</Text>
-        )}
-        {showDatePicker && (
-          <DateTimePicker
-            value={(() => {
-              if (!watchPurchaseDate) return new Date();
-              // Parse as local date to avoid timezone issues
-              const [year, month, day] = watchPurchaseDate.split('-').map(Number);
-              return new Date(year, month - 1, day);
-            })()}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleDateChange}
-            maximumDate={new Date()}
+          {/* Quick-select chips for user's previous source types */}
+          {uniqueSourceNames.length > 0 && !watchSourceName && (
+            <View style={styles.sourceChipsContainer}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.sourceChipsScroll}
+              >
+                {uniqueSourceNames.slice(0, 6).map((source) => (
+                  <Pressable
+                    key={source}
+                    style={styles.sourceChip}
+                    onPress={() => setValue('source_name', source)}
+                  >
+                    <Text style={styles.sourceChipText}>{source}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+              <Text style={styles.sourceChipsHint}>Tap to reuse a previous source type</Text>
+            </View>
+          )}
+
+          {/* Purchase Cost & Sales Tax - Side by Side */}
+          <View style={styles.costRow}>
+            <View style={styles.costField}>
+              <Controller
+                control={control}
+                name="purchase_cost"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    label="PURCHASE COST *"
+                    placeholder="0.00"
+                    value={value > 0 ? value.toString() : ''}
+                    onChangeText={(text) => {
+                      const num = parseFloat(text) || 0;
+                      handlePurchaseCostChange(num);
+                    }}
+                    onBlur={onBlur}
+                    error={errors.purchase_cost?.message}
+                    keyboardType="decimal-pad"
+                    leftIcon="dollar"
+                  />
+                )}
+              />
+            </View>
+            <View style={styles.costField}>
+              <Controller
+                control={control}
+                name="sales_tax"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <Input
+                    label="SALES TAX"
+                    placeholder="0.00"
+                    value={value !== null && value !== undefined ? value.toString() : ''}
+                    onChangeText={(text) => {
+                      const num = parseFloat(text) || null;
+                      onChange(num);
+                      if (useAutoTax) setUseAutoTax(false);
+                    }}
+                    onBlur={onBlur}
+                    error={errors.sales_tax?.message}
+                    keyboardType="decimal-pad"
+                    leftIcon="dollar"
+                  />
+                )}
+              />
+            </View>
+          </View>
+
+          {/* Auto-tax toggle and total */}
+          <View style={styles.taxSection}>
+            {defaultTaxRate !== null && defaultTaxRate > 0 && (
+              <Pressable
+                style={styles.taxToggle}
+                onPress={() => {
+                  setUseAutoTax(!useAutoTax);
+                  if (!useAutoTax && watchPurchaseCost > 0) {
+                    const calculatedTax = calculateSalesTaxFromRate(watchPurchaseCost, defaultTaxRate);
+                    setValue('sales_tax', calculatedTax);
+                  }
+                }}
+              >
+                <View style={[styles.checkbox, useAutoTax && styles.checkboxChecked]}>
+                  {useAutoTax && <Ionicons name="checkmark" size={14} color={colors.background} />}
+                </View>
+                <Text style={styles.taxToggleText}>
+                  Auto-calculate tax ({defaultTaxRate}%)
+                </Text>
+              </Pressable>
+            )}
+
+            {/* Total Cost Display */}
+            {(watchPurchaseCost > 0 || (watchSalesTax && watchSalesTax > 0)) && (
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Total Cost</Text>
+                <Text style={styles.totalValue}>${totalCost.toFixed(2)}</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Purchase Date */}
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>PURCHASE DATE *</Text>
+            <Pressable
+              style={styles.dateButton}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text style={styles.dateText}>
+                {watchPurchaseDate ? formatDisplayDate(watchPurchaseDate) : 'Select date'}
+              </Text>
+              <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
+            </Pressable>
+            {errors.purchase_date && (
+              <Text style={styles.error}>{errors.purchase_date.message}</Text>
+            )}
+            {showDatePicker && (
+              <DateTimePicker
+                value={(() => {
+                  if (!watchPurchaseDate) return new Date();
+                  const [year, month, day] = watchPurchaseDate.split('-').map(Number);
+                  return new Date(year, month - 1, day);
+                })()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+              />
+            )}
+          </View>
+
+          {/* Notes */}
+          <Controller
+            control={control}
+            name="notes"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="NOTES"
+                placeholder="Add details..."
+                value={value || ''}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={errors.notes?.message}
+                multiline
+                numberOfLines={3}
+                inputStyle={styles.notesInput}
+              />
+            )}
           />
-        )}
-      </View>
-
-      {/* Notes */}
-      <Controller
-        control={control}
-        name="notes"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <Input
-            label="Notes"
-            placeholder="Optional notes about this pallet..."
-            value={value || ''}
-            onChangeText={onChange}
-            onBlur={onBlur}
-            error={errors.notes?.message}
-            multiline
-            numberOfLines={3}
-            inputStyle={styles.notesInput}
-          />
-        )}
-      />
-
+        </View>
       </ScrollView>
 
       {/* Fixed Footer Buttons */}
@@ -405,19 +426,26 @@ export function PalletForm({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.backgroundSecondary,
   },
   content: {
     padding: spacing.lg,
-    paddingBottom: spacing.xxl * 2, // Extra padding so buttons can scroll above keyboard
+    paddingBottom: spacing.xxl * 2,
+  },
+  formCard: {
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
   },
   fieldContainer: {
     marginBottom: spacing.md,
   },
   label: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
-    color: colors.textPrimary,
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.textSecondary,
     marginBottom: spacing.xs,
+    letterSpacing: 0.5,
   },
   autocompleteContainer: {
     position: 'relative',
@@ -448,19 +476,51 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
-  taxSection: {
-    marginBottom: spacing.md,
+  sourceChipsContainer: {
+    marginBottom: spacing.lg,
+    marginTop: -spacing.sm,
   },
-  taxToggleRow: {
+  sourceChipsScroll: {
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  sourceChip: {
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  sourceChipText: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  sourceChipsHint: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  costRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
     marginBottom: spacing.sm,
+  },
+  costField: {
+    flex: 1,
+  },
+  taxSection: {
+    marginBottom: spacing.lg,
   },
   taxToggle: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: spacing.sm,
   },
   checkbox: {
-    width: 22,
-    height: 22,
+    width: 20,
+    height: 20,
     borderRadius: borderRadius.sm,
     borderWidth: 2,
     borderColor: colors.border,
@@ -471,11 +531,6 @@ const styles = StyleSheet.create({
   checkboxChecked: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
-  },
-  checkmark: {
-    color: colors.background,
-    fontSize: fontSize.sm,
-    fontWeight: 'bold',
   },
   taxToggleText: {
     fontSize: fontSize.sm,
@@ -488,19 +543,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     padding: spacing.md,
     borderRadius: borderRadius.md,
-    marginTop: spacing.sm,
   },
   totalLabel: {
-    fontSize: fontSize.md,
+    fontSize: fontSize.sm,
     fontWeight: '500',
-    color: colors.textPrimary,
+    color: colors.textSecondary,
   },
   totalValue: {
     fontSize: fontSize.lg,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: colors.primary,
   },
   dateButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
     borderWidth: 1,
