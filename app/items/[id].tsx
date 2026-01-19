@@ -259,6 +259,7 @@ export default function ItemDetailScreen() {
                   horizontal
                   pagingEnabled
                   showsHorizontalScrollIndicator={false}
+                  style={styles.heroScrollView}
                   onScroll={(e) => {
                     const index = Math.round(e.nativeEvent.contentOffset.x / screenWidth);
                     setCurrentPhotoIndex(index);
@@ -345,6 +346,7 @@ export default function ItemDetailScreen() {
                 </View>
               </View>
             )}
+          </View>
 
           {/* Financial Snapshot Card */}
           <View style={styles.financialCard}>
@@ -407,8 +409,6 @@ export default function ItemDetailScreen() {
                 </View>
               )}
             </View>
-          </View>
-
           </View>
 
           {/* Cost Allocation Info for Pallet Items */}
@@ -734,8 +734,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   heroImageContainer: {
-    flex: 1,
+    height: 300,
     position: 'relative',
+  },
+  heroScrollView: {
+    height: 300,
   },
   heroImage: {
     width: screenWidth,
