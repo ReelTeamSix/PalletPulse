@@ -80,8 +80,10 @@ export function UserProfileCard({
           )}
         </View>
 
-        {/* Always show chevron for visual consistency */}
-        <Ionicons name="chevron-forward" size={20} color={colors.textDisabled} />
+        {/* Only show chevron when profile is clickable */}
+        {onPress && (
+          <Ionicons name="chevron-forward" size={20} color={colors.textDisabled} />
+        )}
       </Pressable>
 
       {/* Subscription management row */}
