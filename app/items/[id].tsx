@@ -217,8 +217,13 @@ export default function ItemDetailScreen() {
   const hasSold = item.status === 'sold';
 
   // Calculate margin percentage for sold items
-  const marginPercent = hasSold && item.sale_price && item.sale_price > 0
+  // Only show margin indicator for reasonable values (-99% to 999%)
+  // Extreme losses (like -18900%) aren't meaningful to display
+  const rawMarginPercent = hasSold && item.sale_price && item.sale_price > 0
     ? Math.round((profit / item.sale_price) * 100)
+    : null;
+  const marginPercent = rawMarginPercent !== null && rawMarginPercent >= -99 && rawMarginPercent <= 999
+    ? rawMarginPercent
     : null;
 
   // Calculate days to sell
@@ -398,7 +403,7 @@ export default function ItemDetailScreen() {
                   {hasSold ? formatCurrency(profit) : (estimatedProfit !== null ? formatCurrency(estimatedProfit) : '-')}
                 </Text>
               </View>
-              {/* Margin Indicator */}
+              {/* Margin Indicator - only shown for reasonable margin values */}
               {hasSold && marginPercent !== null && (
                 <View style={styles.marginIndicator}>
                   <View style={[
@@ -1062,6 +1067,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.background,
     marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
     marginBottom: spacing.lg,
     padding: spacing.md,
     borderRadius: borderRadius.lg,
