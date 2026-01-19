@@ -1577,19 +1577,44 @@ Lint: passes
 **Completed:** Jan 18, 2026
 
 **Overview:**
-Updated Item Detail page to match ItemCard styling improvements for consistency across the app.
+Comprehensive redesign of the Item Detail page to match the inspiration design, with hero image overlay, Financial Snapshot card with margin indicator, and enhanced Sale Details section.
 
 **Files Modified:**
-- `app/items/[id].tsx` - Item detail screen
-  - Replaced filled status badge with colored dot + uppercase text (matching ItemCard)
-  - Updated condition badge to use light background with colored text
-  - Consistent visual language between list and detail views
+- `app/items/[id].tsx` - Complete redesign (~480 lines changed)
 
-**Design Decisions:**
-Applied same improvements as ItemCard for consistency:
-- **Status indicator:** Colored dot + uppercase label instead of filled badge
-- **Condition badge:** Light background (20% opacity) with colored text instead of filled with white text
-- **Skipped:** Financial Snapshot margin indicator (adding stuff just to add stuff)
+**Key Features:**
+
+1. **Hero Image Section with Overlay**
+   - Dark gradient overlay at bottom of image
+   - Status badge (SOLD/LISTED/UNLISTED) with icon overlaid on image top-right
+   - Condition badge at bottom-left of image
+   - Item name and SKU overlaid on dark gradient
+   - Photo indicators positioned above text overlay
+
+2. **Financial Snapshot Card**
+   - Card with shadow on light gray background
+   - SALE PRICE and ALLOCATED COST in side-by-side gray boxes
+   - Dashed divider line
+   - Large Net Profit display
+   - Circular margin percentage indicator (e.g., 35% MARGIN)
+
+3. **Sale Details Section (for sold items)**
+   - Header with "Sale Details" and platform tag (e.g., "eBay Sale")
+   - Platform Fees row with icon container, fee description, and amount
+   - Shipping Costs row with icon container and amount
+   - Listed Date and Days to Sell displayed side-by-side
+
+4. **Updated Footer**
+   - Full-width "Edit Item" button with icon for sold items
+   - Edit/Mark as Sold split buttons for unsold items
+
+5. **Styling Updates**
+   - Light gray background (backgroundSecondary)
+   - White cards with shadows for depth
+   - Consistent with app-wide design system
+
+**Added Dependencies:**
+- `expo-linear-gradient` for hero image gradient overlay
 
 **Test Results:**
 ```
@@ -1599,6 +1624,7 @@ Lint: passes
 
 **Commits:**
 - `feat(items): update Item Detail status indicator and condition badge`
+- `feat(items): comprehensive Item Detail screen redesign`
 
 ---
 
