@@ -1573,4 +1573,33 @@ Lint: passes
 
 ---
 
+### 11F: Item Detail Page Redesign ✅
+**Completed:** Jan 18, 2026
+
+**Overview:**
+Updated Item Detail page to match ItemCard styling improvements for consistency across the app.
+
+**Files Modified:**
+- `app/items/[id].tsx` - Item detail screen
+  - Replaced filled status badge with colored dot + uppercase text (matching ItemCard)
+  - Updated condition badge to use light background with colored text
+  - Consistent visual language between list and detail views
+
+**Design Decisions:**
+Applied same improvements as ItemCard for consistency:
+- **Status indicator:** Colored dot + uppercase label instead of filled badge
+- **Condition badge:** Light background (20% opacity) with colored text instead of filled with white text
+- **Skipped:** Financial Snapshot margin indicator (adding stuff just to add stuff)
+
+**Test Results:**
+```
+TypeScript: passes
+Lint: passes
+```
+
+**Commits:**
+- `feat(items): update Item Detail status indicator and condition badge`
+
+---
+
 **Reply "approved" to continue, or provide feedback.**
