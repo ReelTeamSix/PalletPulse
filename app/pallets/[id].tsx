@@ -429,9 +429,11 @@ export default function PalletDetailScreen() {
             {palletItems.length > 0 && profitMetrics && (
               <View style={styles.itemsProgressContainer}>
                 <ProgressBar
-                  progress={profitMetrics.soldItemsCount / palletItems.length}
+                  current={profitMetrics.soldItemsCount}
+                  total={palletItems.length}
                   color={colors.profit}
                   height={6}
+                  showCount={false}
                 />
                 <Text style={styles.itemsProgressText}>
                   {Math.round((profitMetrics.soldItemsCount / palletItems.length) * 100)}% Inventory Sold
