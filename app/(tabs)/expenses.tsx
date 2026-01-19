@@ -21,7 +21,6 @@ import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
 import { useMileageStore, MileageTripWithPallets } from '@/src/stores/mileage-store';
 import { Card } from '@/src/components/ui/Card';
-import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import {
   SummaryCard,
   SummaryCardRow,
@@ -167,6 +166,7 @@ export default function ExpensesScreen() {
   const handleAddMileage = () => router.push('/mileage/new');
   const handleExpensePress = (expense: ExpenseWithPallets) => router.push(`/expenses/${expense.id}`);
   const handleMileagePress = (trip: MileageTripWithPallets) => router.push(`/mileage/${trip.id}`);
+  const handleViewAll = () => router.push('/expenses/list');
 
   const getPalletNames = (palletIds: string[]) => {
     return palletIds
@@ -210,7 +210,7 @@ export default function ExpensesScreen() {
           onPress={() => handleExpensePress(expense)}
         >
           <View style={[styles.activityIcon, { backgroundColor: colors.loss + '15' }]}>
-            <Ionicons name="receipt-outline" size={18} color={colors.loss} />
+            <Ionicons name="receipt" size={18} color={colors.loss} />
           </View>
           <View style={styles.activityContent}>
             <Text style={styles.activityTitle} numberOfLines={1}>
@@ -244,7 +244,7 @@ export default function ExpensesScreen() {
         onPress={() => handleMileagePress(trip)}
       >
         <View style={[styles.activityIcon, { backgroundColor: colors.primary + '15' }]}>
-          <Ionicons name="car-outline" size={18} color={colors.primary} />
+          <Ionicons name="car" size={18} color={colors.primary} />
         </View>
         <View style={styles.activityContent}>
           <Text style={styles.activityTitle} numberOfLines={1}>
@@ -255,8 +255,8 @@ export default function ExpensesScreen() {
             {palletNames.length > 0 ? ` - ${palletNames[0]}` : ''}
           </Text>
         </View>
-        <Text style={[styles.activityValue, { color: colors.textPrimary }]}>
-          {formatCurrency(deduction)}
+        <Text style={[styles.activityValue, { color: colors.loss }]}>
+          -{formatCurrency(deduction)}
         </Text>
       </Pressable>
     );
@@ -264,7 +264,7 @@ export default function ExpensesScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Ionicons name="wallet-outline" size={48} color={colors.textDisabled} />
+      <Ionicons name="wallet" size={48} color={colors.textDisabled} />
       <Text style={styles.emptyTitle}>No expenses yet</Text>
       <Text style={styles.emptyText}>
         Track your business expenses and mileage to maximize your tax deductions.
@@ -274,7 +274,7 @@ export default function ExpensesScreen() {
 
   const renderErrorState = () => (
     <View style={styles.emptyState}>
-      <Ionicons name="alert-circle-outline" size={48} color={colors.loss} />
+      <Ionicons name="alert-circle" size={48} color={colors.loss} />
       <Text style={styles.emptyTitle}>Something went wrong</Text>
       <Text style={styles.emptyText}>{error}</Text>
       <Pressable style={styles.retryButton} onPress={handleRefresh}>
@@ -361,13 +361,13 @@ export default function ExpensesScreen() {
           {/* Summary Cards */}
           <SummaryCardRow>
             <SummaryCard
-              icon="receipt-outline"
+              icon="receipt"
               label="Overhead"
               value={totalOverhead}
               subtitle={`${filteredExpenses.length} expense${filteredExpenses.length !== 1 ? 's' : ''}`}
             />
             <SummaryCard
-              icon="car-outline"
+              icon="car"
               label="Mileage"
               value={mileageSummary.totalDeduction}
               subtitle={`${mileageSummary.totalMiles.toFixed(0)} mi logged`}
@@ -408,7 +408,12 @@ export default function ExpensesScreen() {
           {/* Recent Activity */}
           {recentActivity.length > 0 && (
             <View style={styles.activitySection}>
-              <SectionHeader title="Recent Activity" />
+              <View style={styles.activityHeader}>
+                <Text style={styles.activityHeaderTitle}>RECENT ACTIVITY</Text>
+                <Pressable onPress={handleViewAll} hitSlop={8}>
+                  <Text style={styles.viewAllLink}>View All</Text>
+                </Pressable>
+              </View>
               <Card shadow="sm" padding={0}>
                 {recentActivity.map((item, index) => renderActivityItem(item, index))}
               </Card>
@@ -418,9 +423,9 @@ export default function ExpensesScreen() {
           {/* Tax Disclaimer */}
           {(filteredExpenses.length > 0 || filteredTrips.length > 0) && (
             <View style={styles.disclaimer}>
-              <Ionicons name="information-circle" size={14} color={colors.textSecondary} />
+              <Ionicons name="information-circle" size={14} color={colors.textDisabled} />
               <Text style={styles.disclaimerText}>
-                Business expenses may be tax deductible. Consult a tax professional - Pallet Pro is not tax advice.
+                Business expenses may be tax deductible. Consult a tax professional.
               </Text>
             </View>
           )}
@@ -530,6 +535,23 @@ const styles = StyleSheet.create({
   activitySection: {
     marginBottom: spacing.lg,
   },
+  activityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  activityHeaderTitle: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+  },
+  viewAllLink: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: colors.primary,
+  },
   activityRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -570,18 +592,14 @@ const styles = StyleSheet.create({
   },
   disclaimer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-    backgroundColor: colors.warning + '10',
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginTop: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.lg,
   },
   disclaimerText: {
-    flex: 1,
     fontSize: fontSize.xs,
-    color: colors.textSecondary,
-    lineHeight: 18,
+    color: colors.textDisabled,
   },
   featurePreview: {
     marginTop: spacing.md,

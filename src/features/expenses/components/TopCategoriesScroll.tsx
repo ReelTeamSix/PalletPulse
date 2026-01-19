@@ -19,14 +19,14 @@ interface TopCategoriesScrollProps {
 }
 
 const CATEGORY_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
-  storage: 'home-outline',
-  supplies: 'bag-outline',
-  subscriptions: 'card-outline',
-  equipment: 'build-outline',
-  gas: 'car-outline',
-  mileage: 'speedometer-outline',
-  fees: 'receipt-outline',
-  shipping: 'cube-outline',
+  storage: 'home',
+  supplies: 'bag',
+  subscriptions: 'card',
+  equipment: 'build',
+  gas: 'car',
+  mileage: 'speedometer',
+  fees: 'receipt',
+  shipping: 'cube',
   other: 'ellipsis-horizontal',
 };
 
