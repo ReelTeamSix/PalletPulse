@@ -9,14 +9,16 @@ import {
   Modal,
   TextInput,
   Animated,
+  Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
-import { ConfirmationModal } from '@/src/components/ui';
+import { ConfirmationModal, ProgressBar } from '@/src/components/ui';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
@@ -53,12 +55,13 @@ export default function PalletDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { pallets, getPalletById, deletePallet, updatePallet, isLoading, fetchPallets } = usePalletsStore();
-  const { fetchItemsByPallet, markAsSold, deleteItem } = useItemsStore();
+  const { fetchItemsByPallet, markAsSold, deleteItem, fetchThumbnails } = useItemsStore();
   const { fetchExpensesByPallet } = useExpensesStore();
   const { isExpenseTrackingEnabled } = useUserSettingsStore();
   const expenseTrackingEnabled = isExpenseTrackingEnabled();
   const [palletItems, setPalletItems] = useState<Item[]>([]);
   const [palletExpenses, setPalletExpenses] = useState<ExpenseWithPallets[]>([]);
+  const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
   const [loadingItems, setLoadingItems] = useState(false);
   const [showStatusPicker, setShowStatusPicker] = useState(false);
   const [quickSellItem, setQuickSellItem] = useState<Item | null>(null);
@@ -95,14 +98,24 @@ export default function PalletDetailScreen() {
         ]);
         setPalletItems(itemsList);
         setPalletExpenses(expensesList);
+        // Fetch thumbnails for items
+        if (itemsList.length > 0) {
+          const thumbs = await fetchThumbnails(itemsList.map(i => i.id));
+          setThumbnails(thumbs);
+        }
       } else {
         const itemsList = await fetchItemsByPallet(id);
         setPalletItems(itemsList);
         setPalletExpenses([]);
+        // Fetch thumbnails for items
+        if (itemsList.length > 0) {
+          const thumbs = await fetchThumbnails(itemsList.map(i => i.id));
+          setThumbnails(thumbs);
+        }
       }
       setLoadingItems(false);
     }
-  }, [id, fetchItemsByPallet, fetchExpensesByPallet, expenseTrackingEnabled]);
+  }, [id, fetchItemsByPallet, fetchExpensesByPallet, fetchThumbnails, expenseTrackingEnabled]);
 
   // Fetch items and expenses on focus (refreshes when coming back from other screens)
   useFocusEffect(
@@ -413,6 +426,18 @@ export default function PalletDetailScreen() {
                 <Text style={styles.swipeHint}>← Delete | Sell →</Text>
               )}
             </View>
+            {palletItems.length > 0 && profitMetrics && (
+              <View style={styles.itemsProgressContainer}>
+                <ProgressBar
+                  progress={profitMetrics.soldItemsCount / palletItems.length}
+                  color={colors.profit}
+                  height={6}
+                />
+                <Text style={styles.itemsProgressText}>
+                  {Math.round((profitMetrics.soldItemsCount / palletItems.length) * 100)}% Inventory Sold
+                </Text>
+              </View>
+            )}
             {loadingItems ? (
               <View style={styles.placeholder}>
                 <ActivityIndicator size="small" color={colors.primary} />
@@ -444,28 +469,56 @@ export default function PalletDetailScreen() {
                       style={styles.itemCard}
                       onPress={() => handleItemPress(item.id)}
                     >
-                      <View style={styles.itemInfo}>
-                        <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                        <View style={styles.itemMeta}>
-                          <View style={[styles.itemConditionBadge, { backgroundColor: getConditionColor(item.condition) }]}>
-                            <Text style={styles.itemConditionText}>{formatCondition(item.condition)}</Text>
+                      {/* Thumbnail with status badge overlay */}
+                      <View style={styles.itemThumbnailContainer}>
+                        {thumbnails[item.id] ? (
+                          <Image
+                            source={{ uri: thumbnails[item.id] }}
+                            style={styles.itemThumbnail}
+                            resizeMode="cover"
+                          />
+                        ) : (
+                          <View style={[styles.itemThumbnail, styles.itemThumbnailPlaceholder]}>
+                            <Ionicons name="cube-outline" size={28} color={colors.textDisabled} />
                           </View>
-                          <View style={[styles.itemStatusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-                            <Text style={styles.itemStatusText}>
-                              {item.status === 'unlisted' ? 'Unlisted' : item.status === 'listed' ? 'Listed' : 'Sold'}
-                            </Text>
-                          </View>
+                        )}
+                        <View style={[
+                          styles.itemStatusOverlay,
+                          { backgroundColor: getStatusColor(item.status) }
+                        ]}>
+                          <Text style={styles.itemStatusOverlayText}>
+                            {item.status === 'unlisted' ? 'Unlisted' : item.status === 'listed' ? 'Listed' : 'Sold'}
+                          </Text>
                         </View>
                       </View>
-                      <View style={styles.itemPriceSection}>
-                        {item.status === 'sold' && item.sale_price !== null ? (
-                          <Text style={[styles.itemPrice, { color: colors.profit }]}>
-                            {formatCurrency(item.sale_price)}
-                          </Text>
-                        ) : item.listing_price !== null ? (
-                          <Text style={styles.itemPrice}>{formatCurrency(item.listing_price)}</Text>
-                        ) : null}
-                        <FontAwesome name="chevron-right" size={14} color={colors.textSecondary} />
+                      {/* Item content */}
+                      <View style={styles.itemContent}>
+                        <View style={styles.itemHeader}>
+                          <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+                        </View>
+                        <View style={styles.itemDetails}>
+                          <View style={styles.itemConditionRow}>
+                            <Text style={styles.itemConditionLabel}>CONDITION</Text>
+                            <View style={[styles.itemConditionBadge, { backgroundColor: getConditionColor(item.condition) + '20' }]}>
+                              <Text style={[styles.itemConditionText, { color: getConditionColor(item.condition) }]}>
+                                {formatCondition(item.condition)}
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={styles.itemPriceColumn}>
+                            <Text style={styles.itemPriceLabel}>PRICE</Text>
+                            {item.status === 'sold' && item.sale_price !== null ? (
+                              <Text style={[styles.itemPriceValue, { color: colors.profit }]}>
+                                {formatCurrency(item.sale_price)}
+                              </Text>
+                            ) : item.listing_price !== null ? (
+                              <Text style={styles.itemPriceValue}>{formatCurrency(item.listing_price)}</Text>
+                            ) : (
+                              <Text style={[styles.itemPriceValue, { color: colors.textSecondary }]}>-</Text>
+                            )}
+                          </View>
+                        </View>
                       </View>
                     </Pressable>
                   </Swipeable>
@@ -915,58 +968,107 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   itemsList: {
-    gap: spacing.sm,
+    gap: spacing.md,
+  },
+  itemsProgressContainer: {
+    marginBottom: spacing.md,
+  },
+  itemsProgressText: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
   },
   itemCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     flexDirection: 'row',
+  },
+  itemThumbnailContainer: {
+    position: 'relative',
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.md,
+    overflow: 'hidden',
+    marginRight: spacing.md,
+  },
+  itemThumbnail: {
+    width: '100%',
+    height: '100%',
+  },
+  itemThumbnailPlaceholder: {
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemStatusOverlay: {
+    position: 'absolute',
+    top: spacing.xs,
+    left: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  itemStatusOverlayText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.background,
+  },
+  itemContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  itemHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  itemInfo: {
-    flex: 1,
-    marginRight: spacing.md,
+    marginBottom: spacing.sm,
   },
   itemName: {
     fontSize: fontSize.md,
     fontWeight: '600',
     color: colors.textPrimary,
-    marginBottom: spacing.xs,
+    flex: 1,
+    marginRight: spacing.sm,
   },
-  itemMeta: {
+  itemDetails: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  itemConditionRow: {
+    flexDirection: 'column',
+  },
+  itemConditionLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
   itemConditionBadge: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
     borderRadius: borderRadius.sm,
+    alignSelf: 'flex-start',
   },
   itemConditionText: {
     fontSize: fontSize.xs,
-    color: colors.background,
-    fontWeight: '500',
-  },
-  itemStatusBadge: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-  },
-  itemStatusText: {
-    fontSize: fontSize.xs,
-    color: colors.background,
-    fontWeight: '500',
-  },
-  itemPriceSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  itemPrice: {
-    fontSize: fontSize.md,
     fontWeight: '600',
+  },
+  itemPriceColumn: {
+    alignItems: 'flex-end',
+  },
+  itemPriceLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  itemPriceValue: {
+    fontSize: fontSize.lg,
+    fontWeight: '700',
     color: colors.textPrimary,
   },
   swipeAction: {
