@@ -6,6 +6,8 @@ import {
   isTimestampWithinPeriod,
   getTimePeriodLabel,
   getTimePeriodShortLabel,
+  getPreviousPeriodRange,
+  isWithinDateRange,
 } from '../time-period-filter';
 
 describe('time-period-filter', () => {
@@ -188,6 +190,86 @@ describe('time-period-filter', () => {
 
     it('should return "All" for unknown period', () => {
       expect(getTimePeriodShortLabel('unknown' as TimePeriod)).toBe('All');
+    });
+  });
+
+  describe('getPreviousPeriodRange', () => {
+    it('should return null for "all" period', () => {
+      const result = getPreviousPeriodRange('all', referenceDate);
+      expect(result.start).toBeNull();
+      expect(result.end).toBeNull();
+    });
+
+    describe('week period', () => {
+      it('should return previous week range', () => {
+        // Reference: Jan 15, 2026 (Thursday)
+        // Current week starts: Jan 11 (Sunday)
+        // Previous week: Jan 4 - Jan 10
+        const result = getPreviousPeriodRange('week', referenceDate);
+        expect(result.start).not.toBeNull();
+        expect(result.end).not.toBeNull();
+        expect(result.start!.getDate()).toBe(4);
+        expect(result.start!.getMonth()).toBe(0); // January
+        expect(result.end!.getDate()).toBe(10);
+      });
+    });
+
+    describe('month period', () => {
+      it('should return previous month range', () => {
+        // Reference: Jan 15, 2026
+        // Previous month: Dec 1-31, 2025
+        const result = getPreviousPeriodRange('month', referenceDate);
+        expect(result.start).not.toBeNull();
+        expect(result.end).not.toBeNull();
+        expect(result.start!.getMonth()).toBe(11); // December
+        expect(result.start!.getFullYear()).toBe(2025);
+        expect(result.start!.getDate()).toBe(1);
+        expect(result.end!.getMonth()).toBe(11); // December
+        expect(result.end!.getDate()).toBe(31);
+      });
+    });
+
+    describe('year period', () => {
+      it('should return previous year range', () => {
+        // Reference: Jan 15, 2026
+        // Previous year: Jan 1 - Dec 31, 2025
+        const result = getPreviousPeriodRange('year', referenceDate);
+        expect(result.start).not.toBeNull();
+        expect(result.end).not.toBeNull();
+        expect(result.start!.getFullYear()).toBe(2025);
+        expect(result.start!.getMonth()).toBe(0); // January
+        expect(result.start!.getDate()).toBe(1);
+        expect(result.end!.getFullYear()).toBe(2025);
+        expect(result.end!.getMonth()).toBe(11); // December
+      });
+    });
+  });
+
+  describe('isWithinDateRange', () => {
+    const startDate = new Date('2025-12-01T00:00:00');
+    const endDate = new Date('2025-12-31T23:59:59');
+
+    it('should return true for dates within range', () => {
+      expect(isWithinDateRange('2025-12-01', startDate, endDate)).toBe(true);
+      expect(isWithinDateRange('2025-12-15', startDate, endDate)).toBe(true);
+      expect(isWithinDateRange('2025-12-31', startDate, endDate)).toBe(true);
+    });
+
+    it('should return false for dates outside range', () => {
+      expect(isWithinDateRange('2025-11-30', startDate, endDate)).toBe(false);
+      expect(isWithinDateRange('2026-01-01', startDate, endDate)).toBe(false);
+    });
+
+    it('should return false for null/undefined dates', () => {
+      expect(isWithinDateRange(null, startDate, endDate)).toBe(false);
+      expect(isWithinDateRange(undefined, startDate, endDate)).toBe(false);
+      expect(isWithinDateRange('', startDate, endDate)).toBe(false);
+    });
+
+    it('should return false if start or end is null', () => {
+      expect(isWithinDateRange('2025-12-15', null, endDate)).toBe(false);
+      expect(isWithinDateRange('2025-12-15', startDate, null)).toBe(false);
+      expect(isWithinDateRange('2025-12-15', null, null)).toBe(false);
     });
   });
 });

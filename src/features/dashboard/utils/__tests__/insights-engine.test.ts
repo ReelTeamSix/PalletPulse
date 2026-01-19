@@ -199,75 +199,92 @@ describe('insights-engine', () => {
     });
   });
 
-  describe('best source insight', () => {
-    it('should identify best performing source by ROI', () => {
-      const pallet1 = createMockPallet({ id: 'p1', name: 'Great Pallet' });
-      const pallet2 = createMockPallet({ id: 'p2', name: 'Okay Pallet' });
+  describe('best pallet insight', () => {
+    it('should identify best performing pallet by ROI', () => {
+      // Note: getBestPalletInsight uses pallet.purchase_cost, not item.allocated_cost
+      // Great Pallet: purchase_cost=20, revenue=60 (2x30), ROI = (60-20)/20 = 200%
+      const pallet1 = createMockPallet({ id: 'p1', name: 'Great Pallet', purchase_cost: 20 });
+      // Okay Pallet: purchase_cost=40, revenue=60 (2x30), ROI = (60-40)/40 = 50%
+      const pallet2 = createMockPallet({ id: 'p2', name: 'Okay Pallet', purchase_cost: 40 });
 
       const items: Item[] = [
-        // Great Pallet: 200% ROI (cost 10, revenue 30)
+        // Great Pallet items
         createMockItem({
           status: 'sold',
           pallet_id: 'p1',
-          allocated_cost: 10,
           sale_price: 30,
           sale_date: daysAgo(5),
         }),
         createMockItem({
           status: 'sold',
           pallet_id: 'p1',
-          allocated_cost: 10,
           sale_price: 30,
           sale_date: daysAgo(3),
         }),
-        // Okay Pallet: 50% ROI (cost 20, revenue 30)
+        // Okay Pallet items
         createMockItem({
           status: 'sold',
           pallet_id: 'p2',
-          allocated_cost: 20,
           sale_price: 30,
           sale_date: daysAgo(4),
         }),
         createMockItem({
           status: 'sold',
           pallet_id: 'p2',
-          allocated_cost: 20,
           sale_price: 30,
           sale_date: daysAgo(2),
         }),
       ];
 
       const insights = generateInsights({ pallets: [pallet1, pallet2], items });
-      const bestSourceInsight = insights.find(i => i.id === 'best-source');
+      const bestPalletInsight = insights.find(i => i.id === 'best-pallet');
 
-      expect(bestSourceInsight).toBeDefined();
-      expect(bestSourceInsight!.message).toContain('Great Pallet');
-      expect(bestSourceInsight!.message).toContain('200%');
+      expect(bestPalletInsight).toBeDefined();
+      expect(bestPalletInsight!.message).toContain('Great Pallet');
+      expect(bestPalletInsight!.message).toContain('200%');
     });
 
-    it('should require at least 3 sold items to show insight', () => {
-      const pallet = createMockPallet({ id: 'p1', name: 'Test Pallet' });
+    it('should require at least 2 sold items from a pallet to show insight', () => {
+      // Pallet with only 1 sold item should not generate best-pallet insight
+      const pallet = createMockPallet({ id: 'p1', name: 'Test Pallet', purchase_cost: 20 });
       const items: Item[] = [
         createMockItem({
           status: 'sold',
           pallet_id: 'p1',
-          allocated_cost: 10,
           sale_price: 50,
+          sale_date: daysAgo(1),
+        }),
+        // Only 1 sold item - not enough for best-pallet insight
+      ];
+
+      const insights = generateInsights({ pallets: [pallet], items });
+      const bestPalletInsight = insights.find(i => i.id === 'best-pallet');
+
+      expect(bestPalletInsight).toBeUndefined();
+    });
+
+    it('should require positive ROI to show best pallet insight', () => {
+      // Pallet with 2 sold items but negative ROI
+      const pallet = createMockPallet({ id: 'p1', name: 'Test Pallet', purchase_cost: 200 });
+      const items: Item[] = [
+        createMockItem({
+          status: 'sold',
+          pallet_id: 'p1',
+          sale_price: 30, // Total revenue: 60, cost: 200 = negative ROI
           sale_date: daysAgo(1),
         }),
         createMockItem({
           status: 'sold',
           pallet_id: 'p1',
-          allocated_cost: 10,
-          sale_price: 50,
+          sale_price: 30,
           sale_date: daysAgo(2),
         }),
       ];
 
       const insights = generateInsights({ pallets: [pallet], items });
-      const bestSourceInsight = insights.find(i => i.id === 'best-source');
+      const bestPalletInsight = insights.find(i => i.id === 'best-pallet');
 
-      expect(bestSourceInsight).toBeUndefined();
+      expect(bestPalletInsight).toBeUndefined();
     });
   });
 
