@@ -94,7 +94,8 @@ export function HeroCard({
           {showPercentage && (
             <Text style={[
               styles.percentText,
-              { color: isPositiveChange ? colors.profit : colors.loss }
+              // Color matches profit status for visual consistency
+              { color: isProfitable ? colors.profit : colors.loss }
             ]}>
               {isPositiveChange ? '+' : ''}{Math.round(percentChange!)}%
             </Text>
