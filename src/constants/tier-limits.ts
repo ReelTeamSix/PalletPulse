@@ -90,6 +90,35 @@ export const TIER_PRICING = {
   enterprise: { monthly: null, annual: null }, // Custom pricing
 } as const;
 
+// Tier display configuration for badges and UI elements
+// Centralized here for consistency across the app
+export const TIER_DISPLAY = {
+  free: {
+    label: 'Free Plan',
+    shortLabel: 'FREE',
+    color: '#F59E0B', // Amber/warning
+    icon: 'star-outline',
+  },
+  starter: {
+    label: 'Starter',
+    shortLabel: 'STARTER',
+    color: '#2563EB', // Primary blue
+    icon: 'star-half',
+  },
+  pro: {
+    label: 'Pro',
+    shortLabel: 'PRO',
+    color: '#8B5CF6', // Purple for premium feel
+    icon: 'star',
+  },
+  enterprise: {
+    label: 'Enterprise',
+    shortLabel: 'ENTERPRISE',
+    color: '#D97706', // Amber/gold for top tier
+    icon: 'star',
+  },
+} as const;
+
 // Usage thresholds for UI indicators
 export const USAGE_THRESHOLDS = {
   warning: 0.75,  // Yellow at 75%

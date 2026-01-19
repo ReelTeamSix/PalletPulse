@@ -32,7 +32,7 @@ import { Item } from '@/src/types/database';
 import { PLATFORM_PRESETS } from '@/src/features/sales/schemas/sale-form-schema';
 import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
-import { SubscriptionTier } from '@/src/constants/tier-limits';
+import { SubscriptionTier, TIER_DISPLAY } from '@/src/constants/tier-limits';
 
 interface ItemFormProps {
   initialValues?: Partial<ItemFormData>;
@@ -988,13 +988,13 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
   },
   tierBadgeStarter: {
-    backgroundColor: colors.primary,
+    backgroundColor: TIER_DISPLAY.starter.color,
   },
   tierBadgePro: {
-    backgroundColor: '#8B5CF6', // Purple for premium feel
+    backgroundColor: TIER_DISPLAY.pro.color,
   },
   tierBadgeEnterprise: {
-    backgroundColor: '#D97706', // Amber/gold for top tier
+    backgroundColor: TIER_DISPLAY.enterprise.color,
   },
   tierBadgeText: {
     fontSize: 10,

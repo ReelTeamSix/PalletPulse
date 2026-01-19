@@ -15,6 +15,7 @@
 5. **Ask when uncertain** — Better to clarify than assume wrong
 6. **Propose ideas, don't implement without approval** — When you discover optimizations, feature improvements, design changes, or new ideas while working, bring them to the human's attention for approval before implementing. Share your reasoning and wait for explicit approval.
 7. **ALWAYS run linting after code changes** — Before committing, run `npm run lint` and fix any errors. This is mandatory, not optional.
+8. **Prioritize reusable components** — Before creating new UI components, check `src/components/ui/` for existing reusable components. Reusability keeps the codebase clean and consistent. If a component could be reused elsewhere, extract it to the shared ui folder.
 
 ---
 
@@ -220,6 +221,44 @@ export function PalletCard({ pallet, onPress }: PalletCardProps) {
 export function PalletCard(props: PalletCardProps) {
   return <Text>{props.pallet.name}</Text>;
 }
+```
+
+### Component Reusability - IMPORTANT
+
+**Before creating ANY new component, check for existing reusable components:**
+
+1. **Check `src/components/ui/`** for shared primitives (Button, Card, Input, Badge, SettingRow, etc.)
+2. **Check `src/components/`** for layout and form components
+3. **Check feature folders** for domain-specific components that could be generalized
+
+**When to extract to shared components:**
+- Component is used (or could be used) in 2+ places
+- Component handles common UI patterns (cards, rows, badges, toggles)
+- Component could benefit other features with minor modifications
+
+**Shared UI Components Available:**
+| Component | Location | Use For |
+|-----------|----------|---------|
+| `Button` | `ui/Button` | All buttons |
+| `Card` | `ui/Card` | Elevated card containers |
+| `Input` | `ui/Input` | Text inputs |
+| `Badge` | `ui/Badge` | Status/tier badges |
+| `SettingRow` | `ui/SettingRow` | Settings list rows with icons |
+| `ToggleRow` | `ui/SettingRow` | Settings rows with switches |
+| `SectionHeader` | `ui/SectionHeader` | Section titles |
+| `ConfirmationModal` | `ui/ConfirmationModal` | Confirm dialogs |
+| `PhotoPicker` | `ui/PhotoPicker` | Image selection |
+| `ProgressBar` | `ui/ProgressBar` | Progress indicators |
+
+```tsx
+// ✅ Good - Use existing shared components
+import { SettingRow, ToggleRow, Badge } from '@/src/components/ui';
+
+<SettingRow icon="time" label="Threshold" value="30 days" onPress={handlePress} />
+<ToggleRow icon="wallet" label="Enable Feature" value={enabled} onValueChange={setEnabled} />
+
+// ❌ Bad - Creating duplicate local components
+function MySettingRow({ label, value }) { ... } // Already exists!
 ```
 
 ---

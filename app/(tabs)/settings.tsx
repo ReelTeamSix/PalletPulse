@@ -6,7 +6,6 @@ import {
   Text,
   Alert,
   ScrollView,
-  Switch,
   Pressable,
   ActivityIndicator,
   Linking,
@@ -16,110 +15,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { spacing, fontSize } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
 import { Card } from '@/src/components/ui/Card';
 import { SectionHeader } from '@/src/components/ui/SectionHeader';
-import { Button, ConfirmationModal } from '@/src/components/ui';
+import { Button, ConfirmationModal, SettingRow, ToggleRow } from '@/src/components/ui';
 import { UserProfileCard } from '@/src/features/settings';
 import { useAuthStore } from '@/src/stores/auth-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
 import { PaywallModal } from '@/src/components/subscription';
-// Setting row component
-function SettingRow({
-  icon,
-  label,
-  value,
-  onPress,
-  rightElement,
-  hint,
-  isLast = false,
-}: {
-  icon?: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value?: string;
-  onPress?: () => void;
-  rightElement?: React.ReactNode;
-  hint?: string;
-  isLast?: boolean;
-}) {
-  const content = (
-    <View style={[styles.settingRow, !isLast && styles.settingRowBorder]}>
-      {icon && (
-        <View style={styles.settingIcon}>
-          <Ionicons name={icon} size={20} color={colors.textSecondary} />
-        </View>
-      )}
-      <View style={styles.settingContent}>
-        <Text style={styles.settingLabel}>{label}</Text>
-        {hint && <Text style={styles.settingHint}>{hint}</Text>}
-      </View>
-      {rightElement || (
-        <View style={styles.settingValueContainer}>
-          {value && <Text style={styles.settingValue}>{value}</Text>}
-          {onPress && (
-            <Ionicons name="chevron-forward" size={18} color={colors.textDisabled} />
-          )}
-        </View>
-      )}
-    </View>
-  );
-
-  if (onPress) {
-    return (
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => pressed && styles.settingPressed}
-      >
-        {content}
-      </Pressable>
-    );
-  }
-  return content;
-}
-
-// Toggle row component
-function ToggleRow({
-  icon,
-  label,
-  value,
-  onValueChange,
-  hint,
-  disabled,
-  isLast = false,
-}: {
-  icon?: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-  hint?: string;
-  disabled?: boolean;
-  isLast?: boolean;
-}) {
-  return (
-    <View style={[styles.settingRow, !isLast && styles.settingRowBorder, disabled && styles.settingRowDisabled]}>
-      {icon && (
-        <View style={styles.settingIcon}>
-          <Ionicons name={icon} size={20} color={disabled ? colors.textDisabled : colors.textSecondary} />
-        </View>
-      )}
-      <View style={styles.settingContent}>
-        <Text style={[styles.settingLabel, disabled && styles.settingLabelDisabled]}>
-          {label}
-        </Text>
-        {hint && <Text style={styles.settingHint}>{hint}</Text>}
-      </View>
-      <Switch
-        value={value}
-        onValueChange={onValueChange}
-        trackColor={{ false: colors.border, true: colors.primary }}
-        thumbColor={colors.background}
-        disabled={disabled}
-      />
-    </View>
-  );
-}
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -276,26 +181,26 @@ export default function SettingsScreen() {
           <SectionHeader title="Subscription" />
           <Card shadow="sm" padding={0} style={styles.sectionCard}>
             <SettingRow
-              icon="card-outline"
+              icon="card"
               label="Current Plan"
               value={currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
             />
             {billingCycle && (
               <SettingRow
-                icon="calendar-outline"
+                icon="calendar"
                 label="Billing Cycle"
                 value={billingCycle.charAt(0).toUpperCase() + billingCycle.slice(1)}
               />
             )}
             {expirationDate && (
               <SettingRow
-                icon="time-outline"
+                icon="time"
                 label={willRenew ? 'Next Billing Date' : 'Expires On'}
                 value={formatExpirationDate(expirationDate)}
               />
             )}
             <SettingRow
-              icon="settings-outline"
+              icon="settings"
               label="Manage Subscription"
               onPress={handleManageSubscription}
               isLast
@@ -310,7 +215,7 @@ export default function SettingsScreen() {
           <SectionHeader title="Subscription" />
           <Card shadow="sm" padding="md" style={styles.upgradeCard}>
             <View style={styles.upgradeContent}>
-              <Ionicons name="rocket-outline" size={32} color={colors.primary} />
+              <Ionicons name="rocket" size={32} color={colors.primary} />
               <View style={styles.upgradeText}>
                 <Text style={styles.upgradeTitle}>Upgrade Your Plan</Text>
                 <Text style={styles.upgradeSubtitle}>
@@ -342,13 +247,13 @@ export default function SettingsScreen() {
       <SectionHeader title="App Settings" />
       <Card shadow="sm" padding={0} style={styles.sectionCard}>
         <SettingRow
-          icon="time-outline"
+          icon="time"
           label="Stale Inventory Threshold"
           value={`${settings?.stale_threshold_days ?? 30} days`}
           onPress={handleStaleThresholdChange}
         />
         <ToggleRow
-          icon="calculator-outline"
+          icon="calculator"
           label="Include Unsellable in Cost"
           value={settings?.include_unsellable_in_cost ?? false}
           onValueChange={setIncludeUnsellableInCost}
@@ -361,7 +266,7 @@ export default function SettingsScreen() {
       <SectionHeader title="Expense Tracking" />
       <Card shadow="sm" padding={0} style={styles.sectionCard}>
         <ToggleRow
-          icon="wallet-outline"
+          icon="wallet"
           label="Enable Expense Tracking"
           value={canAccessExpenseTracking ? (settings?.expense_tracking_enabled ?? false) : false}
           onValueChange={handleToggleExpenseTracking}
@@ -393,9 +298,9 @@ export default function SettingsScreen() {
       {/* About Section */}
       <SectionHeader title="About" />
       <Card shadow="sm" padding={0} style={styles.sectionCard}>
-        <SettingRow icon="information-circle-outline" label="Version" value="1.0.0" />
-        <SettingRow icon="document-text-outline" label="Terms of Service" onPress={() => {}} />
-        <SettingRow icon="shield-outline" label="Privacy Policy" onPress={() => {}} isLast />
+        <SettingRow icon="information-circle" label="Version" value="1.0.0" />
+        <SettingRow icon="document-text" label="Terms of Service" onPress={() => {}} />
+        <SettingRow icon="shield" label="Privacy Policy" onPress={() => {}} isLast />
       </Card>
 
       {/* Sign Out */}
@@ -476,56 +381,6 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     marginBottom: spacing.md,
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    minHeight: 56,
-  },
-  settingRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  settingRowDisabled: {
-    opacity: 0.5,
-  },
-  settingPressed: {
-    backgroundColor: colors.surface,
-  },
-  settingIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
-  },
-  settingContent: {
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  settingLabel: {
-    fontSize: fontSize.md,
-    color: colors.textPrimary,
-  },
-  settingLabelDisabled: {
-    color: colors.textDisabled,
-  },
-  settingHint: {
-    fontSize: fontSize.xs,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  settingValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  settingValue: {
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
   },
   featuresContainer: {
     padding: spacing.md,

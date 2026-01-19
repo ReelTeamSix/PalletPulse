@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { TIER_DISPLAY, type SubscriptionTier } from '@/src/constants/tier-limits';
 import { Card } from '@/src/components/ui/Card';
 
 export interface UserProfileCardProps {
@@ -12,24 +13,6 @@ export interface UserProfileCardProps {
   onPress?: () => void;
   onSubscriptionPress?: () => void;
 }
-
-const TIER_CONFIG = {
-  free: {
-    label: 'Free Plan',
-    color: colors.warning,
-    icon: 'star-outline' as const,
-  },
-  starter: {
-    label: 'Starter',
-    color: colors.primary,
-    icon: 'star-half-outline' as const,
-  },
-  pro: {
-    label: 'PRO',
-    color: colors.profit,
-    icon: 'star' as const,
-  },
-};
 
 function getInitials(email: string | null, displayName?: string | null): string {
   if (displayName) {
@@ -61,7 +44,7 @@ export function UserProfileCard({
   onPress,
   onSubscriptionPress,
 }: UserProfileCardProps) {
-  const tierConfig = TIER_CONFIG[tier];
+  const tierDisplay = TIER_DISPLAY[tier as SubscriptionTier];
   const initials = getInitials(email, displayName);
   const name = getDisplayName(email, displayName);
 
@@ -85,9 +68,9 @@ export function UserProfileCard({
               {name}
             </Text>
             {/* Tier badge */}
-            <View style={[styles.tierBadge, { backgroundColor: tierConfig.color }]}>
-              <Ionicons name={tierConfig.icon} size={10} color={colors.background} />
-              <Text style={styles.tierText}>{tierConfig.label}</Text>
+            <View style={[styles.tierBadge, { backgroundColor: tierDisplay.color }]}>
+              <Ionicons name={tierDisplay.icon as keyof typeof Ionicons.glyphMap} size={10} color={colors.background} />
+              <Text style={styles.tierText}>{tierDisplay.shortLabel}</Text>
             </View>
           </View>
           {email && (
@@ -97,9 +80,8 @@ export function UserProfileCard({
           )}
         </View>
 
-        {onPress && (
-          <Ionicons name="chevron-forward" size={20} color={colors.textDisabled} />
-        )}
+        {/* Always show chevron for visual consistency */}
+        <Ionicons name="chevron-forward" size={20} color={colors.textDisabled} />
       </Pressable>
 
       {/* Subscription management row */}
