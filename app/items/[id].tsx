@@ -282,13 +282,18 @@ export default function ItemDetailScreen() {
           <View style={styles.header}>
             <View style={styles.titleRow}>
               <Text style={styles.title} numberOfLines={2}>{item.name}</Text>
-              <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                <Text style={styles.statusText}>{formatStatus(item.status)}</Text>
+              <View style={styles.statusIndicator}>
+                <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+                <Text style={[styles.statusLabel, { color: statusColor }]}>
+                  {formatStatus(item.status).toUpperCase()}
+                </Text>
               </View>
             </View>
             <View style={styles.metaRow}>
-              <View style={[styles.conditionBadge, { backgroundColor: conditionColor }]}>
-                <Text style={styles.conditionText}>{formatCondition(item.condition)}</Text>
+              <View style={[styles.conditionBadge, { backgroundColor: conditionColor + '20' }]}>
+                <Text style={[styles.conditionText, { color: conditionColor }]}>
+                  {formatCondition(item.condition)}
+                </Text>
               </View>
               {item.quantity > 1 && (
                 <Text style={styles.quantity}>Qty: {item.quantity}</Text>
@@ -692,15 +697,20 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     flex: 1,
   },
-  statusBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
-  statusText: {
-    fontSize: fontSize.sm,
-    color: colors.background,
-    fontWeight: '600',
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   metaRow: {
     flexDirection: 'row',
@@ -714,8 +724,7 @@ const styles = StyleSheet.create({
   },
   conditionText: {
     fontSize: fontSize.xs,
-    color: colors.background,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   quantity: {
     fontSize: fontSize.sm,
