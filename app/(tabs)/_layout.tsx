@@ -5,7 +5,6 @@ import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/src/constants/colors';
-import { useColorScheme } from '@/components/useColorScheme';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 
 function TabBarIcon(props: {
@@ -17,8 +16,6 @@ function TabBarIcon(props: {
 }
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const { isExpenseTrackingEnabled } = useUserSettingsStore();
   const expensesEnabled = isExpenseTrackingEnabled();
   const insets = useSafeAreaInsets();
@@ -30,10 +27,10 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: isDark ? colors.textSecondaryDark : colors.textDisabled,
+        tabBarInactiveTintColor: colors.textDisabled,
         tabBarShowLabel: true,
         tabBarStyle: {
-          backgroundColor: isDark ? colors.surfaceDark : '#FFFFFF',
+          backgroundColor: '#FFFFFF',
           borderTopWidth: 0,
           elevation: 8,
           shadowColor: '#000',

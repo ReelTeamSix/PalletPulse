@@ -11,7 +11,6 @@ import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
 import { useExpensesStore } from '@/src/stores/expenses-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
-import { formatCurrency } from '@/src/lib/profit-utils';
 import {
   HeroCard,
   MetricCard,
@@ -45,8 +44,6 @@ export default function DashboardScreen() {
   const { pallets, fetchPallets, isLoading: palletsLoading } = usePalletsStore();
   const { items, fetchItems, isLoading: itemsLoading } = useItemsStore();
   const { expenses, fetchExpenses, isLoading: expensesLoading } = useExpensesStore();
-  const { isExpenseTrackingEnabled } = useUserSettingsStore();
-  const expenseTrackingEnabled = isExpenseTrackingEnabled();
 
   // Time period filter for hero card
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
@@ -55,13 +52,13 @@ export default function DashboardScreen() {
     useCallback(() => {
       fetchPallets();
       fetchItems();
-      if (expenseTrackingEnabled) {
-        fetchExpenses();
-      }
-    }, [expenseTrackingEnabled]) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
+      // Always fetch expenses for accurate profit calculation
+      // (even if user doesn't have access to expenses UI)
+      fetchExpenses();
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
   );
 
-  const isLoading = palletsLoading || itemsLoading || (expenseTrackingEnabled && expensesLoading);
+  const isLoading = palletsLoading || itemsLoading || expensesLoading;
 
   // Helper to calculate profit for a set of sold items and expenses
   const calculatePeriodProfit = useCallback((
@@ -81,12 +78,10 @@ export default function DashboardScreen() {
       item => item.status === 'sold' && isWithinTimePeriod(item.sale_date, timePeriod)
     );
 
-    // Expenses in this period (if expense tracking enabled)
-    const periodExpensesAmount = expenseTrackingEnabled
-      ? expenses
-          .filter(e => isWithinTimePeriod(e.expense_date, timePeriod))
-          .reduce((sum, e) => sum + e.amount, 0)
-      : 0;
+    // Always include expenses for accurate profit calculation
+    const periodExpensesAmount = expenses
+      .filter(e => isWithinTimePeriod(e.expense_date, timePeriod))
+      .reduce((sum, e) => sum + e.amount, 0);
 
     const periodProfit = calculatePeriodProfit(soldItemsInPeriod, periodExpensesAmount);
 
@@ -99,11 +94,9 @@ export default function DashboardScreen() {
         item => item.status === 'sold' && isWithinDateRange(item.sale_date, prevStart, prevEnd)
       );
 
-      const prevExpensesAmount = expenseTrackingEnabled
-        ? expenses
-            .filter(e => isWithinDateRange(e.expense_date, prevStart, prevEnd))
-            .reduce((sum, e) => sum + e.amount, 0)
-        : 0;
+      const prevExpensesAmount = expenses
+        .filter(e => isWithinDateRange(e.expense_date, prevStart, prevEnd))
+        .reduce((sum, e) => sum + e.amount, 0);
 
       previousProfit = calculatePeriodProfit(soldItemsInPrevPeriod, prevExpensesAmount);
     }
@@ -114,7 +107,7 @@ export default function DashboardScreen() {
       isProfitable: periodProfit >= 0,
       previousProfit,
     };
-  }, [items, expenses, expenseTrackingEnabled, timePeriod, calculatePeriodProfit]);
+  }, [items, expenses, timePeriod, calculatePeriodProfit]);
 
   // Get stale threshold from user settings (needed for metrics calculation)
   const { settings } = useUserSettingsStore();
@@ -208,12 +201,8 @@ export default function DashboardScreen() {
   }, [items, pallets]);
 
   const handleRefresh = useCallback(async () => {
-    const promises = [fetchPallets(), fetchItems()];
-    if (expenseTrackingEnabled) {
-      promises.push(fetchExpenses());
-    }
-    await Promise.all(promises);
-  }, [expenseTrackingEnabled]); // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
+    await Promise.all([fetchPallets(), fetchItems(), fetchExpenses()]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
 
   const handleActivityPress = (activity: Activity) => {
     if (activity.type === 'sale' || activity.type === 'listed') {
