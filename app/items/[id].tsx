@@ -11,11 +11,13 @@ import {
   Modal,
   StatusBar,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { shadows } from '@/src/constants/shadows';
 import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { Button, ConfirmationModal } from '@/src/components/ui';
@@ -214,6 +216,21 @@ export default function ItemDetailScreen() {
   const isProfitable = profit >= 0;
   const hasSold = item.status === 'sold';
 
+  // Calculate margin percentage for sold items
+  const marginPercent = hasSold && item.sale_price && item.sale_price > 0
+    ? Math.round((profit / item.sale_price) * 100)
+    : null;
+
+  // Calculate days to sell
+  const daysToSell = useMemo(() => {
+    if (!hasSold || !item.listing_date || !item.sale_date) return null;
+    const listDate = new Date(item.listing_date);
+    const saleDate = new Date(item.sale_date);
+    const diffTime = saleDate.getTime() - listDate.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 ? diffDays : null;
+  }, [hasSold, item.listing_date, item.sale_date]);
+
   return (
     <>
       <Stack.Screen
@@ -234,9 +251,10 @@ export default function ItemDetailScreen() {
       />
       <View style={styles.container}>
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-          <View style={styles.photoSection}>
+          {/* Hero Image Section with Overlay */}
+          <View style={styles.heroSection}>
             {photos.length > 0 ? (
-              <View>
+              <View style={styles.heroImageContainer}>
                 <ScrollView
                   horizontal
                   pagingEnabled
@@ -251,12 +269,48 @@ export default function ItemDetailScreen() {
                     <Pressable key={photo.id} onPress={() => handlePhotoPress(index)}>
                       <Image
                         source={{ uri: getPhotoUrl(photo.storage_path) }}
-                        style={styles.photo}
+                        style={styles.heroImage}
                         resizeMode="cover"
                       />
                     </Pressable>
                   ))}
                 </ScrollView>
+
+                {/* Gradient Overlay */}
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.7)']}
+                  style={styles.heroGradient}
+                  pointerEvents="none"
+                />
+
+                {/* Status Badge on Image */}
+                <View style={[styles.heroStatusBadge, { backgroundColor: statusColor }]}>
+                  <Ionicons
+                    name={hasSold ? 'checkmark-circle' : item.status === 'listed' ? 'pricetag' : 'cube'}
+                    size={14}
+                    color={colors.background}
+                  />
+                  <Text style={styles.heroStatusText}>
+                    {formatStatus(item.status).toUpperCase()}
+                  </Text>
+                </View>
+
+                {/* Condition Badge on Image */}
+                <View style={[styles.heroConditionBadge, { backgroundColor: conditionColor }]}>
+                  <Text style={styles.heroConditionText}>
+                    {formatCondition(item.condition).toUpperCase()}
+                  </Text>
+                </View>
+
+                {/* Item Name Overlay */}
+                <View style={styles.heroTextOverlay}>
+                  {item.barcode && (
+                    <Text style={styles.heroSku}>SKU: {item.barcode}</Text>
+                  )}
+                  <Text style={styles.heroTitle} numberOfLines={2}>{item.name}</Text>
+                </View>
+
+                {/* Photo Indicators */}
                 {photos.length > 1 && (
                   <View style={styles.photoIndicator}>
                     {photos.map((_, index) => (
@@ -272,83 +326,89 @@ export default function ItemDetailScreen() {
                 )}
               </View>
             ) : (
-              <View style={styles.photoPlaceholder}>
+              <View style={styles.heroPlaceholder}>
                 <Ionicons name="camera-outline" size={48} color={colors.neutral} />
-                <Text style={styles.photoPlaceholderText}>No photos</Text>
+                <Text style={styles.heroPlaceholderText}>No photos</Text>
+                {/* Status and Name for no-photo state */}
+                <View style={styles.noPhotoHeader}>
+                  <Text style={styles.noPhotoTitle}>{item.name}</Text>
+                  <View style={styles.noPhotoBadgeRow}>
+                    <View style={[styles.noPhotoStatusBadge, { backgroundColor: statusColor }]}>
+                      <Text style={styles.noPhotoStatusText}>{formatStatus(item.status)}</Text>
+                    </View>
+                    <View style={[styles.noPhotoConditionBadge, { backgroundColor: conditionColor + '20' }]}>
+                      <Text style={[styles.noPhotoConditionText, { color: conditionColor }]}>
+                        {formatCondition(item.condition)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
               </View>
             )}
-          </View>
 
-          <View style={styles.header}>
-            <View style={styles.titleRow}>
-              <Text style={styles.title} numberOfLines={2}>{item.name}</Text>
-              <View style={styles.statusIndicator}>
-                <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-                <Text style={[styles.statusLabel, { color: statusColor }]}>
-                  {formatStatus(item.status).toUpperCase()}
+          {/* Financial Snapshot Card */}
+          <View style={styles.financialCard}>
+            <View style={styles.financialHeader}>
+              <Text style={styles.financialTitle}>Financial Snapshot</Text>
+              <Ionicons name="trending-up" size={20} color={colors.primary} />
+            </View>
+
+            {/* Price Boxes */}
+            <View style={styles.priceBoxRow}>
+              <View style={styles.priceBox}>
+                <Text style={styles.priceBoxLabel}>
+                  {hasSold ? 'SALE PRICE' : 'LIST PRICE'}
+                </Text>
+                <Text style={styles.priceBoxValue}>
+                  {formatCurrency(hasSold ? item.sale_price : item.listing_price)}
+                </Text>
+              </View>
+              <View style={styles.priceBox}>
+                <Text style={styles.priceBoxLabel}>
+                  {isEstimatedCost ? 'ALLOCATED COST' : 'ITEM COST'}
+                </Text>
+                <Text style={[styles.priceBoxValue, styles.costValue]}>
+                  {formatCurrency(effectiveCost)}
                 </Text>
               </View>
             </View>
-            <View style={styles.metaRow}>
-              <View style={[styles.conditionBadge, { backgroundColor: conditionColor + '20' }]}>
-                <Text style={[styles.conditionText, { color: conditionColor }]}>
-                  {formatCondition(item.condition)}
+
+            {/* Dashed Divider */}
+            <View style={styles.dashedDivider} />
+
+            {/* Net Profit Row */}
+            <View style={styles.profitRow}>
+              <View>
+                <Text style={styles.profitLabel}>
+                  {hasSold ? 'Net Profit' : 'Est. Profit'}
+                </Text>
+                <Text style={[
+                  styles.profitValue,
+                  { color: isProfitable ? colors.profit : colors.loss }
+                ]}>
+                  {hasSold ? formatCurrency(profit) : (estimatedProfit !== null ? formatCurrency(estimatedProfit) : '-')}
                 </Text>
               </View>
-              {item.quantity > 1 && (
-                <Text style={styles.quantity}>Qty: {item.quantity}</Text>
+              {/* Margin Indicator */}
+              {hasSold && marginPercent !== null && (
+                <View style={styles.marginIndicator}>
+                  <View style={[
+                    styles.marginCircle,
+                    { borderColor: isProfitable ? colors.profit : colors.loss }
+                  ]}>
+                    <Text style={[
+                      styles.marginPercent,
+                      { color: isProfitable ? colors.profit : colors.loss }
+                    ]}>
+                      {marginPercent}%
+                    </Text>
+                  </View>
+                  <Text style={styles.marginLabel}>MARGIN</Text>
+                </View>
               )}
             </View>
           </View>
 
-          <View style={styles.priceRow}>
-            {hasSold ? (
-              <>
-                <View style={styles.priceCard}>
-                  <Text style={styles.priceLabel}>Sold For</Text>
-                  <Text style={[styles.priceValue, { color: colors.profit }]}>
-                    {formatCurrency(item.sale_price)}
-                  </Text>
-                </View>
-                <View style={styles.priceCard}>
-                  <View style={styles.priceLabelRow}>
-                    <Text style={styles.priceLabel}>{isEstimatedCost ? 'Est. Cost' : 'Cost'}</Text>
-                    {isEstimatedCost && (
-                      <Ionicons name="information-circle" size={12} color={colors.textSecondary} />
-                    )}
-                  </View>
-                  <Text style={styles.priceValue}>{formatCurrency(effectiveCost)}</Text>
-                </View>
-                <View style={[styles.priceCard, { backgroundColor: isProfitable ? colors.profit + '15' : colors.loss + '15' }]}>
-                  <Text style={styles.priceLabel}>Profit</Text>
-                  <Text style={[styles.priceValue, { color: isProfitable ? colors.profit : colors.loss }]}>
-                    {formatCurrency(profit)}
-                  </Text>
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={styles.priceCard}>
-                  <Text style={styles.priceLabel}>List Price</Text>
-                  <Text style={styles.priceValue}>{formatCurrency(item.listing_price)}</Text>
-                </View>
-                <View style={styles.priceCard}>
-                  <View style={styles.priceLabelRow}>
-                    <Text style={styles.priceLabel}>{isEstimatedCost ? 'Est. Cost' : 'Cost'}</Text>
-                    {isEstimatedCost && (
-                      <Ionicons name="information-circle" size={12} color={colors.textSecondary} />
-                    )}
-                  </View>
-                  <Text style={styles.priceValue}>{formatCurrency(effectiveCost)}</Text>
-                </View>
-                <View style={[styles.priceCard, styles.profitCard]}>
-                  <Text style={styles.priceLabel}>Est. Profit</Text>
-                  <Text style={[styles.priceValue, styles.profitText]}>
-                    {estimatedProfit !== null ? formatCurrency(estimatedProfit) : '-'}
-                  </Text>
-                </View>
-              </>
-            )}
           </View>
 
           {/* Cost Allocation Info for Pallet Items */}
@@ -361,54 +421,70 @@ export default function ItemDetailScreen() {
             </View>
           )}
 
-          {/* Sale Info Breakdown for Sold Items */}
+          {/* Sale Details Section for Sold Items */}
           {hasSold && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Sale Breakdown</Text>
-              <View style={styles.saleInfoCard}>
-                <View style={styles.saleInfoRow}>
-                  <Text style={styles.saleInfoLabel}>Sale Price</Text>
-                  <Text style={[styles.saleInfoValue, styles.saleInfoPositive]}>
-                    {formatCurrency(item.sale_price)}
-                  </Text>
-                </View>
+              <View style={styles.saleDetailsHeader}>
+                <Text style={styles.sectionTitle}>Sale Details</Text>
                 {item.platform && (
-                  <View style={styles.saleInfoRow}>
-                    <Text style={styles.saleInfoLabel}>Platform</Text>
-                    <Text style={styles.saleInfoValue}>{formatPlatform(item.platform)}</Text>
+                  <View style={styles.platformTag}>
+                    <Ionicons name="laptop-outline" size={14} color={colors.primary} />
+                    <Text style={styles.platformTagText}>{formatPlatform(item.platform)} Sale</Text>
                   </View>
                 )}
+              </View>
+
+              <View style={styles.saleDetailsCard}>
+                {/* Platform Fees Row */}
                 {(item.platform_fee !== null && item.platform_fee > 0) && (
-                  <View style={styles.saleInfoRow}>
-                    <Text style={styles.saleInfoLabel}>Platform Fee</Text>
-                    <Text style={[styles.saleInfoValue, styles.saleInfoNegative]}>
+                  <View style={styles.saleDetailRow}>
+                    <View style={styles.saleDetailIconContainer}>
+                      <Ionicons name="receipt-outline" size={18} color={colors.primary} />
+                    </View>
+                    <View style={styles.saleDetailContent}>
+                      <Text style={styles.saleDetailTitle}>Platform Fees</Text>
+                      {item.platform && PLATFORM_PRESETS[item.platform] && (
+                        <Text style={styles.saleDetailSubtitle}>
+                          {PLATFORM_PRESETS[item.platform].defaultFeePercent}% + ${PLATFORM_PRESETS[item.platform].fixedFee?.toFixed(2) || '0.00'} fixed fee
+                        </Text>
+                      )}
+                    </View>
+                    <Text style={styles.saleDetailAmount}>
                       -{formatCurrency(item.platform_fee)}
                     </Text>
                   </View>
                 )}
+
+                {/* Shipping Costs Row */}
                 {(item.shipping_cost !== null && item.shipping_cost > 0) && (
-                  <View style={styles.saleInfoRow}>
-                    <Text style={styles.saleInfoLabel}>Shipping Cost</Text>
-                    <Text style={[styles.saleInfoValue, styles.saleInfoNegative]}>
+                  <View style={styles.saleDetailRow}>
+                    <View style={[styles.saleDetailIconContainer, { backgroundColor: colors.warning + '15' }]}>
+                      <Ionicons name="cube-outline" size={18} color={colors.warning} />
+                    </View>
+                    <View style={styles.saleDetailContent}>
+                      <Text style={styles.saleDetailTitle}>Shipping Costs</Text>
+                      <Text style={styles.saleDetailSubtitle}>Shipping expense</Text>
+                    </View>
+                    <Text style={styles.saleDetailAmount}>
                       -{formatCurrency(item.shipping_cost)}
                     </Text>
                   </View>
                 )}
-                <View style={styles.saleInfoRow}>
-                  <Text style={styles.saleInfoLabel}>Item Cost</Text>
-                  <Text style={[styles.saleInfoValue, styles.saleInfoNegative]}>
-                    -{formatCurrency(effectiveCost)}
-                  </Text>
-                </View>
-                <View style={styles.saleInfoDivider} />
-                <View style={styles.saleInfoRow}>
-                  <Text style={styles.saleInfoLabelBold}>Net Profit</Text>
-                  <Text style={[
-                    styles.saleInfoValueBold,
-                    isProfitable ? styles.saleInfoPositive : styles.saleInfoNegative
-                  ]}>
-                    {formatCurrency(profit)}
-                  </Text>
+
+                {/* Date Info Row */}
+                <View style={styles.dateInfoRow}>
+                  {item.listing_date && (
+                    <View style={styles.dateInfoItem}>
+                      <Text style={styles.dateInfoLabel}>LISTED DATE</Text>
+                      <Text style={styles.dateInfoValue}>{formatDate(item.listing_date)}</Text>
+                    </View>
+                  )}
+                  {daysToSell !== null && (
+                    <View style={styles.dateInfoItem}>
+                      <Text style={styles.dateInfoLabel}>DAYS TO SELL</Text>
+                      <Text style={styles.dateInfoValue}>{daysToSell} {daysToSell === 1 ? 'Day' : 'Days'}</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             </View>
@@ -497,21 +573,28 @@ export default function ItemDetailScreen() {
           )}
         </ScrollView>
 
-        {!hasSold && (
-          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
-            <Button
-              title="Edit Item"
-              onPress={handleEdit}
-              variant="outline"
-              style={styles.editButton}
-            />
-            <Button
-              title="Mark as Sold"
-              onPress={handleMarkAsSold}
-              style={styles.soldButton}
-            />
-          </View>
-        )}
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
+          {hasSold ? (
+            <Pressable style={styles.editButtonFull} onPress={handleEdit}>
+              <Ionicons name="create-outline" size={20} color={colors.background} />
+              <Text style={styles.editButtonText}>Edit Item</Text>
+            </Pressable>
+          ) : (
+            <>
+              <Button
+                title="Edit Item"
+                onPress={handleEdit}
+                variant="outline"
+                style={styles.editButtonHalf}
+              />
+              <Button
+                title="Mark as Sold"
+                onPress={handleMarkAsSold}
+                style={styles.soldButton}
+              />
+            </>
+          )}
+        </View>
 
         {/* Full-screen Photo Viewer Modal */}
         <Modal
@@ -593,13 +676,13 @@ export default function ItemDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundSecondary,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundSecondary,
   },
   errorContainer: {
     flex: 1,
@@ -644,19 +727,82 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 120,
   },
-  photoSection: {
-    height: 250,
+
+  // Hero Section Styles
+  heroSection: {
+    height: 300,
     backgroundColor: colors.surface,
   },
-  photo: {
+  heroImageContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  heroImage: {
     width: screenWidth,
-    height: 250,
+    height: 300,
+  },
+  heroGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 150,
+  },
+  heroStatusBadge: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    gap: 4,
+  },
+  heroStatusText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    color: colors.background,
+    letterSpacing: 0.5,
+  },
+  heroConditionBadge: {
+    position: 'absolute',
+    bottom: 70,
+    left: spacing.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.sm,
+  },
+  heroConditionText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.background,
+    letterSpacing: 0.5,
+  },
+  heroTextOverlay: {
+    position: 'absolute',
+    bottom: spacing.md,
+    left: spacing.md,
+    right: spacing.md,
+  },
+  heroSku: {
+    fontSize: fontSize.xs,
+    color: 'rgba(255,255,255,0.7)',
+    marginBottom: 4,
+  },
+  heroTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.background,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   photoIndicator: {
     flexDirection: 'row',
     justifyContent: 'center',
     position: 'absolute',
-    bottom: spacing.md,
+    bottom: 70,
     left: 0,
     right: 0,
     gap: spacing.xs,
@@ -670,106 +816,149 @@ const styles = StyleSheet.create({
   indicatorDotActive: {
     backgroundColor: colors.background,
   },
-  photoPlaceholder: {
+  heroPlaceholder: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.surface,
   },
-  photoPlaceholderText: {
+  heroPlaceholderText: {
     fontSize: fontSize.md,
     color: colors.neutral,
     marginTop: spacing.sm,
   },
-  header: {
-    padding: spacing.lg,
-    paddingBottom: spacing.md,
+  noPhotoHeader: {
+    position: 'absolute',
+    bottom: spacing.lg,
+    left: spacing.lg,
+    right: spacing.lg,
   },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
-    gap: spacing.sm,
-  },
-  title: {
-    fontSize: fontSize.xxl,
+  noPhotoTitle: {
+    fontSize: fontSize.xl,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    flex: 1,
+    marginBottom: spacing.sm,
   },
-  statusIndicator: {
+  noPhotoBadgeRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  statusLabel: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: spacing.sm,
   },
-  conditionBadge: {
+  noPhotoStatusBadge: {
     paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
+    paddingVertical: 4,
     borderRadius: borderRadius.sm,
   },
-  conditionText: {
+  noPhotoStatusText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+    color: colors.background,
+  },
+  noPhotoConditionBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.sm,
+  },
+  noPhotoConditionText: {
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
-  quantity: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    fontWeight: '500',
+
+  // Financial Snapshot Card
+  financialCard: {
+    backgroundColor: colors.background,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    ...shadows.md,
   },
-  priceRow: {
+  financialHeader: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.lg,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
   },
-  priceCard: {
+  financialTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  priceBoxRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  priceBox: {
     flex: 1,
     backgroundColor: colors.surface,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
-    alignItems: 'center',
   },
-  profitCard: {
-    backgroundColor: colors.profit + '15',
-  },
-  priceLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  priceBoxLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
     marginBottom: spacing.xs,
   },
-  priceLabel: {
-    fontSize: fontSize.xs,
-    color: colors.textSecondary,
-  },
-  priceValue: {
+  priceBoxValue: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
     color: colors.textPrimary,
   },
-  profitText: {
-    color: colors.profit,
+  costValue: {
+    color: colors.loss,
   },
+  dashedDivider: {
+    height: 1,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginVertical: spacing.md,
+  },
+  profitRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  profitLabel: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  profitValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  marginIndicator: {
+    alignItems: 'center',
+  },
+  marginCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  marginPercent: {
+    fontSize: fontSize.md,
+    fontWeight: 'bold',
+  },
+  marginLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+  },
+
+  // Cost Allocation Info
   costAllocationInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: spacing.lg,
-    marginBottom: spacing.md,
+    marginTop: spacing.sm,
     paddingHorizontal: spacing.sm,
     gap: spacing.xs,
   },
@@ -779,15 +968,95 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     flex: 1,
   },
+
+  // Sale Details Section
+  saleDetailsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  platformTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  platformTagText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  saleDetailsCard: {
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.xl,
+    padding: spacing.md,
+    ...shadows.sm,
+  },
+  saleDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  saleDetailIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  saleDetailContent: {
+    flex: 1,
+  },
+  saleDetailTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  saleDetailSubtitle: {
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  saleDetailAmount: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.loss,
+  },
+  dateInfoRow: {
+    flexDirection: 'row',
+    paddingTop: spacing.md,
+  },
+  dateInfoItem: {
+    flex: 1,
+  },
+  dateInfoLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  dateInfoValue: {
+    fontSize: fontSize.md,
+    fontWeight: '500',
+    color: colors.textPrimary,
+  },
+
+  // Pallet Link
   palletLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.background,
     marginHorizontal: spacing.lg,
     marginBottom: spacing.lg,
     padding: spacing.md,
     borderRadius: borderRadius.lg,
     gap: spacing.sm,
+    ...shadows.sm,
   },
   palletLinkText: {
     flex: 1,
@@ -795,20 +1064,25 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '500',
   },
+
+  // Section Styles
   section: {
     paddingHorizontal: spacing.lg,
+    marginTop: spacing.lg,
     marginBottom: spacing.lg,
   },
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
     color: colors.textPrimary,
-    marginBottom: spacing.md,
   },
+
+  // Details Card
   detailsCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.xl,
     padding: spacing.md,
+    ...shadows.sm,
   },
   detailRow: {
     flexDirection: 'row',
@@ -830,10 +1104,13 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: spacing.md,
   },
+
+  // Description Card
   descriptionCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.xl,
     padding: spacing.md,
+    ...shadows.sm,
   },
   descriptionText: {
     fontSize: fontSize.md,
@@ -851,6 +1128,8 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 22,
   },
+
+  // Footer
   footer: {
     flexDirection: 'row',
     gap: spacing.md,
@@ -859,12 +1138,29 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     backgroundColor: colors.background,
   },
-  editButton: {
+  editButtonFull: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.lg,
+    gap: spacing.sm,
+  },
+  editButtonText: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    color: colors.background,
+  },
+  editButtonHalf: {
     flex: 1,
   },
   soldButton: {
     flex: 1,
   },
+
+  // Photo Viewer Modal
   photoViewerContainer: {
     flex: 1,
     backgroundColor: 'black',
@@ -903,45 +1199,5 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.md,
     fontWeight: '600',
-  },
-  saleInfoCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-  },
-  saleInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  saleInfoLabel: {
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-  },
-  saleInfoLabelBold: {
-    fontSize: fontSize.md,
-    color: colors.textPrimary,
-    fontWeight: '600',
-  },
-  saleInfoValue: {
-    fontSize: fontSize.md,
-    color: colors.textPrimary,
-    fontWeight: '500',
-  },
-  saleInfoValueBold: {
-    fontSize: fontSize.lg,
-    fontWeight: 'bold',
-  },
-  saleInfoPositive: {
-    color: colors.profit,
-  },
-  saleInfoNegative: {
-    color: colors.loss,
-  },
-  saleInfoDivider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.xs,
   },
 });
