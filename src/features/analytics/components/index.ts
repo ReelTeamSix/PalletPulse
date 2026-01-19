@@ -8,3 +8,4 @@ export { TypeComparisonTable } from './TypeComparisonTable';
 export { StaleInventoryList } from './StaleInventoryList';
 export { TrendChartTeaser } from './TrendChartTeaser';
 export { TrendChart } from './TrendChart';
+export { SupplierRankingTable } from './SupplierRankingTable';

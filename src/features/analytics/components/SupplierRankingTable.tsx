@@ -1,38 +1,40 @@
-// TypeComparisonTable - Compare performance by pallet source type
-// Shows top 2 types for free tier with blur overlay for rest
+// SupplierRankingTable - Compare performance by supplier (vendor)
+// Shows top 2 suppliers for free tier with blur overlay for rest
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
-import type { TypeComparison } from '../types/analytics';
-import { formatROI, getROIColor } from '@/src/lib/profit-utils';
-import { getSourceTypeLabel } from '../utils/analytics-calculations';
+import type { SupplierComparison } from '../types/analytics';
+import { formatROI, getROIColor, formatCurrency } from '@/src/lib/profit-utils';
 import { UpgradeOverlay } from './UpgradeOverlay';
 
-interface TypeComparisonTableProps {
-  data: TypeComparison[];
-  /** Whether to blur/hide data beyond first 2 types */
+interface SupplierRankingTableProps {
+  data: SupplierComparison[];
+  /** Whether to blur/hide data beyond first 2 suppliers */
   blurred?: boolean;
   onUpgrade?: () => void;
 }
 
-export function TypeComparisonTable({
+export function SupplierRankingTable({
   data,
   blurred = false,
   onUpgrade,
-}: TypeComparisonTableProps) {
+}: SupplierRankingTableProps) {
   if (data.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>Performance by Type</Text>
+          <View style={styles.headerIcon}>
+            <Ionicons name="business-outline" size={18} color={colors.primary} />
+          </View>
+          <Text style={styles.title}>Top Suppliers</Text>
         </View>
         <View style={styles.emptyState}>
-          <Ionicons name="layers-outline" size={24} color={colors.textSecondary} />
-          <Text style={styles.emptyText}>No type data yet</Text>
-          <Text style={styles.emptySubtext}>Add pallets with different source types</Text>
+          <Ionicons name="storefront-outline" size={24} color={colors.textSecondary} />
+          <Text style={styles.emptyText}>No supplier data yet</Text>
+          <Text style={styles.emptySubtext}>Add pallets with supplier info</Text>
         </View>
       </View>
     );
@@ -44,28 +46,31 @@ export function TypeComparisonTable({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Performance by Type</Text>
+        <View style={styles.headerIcon}>
+          <Ionicons name="business-outline" size={18} color={colors.primary} />
+        </View>
+        <Text style={styles.title}>Top Suppliers</Text>
       </View>
 
       {/* Table Header */}
       <View style={styles.tableHeader}>
-        <Text style={[styles.headerCell, styles.typeCell]}>Type</Text>
+        <Text style={[styles.headerCell, styles.supplierCell]}>Supplier</Text>
+        <Text style={[styles.headerCell, styles.metricCell]}>Profit</Text>
         <Text style={[styles.headerCell, styles.metricCell]}>ROI</Text>
-        <Text style={[styles.headerCell, styles.metricCell]}>Velocity</Text>
-        <Text style={[styles.headerCell, styles.metricCell]}>Sell %</Text>
+        <Text style={[styles.headerCell, styles.metricCell]}>Pallets</Text>
       </View>
 
       {/* Table Body */}
       <ScrollView style={styles.tableBody} nestedScrollEnabled>
-        {visibleData.map((type, index) => (
-          <TypeRow key={type.sourceType} type={type} rank={index + 1} />
+        {visibleData.map((supplier, index) => (
+          <SupplierRow key={supplier.supplier} supplier={supplier} rank={index + 1} />
         ))}
 
         {/* Placeholder rows for blurred state */}
         {hasHiddenData && (
           <View style={styles.placeholderRows}>
-            {data.slice(2).map((type) => (
-              <View key={type.sourceType} style={styles.placeholderRow}>
+            {data.slice(2).map((supplier) => (
+              <View key={supplier.supplier} style={styles.placeholderRow}>
                 <View style={styles.placeholderText} />
                 <View style={styles.placeholderText} />
                 <View style={styles.placeholderText} />
@@ -80,7 +85,7 @@ export function TypeComparisonTable({
       {hasHiddenData && onUpgrade && (
         <UpgradeOverlay
           visible
-          message="Unlock full type comparison"
+          message="Unlock full supplier comparison"
           onUpgrade={onUpgrade}
           position="bottom"
           bottomHeight={50}
@@ -90,40 +95,40 @@ export function TypeComparisonTable({
   );
 }
 
-interface TypeRowProps {
-  type: TypeComparison;
+interface SupplierRowProps {
+  supplier: SupplierComparison;
   rank: number;
 }
 
-function TypeRow({ type, rank }: TypeRowProps) {
-  const roiColor = getROIColor(type.avgROI, true);
-  const velocityDisplay = type.avgDaysToSell !== null
-    ? `${Math.round(type.avgDaysToSell)}d`
-    : '-';
+function SupplierRow({ supplier, rank }: SupplierRowProps) {
+  const roiColor = getROIColor(supplier.avgROI, true);
+  const profitColor = supplier.totalProfit >= 0 ? colors.profit : colors.loss;
 
   return (
     <View style={styles.tableRow}>
-      <View style={[styles.cell, styles.typeCell]}>
-        <View style={styles.typeIndicator}>
+      <View style={[styles.cell, styles.supplierCell]}>
+        <View style={styles.rankIndicator}>
           <Text style={styles.rankBadge}>{rank}</Text>
         </View>
-        <View>
-          <Text style={styles.typeLabel} numberOfLines={1}>
-            {getSourceTypeLabel(type.sourceType)}
+        <View style={styles.supplierInfo}>
+          <Text style={styles.supplierName} numberOfLines={1}>
+            {supplier.supplier}
           </Text>
-          <Text style={styles.typeMeta}>{type.palletCount} pallets</Text>
+          <Text style={styles.supplierMeta}>{supplier.totalItemsSold} sold</Text>
         </View>
       </View>
       <View style={[styles.cell, styles.metricCell]}>
-        <Text style={[styles.metricValue, { color: roiColor }]}>
-          {formatROI(type.avgROI)}
+        <Text style={[styles.metricValue, { color: profitColor }]}>
+          {formatCurrency(supplier.totalProfit)}
         </Text>
       </View>
       <View style={[styles.cell, styles.metricCell]}>
-        <Text style={styles.metricValue}>{velocityDisplay}</Text>
+        <Text style={[styles.metricValue, { color: roiColor }]}>
+          {formatROI(supplier.avgROI)}
+        </Text>
       </View>
       <View style={[styles.cell, styles.metricCell]}>
-        <Text style={styles.metricValue}>{Math.round(type.sellThroughRate)}%</Text>
+        <Text style={styles.metricValue}>{supplier.palletCount}</Text>
       </View>
     </View>
   );
@@ -140,7 +145,18 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     marginBottom: spacing.md,
+  },
+  headerIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: fontSize.md,
@@ -174,7 +190,7 @@ const styles = StyleSheet.create({
   cell: {
     justifyContent: 'center',
   },
-  typeCell: {
+  supplierCell: {
     flex: 2,
     flexDirection: 'row',
     alignItems: 'center',
@@ -184,7 +200,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
-  typeIndicator: {
+  rankIndicator: {
     width: 24,
     height: 24,
     borderRadius: 12,
@@ -197,12 +213,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.primary,
   },
-  typeLabel: {
+  supplierInfo: {
+    flex: 1,
+  },
+  supplierName: {
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.textPrimary,
   },
-  typeMeta: {
+  supplierMeta: {
     fontSize: fontSize.xs,
     color: colors.textSecondary,
   },

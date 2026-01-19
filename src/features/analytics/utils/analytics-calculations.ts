@@ -9,6 +9,7 @@ import type {
   HeroMetrics,
   PalletAnalytics,
   TypeComparison,
+  SupplierComparison,
   StaleItem,
   TrendDataPoint,
 } from '../types/analytics';
@@ -291,6 +292,95 @@ export function calculateTypeComparison(
 
   // Sort by average ROI descending
   return comparisons.sort((a, b) => b.avgROI - a.avgROI);
+}
+
+// ============================================================================
+// Supplier Comparison
+// ============================================================================
+
+/**
+ * Calculate aggregated metrics by supplier (vendor).
+ * @param pallets - All pallets
+ * @param items - All items
+ * @param expenses - All expenses (with pallet_ids)
+ * @returns Array of supplier comparisons sorted by total profit descending
+ */
+export function calculateSupplierComparison(
+  pallets: Pallet[],
+  items: Item[],
+  expenses: ExpenseWithPallets[]
+): SupplierComparison[] {
+  // Get unique suppliers from pallets (normalize null/empty to "Unknown")
+  const normalizeSupplier = (supplier: string | null): string => {
+    return supplier && supplier.trim() ? supplier.trim() : 'Unknown';
+  };
+
+  const suppliers = [...new Set(pallets.map((p) => normalizeSupplier(p.supplier)))];
+
+  const comparisons: SupplierComparison[] = suppliers.map((supplier) => {
+    const supplierPallets = pallets.filter(
+      (p) => normalizeSupplier(p.supplier) === supplier
+    );
+
+    let totalProfit = 0;
+    let totalCost = 0;
+    let totalItems = 0;
+    let totalSoldItems = 0;
+    let totalDaysToSell = 0;
+    let soldItemsWithDays = 0;
+
+    supplierPallets.forEach((pallet) => {
+      const palletItems = items.filter((item) => item.pallet_id === pallet.id);
+      const palletExpenses = expenses.filter(
+        (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
+      );
+
+      // Calculate split amounts for multi-pallet expenses
+      const splitExpenses: Expense[] = palletExpenses.map((exp) => ({
+        ...exp,
+        amount: exp.amount / (exp.pallet_ids?.length || 1),
+      }));
+
+      const result = calculatePalletProfit(pallet, palletItems, splitExpenses);
+      totalProfit += result.netProfit;
+      totalCost += result.totalCost;
+      totalItems += palletItems.length;
+      totalSoldItems += result.soldItemsCount;
+
+      // Sum days to sell for averaging
+      const soldItems = palletItems.filter(
+        (item) => item.status === 'sold' && item.listing_date && item.sale_date
+      );
+      soldItems.forEach((item) => {
+        const days = getDaysToSell(item);
+        if (days !== null) {
+          totalDaysToSell += days;
+          soldItemsWithDays++;
+        }
+      });
+    });
+
+    const palletCount = supplierPallets.length;
+    const avgROI = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
+    const avgProfitPerPallet = palletCount > 0 ? totalProfit / palletCount : 0;
+    const avgDaysToSell = soldItemsWithDays > 0 ? totalDaysToSell / soldItemsWithDays : null;
+    const sellThroughRate = totalItems > 0 ? (totalSoldItems / totalItems) * 100 : 0;
+
+    return {
+      supplier,
+      totalProfit,
+      totalCost,
+      avgROI,
+      avgProfitPerPallet,
+      palletCount,
+      totalItemsSold: totalSoldItems,
+      avgDaysToSell,
+      sellThroughRate,
+    };
+  });
+
+  // Sort by total profit descending
+  return comparisons.sort((a, b) => b.totalProfit - a.totalProfit);
 }
 
 // ============================================================================

@@ -41,6 +41,33 @@ export interface TypeComparison {
   totalCost: number;
 }
 
+// Aggregated metrics by supplier (vendor)
+export interface SupplierComparison {
+  supplier: string;
+  totalProfit: number;
+  totalCost: number;
+  avgROI: number;
+  avgProfitPerPallet: number;
+  palletCount: number;
+  totalItemsSold: number;
+  avgDaysToSell: number | null;
+  sellThroughRate: number;
+}
+
+// Aggregated metrics by pallet type (source_name)
+export interface PalletTypeComparison {
+  palletType: string;
+  isMysteryBox: boolean;
+  totalProfit: number;
+  totalCost: number;
+  avgROI: number;
+  avgProfitPerPallet: number;
+  palletCount: number;
+  totalItemsSold: number;
+  avgDaysToSell: number | null;
+  sellThroughRate: number;
+}
+
 // Stale item for attention list
 export interface StaleItem {
   id: string;

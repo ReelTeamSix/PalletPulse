@@ -33,6 +33,7 @@ import {
   calculateHeroMetrics,
   calculatePalletLeaderboard,
   calculateTypeComparison,
+  calculateSupplierComparison,
   getStaleItems,
   calculateProfitTrend,
 } from '@/src/features/analytics/utils/analytics-calculations';
@@ -52,6 +53,7 @@ import {
   HeroMetricsCard,
   PalletLeaderboard,
   TypeComparisonTable,
+  SupplierRankingTable,
   StaleInventoryList,
   TrendChartTeaser,
   TrendChart,
@@ -136,6 +138,11 @@ export default function AnalyticsScreen() {
     [pallets, items, expenses]
   );
 
+  const supplierComparison = useMemo(
+    () => calculateSupplierComparison(pallets, items, expenses),
+    [pallets, items, expenses]
+  );
+
   const staleThreshold = settings?.stale_threshold_days ?? 30;
   const staleItems = useMemo(
     () => getStaleItems(items, pallets, staleThreshold),
@@ -152,6 +159,7 @@ export default function AnalyticsScreen() {
   const FREE_TIER_LIMITS = {
     leaderboard: 3,
     typeComparison: 2,
+    supplierComparison: 2,
     staleItems: 3,
   };
 
@@ -163,12 +171,17 @@ export default function AnalyticsScreen() {
     ? typeComparison
     : typeComparison.slice(0, FREE_TIER_LIMITS.typeComparison);
 
+  const visibleSupplierComparison = isPaidTier
+    ? supplierComparison
+    : supplierComparison.slice(0, FREE_TIER_LIMITS.supplierComparison);
+
   const visibleStaleItems = isPaidTier
     ? staleItems
     : staleItems.slice(0, FREE_TIER_LIMITS.staleItems);
 
   // Check if there's hidden data
   const hasMoreTypeComparison = !isPaidTier && typeComparison.length > FREE_TIER_LIMITS.typeComparison;
+  const hasMoreSupplierComparison = !isPaidTier && supplierComparison.length > FREE_TIER_LIMITS.supplierComparison;
   const hasMoreStaleItems = !isPaidTier && staleItems.length > FREE_TIER_LIMITS.staleItems;
   const hiddenLeaderboardCount = Math.max(0, leaderboard.length - FREE_TIER_LIMITS.leaderboard);
   const hiddenStaleCount = Math.max(0, staleItems.length - FREE_TIER_LIMITS.staleItems);
@@ -300,6 +313,15 @@ export default function AnalyticsScreen() {
 
       {/* Hero Metrics - Always visible */}
       <HeroMetricsCard metrics={heroMetrics} />
+
+      {/* Supplier Ranking */}
+      {supplierComparison.length > 0 && (
+        <SupplierRankingTable
+          data={visibleSupplierComparison}
+          blurred={hasMoreSupplierComparison}
+          onUpgrade={handleUpgrade}
+        />
+      )}
 
       {/* Pallet Leaderboard */}
       {leaderboard.length > 0 && (

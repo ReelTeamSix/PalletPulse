@@ -81,6 +81,14 @@ function LeaderboardItem({ pallet, rank, onPress }: LeaderboardItemProps) {
   const medalColor = isTopThree ? MEDAL_COLORS[rank - 1] : undefined;
   const profitColor = pallet.profit >= 0 ? colors.profit : colors.loss;
   const roiColor = getROIColor(pallet.roi, true);
+  const sellProgress = pallet.itemCount > 0 ? pallet.soldCount / pallet.itemCount : 0;
+
+  // Progress bar color based on sell-through rate
+  const getProgressColor = () => {
+    if (pallet.sellThroughRate >= 75) return colors.profit;
+    if (pallet.sellThroughRate >= 50) return colors.primary;
+    return colors.warning;
+  };
 
   return (
     <Pressable
@@ -97,30 +105,47 @@ function LeaderboardItem({ pallet, rank, onPress }: LeaderboardItemProps) {
         )}
       </View>
 
-      {/* Pallet info */}
-      <View style={styles.palletInfo}>
-        <Text style={styles.palletName} numberOfLines={1}>
-          {pallet.name}
-        </Text>
-        <Text style={styles.palletMeta}>
-          {pallet.soldCount}/{pallet.itemCount} sold
-          {pallet.sellThroughRate > 0 && ` (${Math.round(pallet.sellThroughRate)}%)`}
-        </Text>
-      </View>
+      {/* Pallet info and progress */}
+      <View style={styles.palletContent}>
+        <View style={styles.palletRow}>
+          <View style={styles.palletInfo}>
+            <Text style={styles.palletName} numberOfLines={1}>
+              {pallet.name}
+            </Text>
+            <Text style={styles.palletMeta}>
+              {pallet.soldCount}/{pallet.itemCount} sold
+              {pallet.sellThroughRate > 0 && ` (${Math.round(pallet.sellThroughRate)}%)`}
+            </Text>
+          </View>
 
-      {/* Metrics */}
-      <View style={styles.metricsContainer}>
-        <Text style={[styles.profitValue, { color: profitColor }]}>
-          {formatCurrency(pallet.profit)}
-        </Text>
-        <Text style={[styles.roiValue, { color: roiColor }]}>
-          {formatROI(pallet.roi)}
-        </Text>
-      </View>
+          {/* Metrics */}
+          <View style={styles.metricsContainer}>
+            <Text style={[styles.profitValue, { color: profitColor }]}>
+              {formatCurrency(pallet.profit)}
+            </Text>
+            <Text style={[styles.roiValue, { color: roiColor }]}>
+              {formatROI(pallet.roi)}
+            </Text>
+          </View>
 
-      {onPress && (
-        <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} />
-      )}
+          {onPress && (
+            <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} />
+          )}
+        </View>
+
+        {/* Progress bar */}
+        <View style={styles.progressContainer}>
+          <View
+            style={[
+              styles.progressBar,
+              {
+                width: `${Math.min(sellProgress * 100, 100)}%`,
+                backgroundColor: getProgressColor(),
+              },
+            ]}
+          />
+        </View>
+      </View>
     </Pressable>
   );
 }
@@ -157,7 +182,7 @@ const styles = StyleSheet.create({
   // Item styles
   itemContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -173,11 +198,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 2,
   },
   rankNumber: {
     fontSize: fontSize.sm,
     fontWeight: '600',
     color: colors.textSecondary,
+  },
+  palletContent: {
+    flex: 1,
+  },
+  palletRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   palletInfo: {
     flex: 1,
@@ -202,6 +235,18 @@ const styles = StyleSheet.create({
   roiValue: {
     fontSize: fontSize.xs,
     fontWeight: '500',
+  },
+  // Progress bar styles
+  progressContainer: {
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    marginTop: spacing.sm,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 2,
   },
   // Empty state
   emptyState: {

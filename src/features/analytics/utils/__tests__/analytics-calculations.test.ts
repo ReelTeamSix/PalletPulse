@@ -4,6 +4,7 @@ import {
   calculateHeroMetrics,
   calculatePalletLeaderboard,
   calculateTypeComparison,
+  calculateSupplierComparison,
   getStaleItems,
   calculateProfitTrend,
   calculatePeriodSummary,
@@ -30,6 +31,7 @@ const createPallet = (overrides: Partial<Pallet> = {}): Pallet => ({
   status: 'completed',
   notes: null,
   version: 1,
+  completion_prompt_dismissed: false,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
@@ -501,5 +503,131 @@ describe('getSourceTypeLabel', () => {
     expect(getSourceTypeLabel('retail_arbitrage')).toBe('Retail Arbitrage');
     expect(getSourceTypeLabel('mystery_box')).toBe('Mystery Box');
     expect(getSourceTypeLabel('other')).toBe('Other');
+  });
+});
+
+// ============================================================================
+// calculateSupplierComparison Tests
+// ============================================================================
+
+describe('calculateSupplierComparison', () => {
+  it('should return empty array for no pallets', () => {
+    const result = calculateSupplierComparison([], [], []);
+    expect(result).toHaveLength(0);
+  });
+
+  it('should group pallets by supplier', () => {
+    const pallets = [
+      createPallet({ id: 'p1', supplier: 'Bulq', purchase_cost: 100, sales_tax: 0 }),
+      createPallet({ id: 'p2', supplier: 'Bulq', purchase_cost: 100, sales_tax: 0 }),
+      createPallet({ id: 'p3', supplier: '888Lots', purchase_cost: 50, sales_tax: 0 }),
+    ];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 150 }),
+      createItem({ id: 'i2', pallet_id: 'p2', status: 'sold', sale_price: 180 }),
+      createItem({ id: 'i3', pallet_id: 'p3', status: 'sold', sale_price: 100 }),
+    ];
+
+    const result = calculateSupplierComparison(pallets, items, []);
+
+    expect(result).toHaveLength(2);
+
+    // 888Lots has higher ROI: (100-50)/50 = 100%
+    // Bulq: (150+180 - 200)/200 = 65%
+    const bulq = result.find(s => s.supplier === 'Bulq');
+    const lots888 = result.find(s => s.supplier === '888Lots');
+
+    expect(bulq).toBeDefined();
+    expect(lots888).toBeDefined();
+    expect(bulq!.palletCount).toBe(2);
+    expect(lots888!.palletCount).toBe(1);
+  });
+
+  it('should sort by total profit descending', () => {
+    const pallets = [
+      createPallet({ id: 'p1', supplier: 'LowProfit', purchase_cost: 100, sales_tax: 0 }),
+      createPallet({ id: 'p2', supplier: 'HighProfit', purchase_cost: 100, sales_tax: 0 }),
+    ];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 120 }),
+      createItem({ id: 'i2', pallet_id: 'p2', status: 'sold', sale_price: 250 }),
+    ];
+
+    const result = calculateSupplierComparison(pallets, items, []);
+
+    expect(result[0].supplier).toBe('HighProfit');
+    expect(result[0].totalProfit).toBe(150); // 250 - 100
+    expect(result[1].supplier).toBe('LowProfit');
+    expect(result[1].totalProfit).toBe(20); // 120 - 100
+  });
+
+  it('should calculate avg profit per pallet correctly', () => {
+    const pallets = [
+      createPallet({ id: 'p1', supplier: 'TestSupplier', purchase_cost: 100, sales_tax: 0 }),
+      createPallet({ id: 'p2', supplier: 'TestSupplier', purchase_cost: 100, sales_tax: 0 }),
+    ];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 150 }),
+      createItem({ id: 'i2', pallet_id: 'p2', status: 'sold', sale_price: 200 }),
+    ];
+
+    const result = calculateSupplierComparison(pallets, items, []);
+
+    // Total profit: 50 + 100 = 150
+    // Avg profit per pallet: 150 / 2 = 75
+    expect(result[0].avgProfitPerPallet).toBe(75);
+  });
+
+  it('should handle pallets with null/empty supplier', () => {
+    const pallets = [
+      createPallet({ id: 'p1', supplier: null, purchase_cost: 100, sales_tax: 0 }),
+      createPallet({ id: 'p2', supplier: '', purchase_cost: 100, sales_tax: 0 }),
+      createPallet({ id: 'p3', supplier: 'Bulq', purchase_cost: 100, sales_tax: 0 }),
+    ];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 150 }),
+      createItem({ id: 'i2', pallet_id: 'p2', status: 'sold', sale_price: 150 }),
+      createItem({ id: 'i3', pallet_id: 'p3', status: 'sold', sale_price: 150 }),
+    ];
+
+    const result = calculateSupplierComparison(pallets, items, []);
+
+    // Should have 2 groups: "Unknown" (for null/empty) and "Bulq"
+    expect(result).toHaveLength(2);
+    const unknown = result.find(s => s.supplier === 'Unknown');
+    expect(unknown).toBeDefined();
+    expect(unknown!.palletCount).toBe(2);
+  });
+
+  it('should calculate sell-through rate correctly', () => {
+    const pallets = [createPallet({ id: 'p1', supplier: 'Bulq', purchase_cost: 100 })];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 50 }),
+      createItem({ id: 'i2', pallet_id: 'p1', status: 'sold', sale_price: 60 }),
+      createItem({ id: 'i3', pallet_id: 'p1', status: 'listed' }),
+      createItem({ id: 'i4', pallet_id: 'p1', status: 'listed' }),
+    ];
+
+    const result = calculateSupplierComparison(pallets, items, []);
+
+    expect(result[0].totalItemsSold).toBe(2);
+    expect(result[0].sellThroughRate).toBe(50); // 2/4 = 50%
+  });
+
+  it('should handle expenses correctly', () => {
+    const pallets = [
+      createPallet({ id: 'p1', supplier: 'Bulq', purchase_cost: 100, sales_tax: 0 }),
+    ];
+    const items = [
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 200 }),
+    ];
+    const expenses = [
+      createExpense({ id: 'e1', amount: 30, pallet_ids: ['p1'] }),
+    ];
+
+    const result = calculateSupplierComparison(pallets, items, expenses);
+
+    // Profit: 200 - 100 - 30 = 70
+    expect(result[0].totalProfit).toBe(70);
   });
 });

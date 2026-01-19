@@ -1,11 +1,10 @@
-// HeroMetricsCard - Displays 4 key analytics metrics
+// HeroMetricsCard - Displays 4 key analytics metrics in individual cards
 // Always visible for all tiers - proves value to free users
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
-import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
-import { shadows } from '@/src/constants/shadows';
+import { spacing, fontSize } from '@/src/constants/spacing';
 import type { HeroMetrics } from '../types/analytics';
 import { formatCurrency, formatROI, getROIColor } from '@/src/lib/profit-utils';
 
@@ -13,21 +12,30 @@ interface HeroMetricsCardProps {
   metrics: HeroMetrics;
 }
 
-interface MetricItemProps {
+interface MetricCardProps {
   label: string;
   value: string;
   icon: keyof typeof Ionicons.glyphMap;
-  color?: string;
+  accentColor: string;
+  isNegative?: boolean;
 }
 
-function MetricItem({ label, value, icon, color }: MetricItemProps) {
+// Warm coral/salmon color for loss backgrounds (matches inspiration)
+const LOSS_BACKGROUND = '#FEF2F2'; // Warm coral tint
+const NEUTRAL_BACKGROUND = '#FFFFFF';
+
+function MetricCard({ label, value, icon, accentColor, isNegative }: MetricCardProps) {
+  // For negative metrics (loss), use a warm coral/salmon background
+  const cardBackground = isNegative ? LOSS_BACKGROUND : NEUTRAL_BACKGROUND;
+  const labelColor = isNegative ? colors.loss : colors.textSecondary;
+
   return (
-    <View style={styles.metricItem}>
-      <View style={[styles.iconContainer, color && { backgroundColor: color + '20' }]}>
-        <Ionicons name={icon} size={18} color={color || colors.primary} />
+    <View style={[styles.metricCard, { backgroundColor: cardBackground }]}>
+      <View style={[styles.iconContainer, { backgroundColor: accentColor + '12' }]}>
+        <Ionicons name={icon} size={22} color={accentColor} />
       </View>
       <Text style={styles.metricValue}>{value}</Text>
-      <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={[styles.metricLabel, { color: labelColor }]}>{label}</Text>
     </View>
   );
 }
@@ -35,35 +43,39 @@ function MetricItem({ label, value, icon, color }: MetricItemProps) {
 export function HeroMetricsCard({ metrics }: HeroMetricsCardProps) {
   const profitColor = metrics.totalProfit >= 0 ? colors.profit : colors.loss;
   const roiColor = getROIColor(metrics.avgROI, true);
+  const isProfitNegative = metrics.totalProfit < 0;
+  const isROINegative = metrics.avgROI < 0;
 
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <MetricItem
+        <MetricCard
           label="Total Profit"
           value={formatCurrency(metrics.totalProfit)}
           icon="cash-outline"
-          color={profitColor}
+          accentColor={profitColor}
+          isNegative={isProfitNegative}
         />
-        <MetricItem
+        <MetricCard
           label="Items Sold"
           value={metrics.totalItemsSold.toString()}
           icon="cart-outline"
-          color={colors.primary}
+          accentColor={colors.primary}
         />
       </View>
       <View style={styles.row}>
-        <MetricItem
+        <MetricCard
           label="Avg ROI"
           value={formatROI(metrics.avgROI)}
-          icon="trending-up-outline"
-          color={roiColor}
+          icon={isROINegative ? 'trending-down-outline' : 'trending-up-outline'}
+          accentColor={roiColor}
+          isNegative={isROINegative}
         />
-        <MetricItem
-          label="Active Value"
+        <MetricCard
+          label="In Stock"
           value={formatCurrency(metrics.activeInventoryValue)}
           icon="cube-outline"
-          color={colors.textSecondary}
+          accentColor={colors.primary}
         />
       </View>
     </View>
@@ -72,40 +84,48 @@ export function HeroMetricsCard({ metrics }: HeroMetricsCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
     marginBottom: spacing.md,
-    ...shadows.sm,
+    gap: spacing.sm,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
-  metricItem: {
+  metricCard: {
     flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: 16, // Softer, more rounded corners
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
     alignItems: 'center',
-    padding: spacing.sm,
+    // Softer shadow for floating effect
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+    // Subtle border for definition
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
   },
   iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary + '20',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   metricValue: {
-    fontSize: fontSize.lg,
+    fontSize: 22, // Slightly larger for emphasis
     fontWeight: '700',
     color: colors.textPrimary,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   metricLabel: {
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     textAlign: 'center',
+    fontWeight: '500',
   },
 });

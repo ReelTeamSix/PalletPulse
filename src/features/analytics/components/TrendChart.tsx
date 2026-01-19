@@ -1,11 +1,12 @@
 // TrendChart - Interactive profit trend chart for paid tier
-// Simple SVG-based line chart implementation
+// Simple SVG-based line chart implementation with comparison badge
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
-import Svg, { Path, Line, Circle, G, Text as SvgText } from 'react-native-svg';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import Svg, { Path, Line, Circle, G, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { shadows } from '@/src/constants/shadows';
 import type { TrendDataPoint } from '../types/analytics';
 import { formatCurrency } from '@/src/lib/profit-utils';
 
@@ -43,6 +44,26 @@ export function TrendChart({ data, title = 'Profit Trend' }: TrendChartProps) {
   const avgProfit = useMemo(() => {
     return data.length > 0 ? totalProfit / data.length : 0;
   }, [data, totalProfit]);
+
+  // Calculate comparison vs previous period (last half vs first half)
+  const periodComparison = useMemo(() => {
+    if (data.length < 2) return null;
+
+    const midPoint = Math.floor(data.length / 2);
+    const firstHalf = data.slice(0, midPoint);
+    const secondHalf = data.slice(midPoint);
+
+    const firstHalfTotal = firstHalf.reduce((sum, p) => sum + p.profit, 0);
+    const secondHalfTotal = secondHalf.reduce((sum, p) => sum + p.profit, 0);
+
+    if (firstHalfTotal === 0) return null;
+
+    const percentChange = ((secondHalfTotal - firstHalfTotal) / Math.abs(firstHalfTotal)) * 100;
+    return {
+      percentChange,
+      isPositive: percentChange >= 0,
+    };
+  }, [data]);
 
   // Calculate scales
   const { yMin, yMax, xScale, yScale, points, pathData } = useMemo(() => {
@@ -129,7 +150,7 @@ export function TrendChart({ data, title = 'Profit Trend' }: TrendChartProps) {
           <Text style={styles.title}>{title}</Text>
         </View>
         <View style={styles.emptyState}>
-          <FontAwesome name="line-chart" size={32} color={colors.textSecondary} />
+          <Ionicons name="analytics-outline" size={32} color={colors.textSecondary} />
           <Text style={styles.emptyText}>No trend data yet</Text>
           <Text style={styles.emptySubtext}>Sell items to see your profit trend</Text>
         </View>
@@ -142,9 +163,36 @@ export function TrendChart({ data, title = 'Profit Trend' }: TrendChartProps) {
 
   return (
     <View style={styles.container}>
-      {/* Header with title and granularity toggle */}
+      {/* Header with title and comparison badge */}
       <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.title}>{title}</Text>
+          {periodComparison && (
+            <View
+              style={[
+                styles.comparisonBadge,
+                periodComparison.isPositive
+                  ? styles.comparisonBadgePositive
+                  : styles.comparisonBadgeNegative,
+              ]}
+            >
+              <Ionicons
+                name={periodComparison.isPositive ? 'trending-up' : 'trending-down'}
+                size={12}
+                color={periodComparison.isPositive ? colors.profit : colors.loss}
+              />
+              <Text
+                style={[
+                  styles.comparisonText,
+                  { color: periodComparison.isPositive ? colors.profit : colors.loss },
+                ]}
+              >
+                {periodComparison.isPositive ? '+' : ''}
+                {periodComparison.percentChange.toFixed(1)}% vs last period
+              </Text>
+            </View>
+          )}
+        </View>
         <View style={styles.granularityToggle}>
           {GRANULARITY_OPTIONS.map((option) => (
             <Pressable
@@ -248,6 +296,14 @@ export function TrendChart({ data, title = 'Profit Trend' }: TrendChartProps) {
           ))}
         </G>
 
+        {/* Gradient definition for area fill */}
+        <Defs>
+          <LinearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0%" stopColor={colors.loss} stopOpacity={0.3} />
+            <Stop offset="100%" stopColor={colors.loss} stopOpacity={0.05} />
+          </LinearGradient>
+        </Defs>
+
         {/* Zero line */}
         {zeroY !== null && (
           <Line
@@ -257,7 +313,15 @@ export function TrendChart({ data, title = 'Profit Trend' }: TrendChartProps) {
             y2={zeroY}
             stroke={colors.textSecondary}
             strokeWidth={1}
-            opacity={0.7}
+            opacity={0.5}
+          />
+        )}
+
+        {/* Area fill under the line */}
+        {pathData && points.length > 0 && (
+          <Path
+            d={`${pathData} L ${points[points.length - 1].x} ${chartHeight - chartPadding.bottom} L ${points[0].x} ${chartHeight - chartPadding.bottom} Z`}
+            fill="url(#areaGradient)"
           />
         )}
 
@@ -265,7 +329,7 @@ export function TrendChart({ data, title = 'Profit Trend' }: TrendChartProps) {
         {pathData && (
           <Path
             d={pathData}
-            stroke={colors.primary}
+            stroke={colors.loss}
             strokeWidth={2.5}
             fill="none"
             strokeLinecap="round"
@@ -279,8 +343,8 @@ export function TrendChart({ data, title = 'Profit Trend' }: TrendChartProps) {
             key={index}
             cx={point.x}
             cy={point.y}
-            r={selectedIndex === index ? 7 : 5}
-            fill={colors.primary}
+            r={selectedIndex === index ? 6 : 4}
+            fill={colors.loss}
             stroke={colors.background}
             strokeWidth={2}
             onPress={() => setSelectedIndex(selectedIndex === index ? null : index)}
@@ -331,21 +395,45 @@ function formatCompactCurrency(value: number): string {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
+    ...shadows.sm,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: spacing.md,
+  },
+  headerLeft: {
+    flex: 1,
+    gap: spacing.xs,
   },
   title: {
     fontSize: fontSize.md,
     fontWeight: '600',
     color: colors.textPrimary,
+  },
+  comparisonBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: borderRadius.full,
+    alignSelf: 'flex-start',
+  },
+  comparisonBadgePositive: {
+    backgroundColor: colors.profit + '15',
+  },
+  comparisonBadgeNegative: {
+    backgroundColor: colors.loss + '15',
+  },
+  comparisonText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
   },
   granularityToggle: {
     flexDirection: 'row',
