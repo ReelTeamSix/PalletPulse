@@ -13,7 +13,8 @@ import { useExpensesStore } from '@/src/stores/expenses-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { useNotificationsStore } from '@/src/stores/notifications-store';
 import { NotificationSheet } from '@/src/components/ui';
-import { checkStaleInventoryNotification } from '@/src/lib/notification-triggers';
+import { checkStaleInventoryNotification, createTrialEndingNotification } from '@/src/lib/notification-triggers';
+import { useOnboardingStore } from '@/src/stores/onboarding-store';
 import {
   HeroCard,
   MetricCard,
@@ -64,12 +65,23 @@ export default function DashboardScreen() {
     }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
   );
 
-  // Check for stale inventory and create notification if needed
+  // Get trial status for notification checks
+  const { isTrialActive, getTrialDaysRemaining } = useOnboardingStore();
+
+  // Check for stale inventory and trial ending notifications
   useEffect(() => {
     if (items.length > 0 && !itemsLoading) {
       checkStaleInventoryNotification(items, staleThresholdDays);
     }
-  }, [items, staleThresholdDays, itemsLoading]);
+
+    // Check for trial ending notification (notify when 3 or fewer days remaining)
+    if (isTrialActive()) {
+      const daysRemaining = getTrialDaysRemaining();
+      if (daysRemaining <= 3 && daysRemaining > 0) {
+        createTrialEndingNotification(daysRemaining);
+      }
+    }
+  }, [items, staleThresholdDays, itemsLoading, isTrialActive, getTrialDaysRemaining]);
 
   const isLoading = palletsLoading || itemsLoading || expensesLoading;
 

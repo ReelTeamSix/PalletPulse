@@ -7,7 +7,7 @@ import { Item, ItemCondition, ItemStatus, SourceType, ItemPhoto, SalesPlatform }
 import { uploadItemPhoto, deletePhoto, getPhotoUrl } from '@/src/lib/photo-utils';
 import { PhotoItem } from '@/src/components/ui/PhotoPicker';
 import { SubscriptionTier } from '@/src/constants/tier-limits';
-import { checkPalletMilestoneNotification } from '@/src/lib/notification-triggers';
+import { checkPalletMilestoneNotification, createLimitWarningNotification } from '@/src/lib/notification-triggers';
 
 // Error codes for tier limit enforcement
 export const ITEM_ERROR_CODES = {
@@ -243,6 +243,13 @@ export const useItemsStore = create<ItemsState>()(
               // Refresh pallets to get the updated status
               palletsStore.fetchPallets();
             }
+          }
+
+          // Check if user is approaching their item limit and notify
+          const newActiveItemCount = activeItemCount + 1;
+          const itemLimit = subscriptionStore.getLimitForAction('activeItems');
+          if (typeof itemLimit === 'number' && itemLimit !== Infinity) {
+            createLimitWarningNotification('items', newActiveItemCount, itemLimit);
           }
 
           return { success: true, data: item };

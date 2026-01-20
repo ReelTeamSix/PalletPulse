@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/src/lib/supabase';
 import { Pallet, PalletStatus, SourceType } from '@/src/types/database';
 import { SubscriptionTier } from '@/src/constants/tier-limits';
+import { createLimitWarningNotification } from '@/src/lib/notification-triggers';
 
 // Error codes for tier limit enforcement
 export const PALLET_ERROR_CODES = {
@@ -117,6 +118,14 @@ export const usePalletsStore = create<PalletsState>()(
           if (error) throw error;
           const pallet = data as Pallet;
           set(state => ({ pallets: [pallet, ...state.pallets], isLoading: false }));
+
+          // Check if user is approaching their pallet limit and notify
+          const newActivePalletCount = activePalletCount + 1;
+          const palletLimit = subscriptionStore.getLimitForAction('activePallets');
+          if (typeof palletLimit === 'number' && palletLimit !== Infinity) {
+            createLimitWarningNotification('pallets', newActivePalletCount, palletLimit);
+          }
+
           return { success: true, data: pallet };
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Failed to add pallet';
