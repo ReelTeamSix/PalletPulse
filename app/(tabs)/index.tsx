@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -13,6 +13,7 @@ import { useExpensesStore } from '@/src/stores/expenses-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { useNotificationsStore } from '@/src/stores/notifications-store';
 import { NotificationSheet } from '@/src/components/ui';
+import { checkStaleInventoryNotification } from '@/src/lib/notification-triggers';
 import {
   HeroCard,
   MetricCard,
@@ -62,6 +63,13 @@ export default function DashboardScreen() {
       fetchNotifications();
     }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
   );
+
+  // Check for stale inventory and create notification if needed
+  useEffect(() => {
+    if (items.length > 0 && !itemsLoading) {
+      checkStaleInventoryNotification(items, staleThresholdDays);
+    }
+  }, [items, staleThresholdDays, itemsLoading]);
 
   const isLoading = palletsLoading || itemsLoading || expensesLoading;
 

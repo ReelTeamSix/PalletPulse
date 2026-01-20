@@ -7,6 +7,7 @@ import { Item, ItemCondition, ItemStatus, SourceType, ItemPhoto, SalesPlatform }
 import { uploadItemPhoto, deletePhoto, getPhotoUrl } from '@/src/lib/photo-utils';
 import { PhotoItem } from '@/src/components/ui/PhotoPicker';
 import { SubscriptionTier } from '@/src/constants/tier-limits';
+import { checkPalletMilestoneNotification } from '@/src/lib/notification-triggers';
 
 // Error codes for tier limit enforcement
 export const ITEM_ERROR_CODES = {
@@ -462,7 +463,7 @@ export const useItemsStore = create<ItemsState>()(
           return `${year}-${month}-${day}`;
         };
 
-        return get().updateItem(id, {
+        const result = await get().updateItem(id, {
           status: 'sold',
           sale_price: saleData.sale_price,
           sale_date: saleData.sale_date || getLocalDateString(),
@@ -473,6 +474,29 @@ export const useItemsStore = create<ItemsState>()(
           platform_fee: saleData.platform_fee ?? null,
           shipping_cost: saleData.shipping_cost ?? null,
         });
+
+        // Check for pallet milestone notification after successful sale
+        if (result.success && currentItem?.pallet_id) {
+          try {
+            // Fetch the pallet data for milestone check
+            const { data: pallet } = await supabase
+              .from('pallets')
+              .select('*')
+              .eq('id', currentItem.pallet_id)
+              .single();
+
+            if (pallet) {
+              // Get all items for this pallet (including the just-sold one with updated data)
+              const allItems = get().items;
+              checkPalletMilestoneNotification(pallet, allItems);
+            }
+          } catch (error) {
+            // Don't fail the sale if notification check fails
+            console.error('Failed to check pallet milestone:', error);
+          }
+        }
+
+        return result;
       },
 
       setSelectedItem: (id: string | null) => set({ selectedItemId: id }),

@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session, User, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/src/lib/supabase';
 import logger from '@/src/lib/logger';
+import { createWelcomeNotification } from '@/src/lib/notification-triggers';
 
 const log = logger.createLogger({ screen: 'AuthStore' });
 
@@ -126,6 +127,9 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
           });
 
+          // Create welcome notification for new users
+          createWelcomeNotification();
+
           return { success: true };
         } catch {
           const errorMessage = 'An unexpected error occurred during sign up.';
@@ -155,6 +159,9 @@ export const useAuthStore = create<AuthState>()(
             session: data.session,
             isLoading: false,
           });
+
+          // Ensure welcome notification exists (handles users who signed up before this feature)
+          createWelcomeNotification();
 
           return { success: true };
         } catch {
