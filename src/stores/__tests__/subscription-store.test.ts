@@ -90,32 +90,33 @@ describe('SubscriptionStore', () => {
   });
 
   describe('canPerform', () => {
-    it('should return true for free tier with count under limit', () => {
+    it('should return true for free tier with active pallets under limit', () => {
       const { canPerform } = useSubscriptionStore.getState();
 
-      // Free tier allows 1 pallet
-      expect(canPerform('pallets', 0)).toBe(true);
+      // Free tier allows 2 active pallets
+      expect(canPerform('activePallets', 0)).toBe(true);
+      expect(canPerform('activePallets', 1)).toBe(true);
     });
 
-    it('should return false for free tier at pallet limit', () => {
+    it('should return false for free tier at active pallet limit', () => {
       const { canPerform } = useSubscriptionStore.getState();
 
-      // Free tier allows 1 pallet, so at count 1 should fail
-      expect(canPerform('pallets', 1)).toBe(false);
+      // Free tier allows 2 active pallets, so at count 2 should fail
+      expect(canPerform('activePallets', 2)).toBe(false);
     });
 
-    it('should return true for items under limit', () => {
+    it('should return true for active items under limit', () => {
       const { canPerform } = useSubscriptionStore.getState();
 
-      // Free tier allows 20 items
-      expect(canPerform('items', 19)).toBe(true);
+      // Free tier allows 100 active items
+      expect(canPerform('activeItems', 99)).toBe(true);
     });
 
-    it('should return false for items at limit', () => {
+    it('should return false for active items at limit', () => {
       const { canPerform } = useSubscriptionStore.getState();
 
-      // Free tier allows 20 items
-      expect(canPerform('items', 20)).toBe(false);
+      // Free tier allows 100 active items
+      expect(canPerform('activeItems', 100)).toBe(false);
     });
 
     it('should return correct result for boolean limits', () => {
@@ -131,8 +132,10 @@ describe('SubscriptionStore', () => {
     it('should return correct limit for free tier', () => {
       const { getLimitForAction } = useSubscriptionStore.getState();
 
-      expect(getLimitForAction('pallets')).toBe(1);
-      expect(getLimitForAction('items')).toBe(20);
+      expect(getLimitForAction('activePallets')).toBe(2);
+      expect(getLimitForAction('archivedPallets')).toBe(10);
+      expect(getLimitForAction('activeItems')).toBe(100);
+      expect(getLimitForAction('archivedItems')).toBe(200);
       expect(getLimitForAction('photosPerItem')).toBe(1);
       expect(getLimitForAction('expenseTracking')).toBe(false);
     });
@@ -236,8 +239,8 @@ describe('SubscriptionStore', () => {
     it('should return null when current tier allows action', () => {
       const { getRequiredTierForAction } = useSubscriptionStore.getState();
 
-      // Free tier with 0 pallets should allow adding one
-      expect(getRequiredTierForAction('pallets', 0)).toBeNull();
+      // Free tier with 0 active pallets should allow adding one
+      expect(getRequiredTierForAction('activePallets', 0)).toBeNull();
     });
 
     it('should return starter when free tier limit exceeded', () => {
@@ -252,8 +255,8 @@ describe('SubscriptionStore', () => {
 
       const { getRequiredTierForAction } = useSubscriptionStore.getState();
 
-      // Free tier at 1 pallet needs upgrade
-      expect(getRequiredTierForAction('pallets', 1)).toBe('starter');
+      // Free tier at 2 active pallets needs upgrade (limit is 2)
+      expect(getRequiredTierForAction('activePallets', 2)).toBe('starter');
     });
 
     it('should return pro when starter limit exceeded', () => {
@@ -269,8 +272,8 @@ describe('SubscriptionStore', () => {
 
       const { getRequiredTierForAction } = useSubscriptionStore.getState();
 
-      // Starter tier allows 25 pallets, so at 25 needs pro
-      expect(getRequiredTierForAction('pallets', 25)).toBe('pro');
+      // Starter tier allows 5 active pallets, so at 5 needs pro
+      expect(getRequiredTierForAction('activePallets', 5)).toBe('pro');
     });
   });
 

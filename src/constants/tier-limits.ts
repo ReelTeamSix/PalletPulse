@@ -4,14 +4,25 @@
 export type SubscriptionTier = 'free' | 'starter' | 'pro' | 'enterprise';
 
 export interface TierLimits {
-  pallets: number;
-  items: number;
+  // Pallet limits - separated into active (in-progress) and archived (completed)
+  activePallets: number;     // Pallets with status 'unprocessed' or 'processing'
+  archivedPallets: number;   // Pallets with status 'completed'
+
+  // Item limits - separated into active (unsold) and archived (sold)
+  activeItems: number;       // Items with status 'unlisted' or 'listed'
+  archivedItems: number;     // Items with status 'sold'
+
+  // Photo limits
   photosPerItem: number;
+  archivedPhotoRetentionDays: number; // Days to keep photos after item sold (-1 = unlimited)
+
+  // Feature limits
   aiDescriptionsPerMonth: number;
   analyticsRetentionDays: number;
   csvExport: boolean;
   pdfExport: boolean;
   expenseTracking: boolean;
+
   // Mileage tracking features (tiered)
   mileageTracking: boolean;        // Basic manual mileage entry (Starter+)
   mileageSavedRoutes: boolean;     // Save frequent routes for quick-log (Pro+)
@@ -20,11 +31,29 @@ export interface TierLimits {
   multiUser: boolean;
 }
 
+// Photo cleanup configuration by tier
+// Determines how photos are handled for sold/archived items
+export interface PhotoCleanupConfig {
+  retentionDays: number;    // Days after sale before cleanup (-1 = never)
+  keepFirstPhoto: boolean;  // Keep hero photo even after cleanup
+}
+
+export const PHOTO_CLEANUP_CONFIG: Record<SubscriptionTier, PhotoCleanupConfig> = {
+  free: { retentionDays: 30, keepFirstPhoto: false },      // Delete all after 30 days
+  starter: { retentionDays: 90, keepFirstPhoto: true },    // Keep first photo only after 90 days
+  pro: { retentionDays: -1, keepFirstPhoto: true },        // Keep all forever
+  enterprise: { retentionDays: -1, keepFirstPhoto: true }, // Keep all forever
+};
+
 export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
   free: {
-    pallets: 1,
-    items: 20,
+    // Limits based on market research: casual resellers do 1-2 pallets/month
+    activePallets: 2,        // Covers typical monthly cycle
+    archivedPallets: 10,     // ~6-12 months of history
+    activeItems: 100,        // 2 pallets × ~50 items average
+    archivedItems: 200,      // ~4 pallets worth of sold history
     photosPerItem: 1,
+    archivedPhotoRetentionDays: 30,  // Photos deleted after 30 days
     aiDescriptionsPerMonth: 0,
     analyticsRetentionDays: 30,
     csvExport: false,
@@ -37,9 +66,13 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     multiUser: false,
   },
   starter: {
-    pallets: 25,
-    items: 500,
+    // For growing resellers: 2-3 months inventory buffer
+    activePallets: 5,
+    archivedPallets: -1,     // Unlimited - paying customers keep full history
+    activeItems: 500,        // 5 pallets × ~100 items max
+    archivedItems: -1,       // Unlimited
     photosPerItem: 3,
+    archivedPhotoRetentionDays: 90,  // Keep first photo, delete rest after 90 days
     aiDescriptionsPerMonth: 50,
     analyticsRetentionDays: -1, // Unlimited
     csvExport: true,
@@ -52,9 +85,13 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     multiUser: false,
   },
   pro: {
-    pallets: -1, // Unlimited
-    items: -1,   // Unlimited
+    // For serious resellers: no limits on core features
+    activePallets: -1,       // Unlimited
+    archivedPallets: -1,     // Unlimited
+    activeItems: -1,         // Unlimited
+    archivedItems: -1,       // Unlimited
     photosPerItem: 10,
+    archivedPhotoRetentionDays: -1,  // Photos kept forever
     aiDescriptionsPerMonth: 200,
     analyticsRetentionDays: -1, // Unlimited
     csvExport: true,
@@ -67,9 +104,13 @@ export const TIER_LIMITS: Record<SubscriptionTier, TierLimits> = {
     multiUser: false,
   },
   enterprise: {
-    pallets: -1, // Unlimited
-    items: -1,   // Unlimited
-    photosPerItem: -1, // Unlimited
+    // For teams and businesses: everything unlimited
+    activePallets: -1,
+    archivedPallets: -1,
+    activeItems: -1,
+    archivedItems: -1,
+    photosPerItem: -1,       // Unlimited
+    archivedPhotoRetentionDays: -1,
     aiDescriptionsPerMonth: -1, // Unlimited
     analyticsRetentionDays: -1, // Unlimited
     csvExport: true,
@@ -160,7 +201,7 @@ export function canPerformAction(
  */
 export function getUsagePercentage(
   tier: SubscriptionTier,
-  limitType: 'pallets' | 'items' | 'photosPerItem' | 'aiDescriptionsPerMonth',
+  limitType: 'activePallets' | 'archivedPallets' | 'activeItems' | 'archivedItems' | 'photosPerItem' | 'aiDescriptionsPerMonth',
   currentCount: number
 ): number | null {
   const limit = TIER_LIMITS[tier][limitType];
@@ -170,4 +211,29 @@ export function getUsagePercentage(
   }
 
   return (currentCount / limit) * 100;
+}
+
+/**
+ * Check if an item's photos should be cleaned based on tier
+ */
+export function shouldCleanArchivedPhotos(
+  tier: SubscriptionTier,
+  soldDate: Date | string,
+  photoCount: number
+): boolean {
+  const config = PHOTO_CLEANUP_CONFIG[tier];
+
+  // No cleanup if unlimited retention
+  if (config.retentionDays === -1) return false;
+
+  // No photos to clean
+  if (photoCount === 0) return false;
+
+  // For tiers that keep first photo, only clean if more than 1 photo
+  if (config.keepFirstPhoto && photoCount <= 1) return false;
+
+  const soldAt = typeof soldDate === 'string' ? new Date(soldDate) : soldDate;
+  const daysSinceSold = Math.floor((Date.now() - soldAt.getTime()) / (1000 * 60 * 60 * 24));
+
+  return daysSinceSold > config.retentionDays;
 }

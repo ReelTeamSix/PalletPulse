@@ -227,14 +227,14 @@ export default function ItemDetailScreen() {
     : null;
 
   // Calculate days to sell
-  const daysToSell = useMemo(() => {
+  const daysToSell = (() => {
     if (!hasSold || !item.listing_date || !item.sale_date) return null;
     const listDate = new Date(item.listing_date);
     const saleDate = new Date(item.sale_date);
     const diffTime = saleDate.getTime() - listDate.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays >= 0 ? diffDays : null;
-  }, [hasSold, item.listing_date, item.sale_date]);
+  })();
 
   // Check if there's any sale detail content to show
   const hasSaleDetails = hasSold && (

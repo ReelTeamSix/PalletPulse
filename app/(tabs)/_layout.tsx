@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/src/constants/colors';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
+import { useSubscriptionStore } from '@/src/stores/subscription-store';
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof Ionicons>['name'];
@@ -17,7 +18,12 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const { isExpenseTrackingEnabled } = useUserSettingsStore();
-  const expensesEnabled = isExpenseTrackingEnabled();
+  const { canPerform } = useSubscriptionStore();
+
+  // User must have tier access AND have it enabled in settings
+  const canAccessExpenses = canPerform('expenseTracking', 0);
+  const expensesEnabled = canAccessExpenses && isExpenseTrackingEnabled();
+
   const insets = useSafeAreaInsets();
 
   // Calculate tab bar height accounting for safe area (Android nav bar)

@@ -90,14 +90,16 @@ export const usePalletsStore = create<PalletsState>()(
         // eslint-disable-next-line @typescript-eslint/no-require-imports -- circular dependency workaround
         const { useSubscriptionStore } = require('./subscription-store');
         const subscriptionStore = useSubscriptionStore.getState();
-        const currentPalletCount = get().pallets.length;
+
+        // Count only ACTIVE pallets (not completed/archived)
+        const activePalletCount = get().pallets.filter(p => p.status !== 'completed').length;
 
         // Check tier limits before allowing pallet creation
-        if (!subscriptionStore.canPerform('pallets', currentPalletCount)) {
-          const requiredTier = subscriptionStore.getRequiredTierForAction('pallets', currentPalletCount);
+        if (!subscriptionStore.canPerform('activePallets', activePalletCount)) {
+          const requiredTier = subscriptionStore.getRequiredTierForAction('activePallets', activePalletCount);
           return {
             success: false,
-            error: 'You have reached your pallet limit. Upgrade to add more pallets.',
+            error: 'You have reached your active pallet limit. Complete a pallet or upgrade to add more.',
             errorCode: PALLET_ERROR_CODES.TIER_LIMIT_REACHED,
             requiredTier: requiredTier || 'starter',
           };

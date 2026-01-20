@@ -144,14 +144,16 @@ export const useItemsStore = create<ItemsState>()(
         // eslint-disable-next-line @typescript-eslint/no-require-imports -- circular dependency workaround
         const { useSubscriptionStore } = require('./subscription-store');
         const subscriptionStore = useSubscriptionStore.getState();
-        const currentItemCount = get().items.length;
+
+        // Count only ACTIVE items (not sold/archived)
+        const activeItemCount = get().items.filter(i => i.status !== 'sold').length;
 
         // Check tier limits before allowing item creation
-        if (!subscriptionStore.canPerform('items', currentItemCount)) {
-          const requiredTier = subscriptionStore.getRequiredTierForAction('items', currentItemCount);
+        if (!subscriptionStore.canPerform('activeItems', activeItemCount)) {
+          const requiredTier = subscriptionStore.getRequiredTierForAction('activeItems', activeItemCount);
           return {
             success: false,
-            error: 'You have reached your item limit. Upgrade to add more items.',
+            error: 'You have reached your active item limit. Mark items as sold or upgrade to add more.',
             errorCode: ITEM_ERROR_CODES.TIER_LIMIT_REACHED,
             requiredTier: requiredTier || 'starter',
           };
