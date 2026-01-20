@@ -24,6 +24,7 @@ import { UserProfileCard } from '@/src/features/settings';
 import { useAuthStore } from '@/src/stores/auth-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
+import { useOnboardingStore } from '@/src/stores/onboarding-store';
 import { PaywallModal } from '@/src/components/subscription';
 
 export default function SettingsScreen() {
@@ -51,6 +52,7 @@ export default function SettingsScreen() {
   const [expenseModalVisible, setExpenseModalVisible] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const { resetOnboarding } = useOnboardingStore();
 
   const currentTier = getEffectiveTier();
   const canAccessExpenseTracking = canPerform('expenseTracking', 0);
@@ -302,6 +304,24 @@ export default function SettingsScreen() {
         <SettingRow icon="document-text" label="Terms of Service" onPress={() => {}} />
         <SettingRow icon="shield" label="Privacy Policy" onPress={() => {}} isLast />
       </Card>
+
+      {/* Debug Section - TODO: Remove before production */}
+      {__DEV__ && (
+        <>
+          <SectionHeader title="Developer" />
+          <Card shadow="sm" padding={0} style={styles.sectionCard}>
+            <SettingRow
+              icon="refresh"
+              label="Reset Onboarding"
+              onPress={() => {
+                resetOnboarding();
+                Alert.alert('Onboarding Reset', 'Sign out and sign back in to see the new onboarding flow.');
+              }}
+              isLast
+            />
+          </Card>
+        </>
+      )}
 
       {/* Sign Out */}
       <Button
