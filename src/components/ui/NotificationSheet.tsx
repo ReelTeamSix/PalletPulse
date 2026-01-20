@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   FlatList,
   TouchableOpacity,
   Dimensions,
-  Alert,
+  Animated,
+  PanResponder,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +20,8 @@ import { spacing, borderRadius, fontSize } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
 import { useNotificationsStore } from '@/src/stores/notifications-store';
 import type { Notification, NotificationType } from '@/src/types/database';
+
+const SWIPE_THRESHOLD = 80;
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHEET_HEIGHT = SCREEN_HEIGHT * 0.65;
@@ -51,39 +54,84 @@ function formatTimeAgo(dateString: string): string {
 interface NotificationItemProps {
   notification: Notification;
   onPress: () => void;
+  onDismiss: () => void;
 }
 
-function NotificationItem({ notification, onPress }: NotificationItemProps) {
+function NotificationItem({ notification, onPress, onDismiss }: NotificationItemProps) {
   const config = notificationConfig[notification.type] || notificationConfig.system;
+  const translateX = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Only respond to horizontal swipes
+        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dy) < 10;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        // Only allow left swipe (negative dx)
+        if (gestureState.dx < 0) {
+          translateX.setValue(gestureState.dx);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -SWIPE_THRESHOLD) {
+          // Swipe past threshold - dismiss
+          Animated.timing(translateX, {
+            toValue: -500,
+            duration: 200,
+            useNativeDriver: true,
+          }).start(() => onDismiss());
+        } else {
+          // Snap back
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   return (
-    <TouchableOpacity
-      style={[
-        styles.notificationItem,
-        !notification.is_read && styles.unreadItem,
-      ]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View style={[styles.itemIconContainer, { backgroundColor: `${config.color}15` }]}>
-        <Ionicons name={config.icon as any} size={20} color={config.color} />
+    <View style={styles.swipeContainer}>
+      {/* Delete background */}
+      <View style={styles.deleteBackground}>
+        <Ionicons name="trash-outline" size={20} color={colors.background} />
       </View>
-      <View style={styles.itemContent}>
-        <View style={styles.itemTitleRow}>
-          <Text
-            style={[styles.itemTitle, !notification.is_read && styles.unreadText]}
-            numberOfLines={1}
-          >
-            {notification.title}
-          </Text>
-          {!notification.is_read && <View style={styles.unreadDot} />}
-        </View>
-        <Text style={styles.itemBody} numberOfLines={2}>
-          {notification.body}
-        </Text>
-        <Text style={styles.itemTimestamp}>{formatTimeAgo(notification.created_at)}</Text>
-      </View>
-    </TouchableOpacity>
+      <Animated.View
+        style={{ transform: [{ translateX }] }}
+        {...panResponder.panHandlers}
+      >
+        <TouchableOpacity
+          style={[
+            styles.notificationItem,
+            !notification.is_read && styles.unreadItem,
+          ]}
+          onPress={onPress}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.itemIconContainer, { backgroundColor: `${config.color}15` }]}>
+            <Ionicons name={config.icon as any} size={20} color={config.color} />
+          </View>
+          <View style={styles.itemContent}>
+            <View style={styles.itemTitleRow}>
+              <Text
+                style={[styles.itemTitle, !notification.is_read && styles.unreadText]}
+                numberOfLines={1}
+              >
+                {notification.title}
+              </Text>
+              {!notification.is_read && <View style={styles.unreadDot} />}
+            </View>
+            <Text style={styles.itemBody} numberOfLines={2}>
+              {notification.body}
+            </Text>
+            <Text style={styles.itemTimestamp}>{formatTimeAgo(notification.created_at)}</Text>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -97,10 +145,8 @@ export function NotificationSheet({ visible, onClose }: NotificationSheetProps) 
   const insets = useSafeAreaInsets();
   const {
     notifications,
-    unreadCount,
     markAsRead,
-    markAllAsRead,
-    deleteAllNotifications,
+    deleteNotification,
   } = useNotificationsStore();
 
   const handleNotificationPress = useCallback(async (notification: Notification) => {
@@ -139,22 +185,9 @@ export function NotificationSheet({ visible, onClose }: NotificationSheetProps) 
     }
   }, [markAsRead, onClose, router]);
 
-  const handleClearAll = () => {
-    Alert.alert(
-      'Clear All Notifications',
-      'Are you sure you want to delete all notifications?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear All',
-          style: 'destructive',
-          onPress: () => {
-            deleteAllNotifications();
-          },
-        },
-      ]
-    );
-  };
+  const handleDismiss = useCallback((notificationId: string) => {
+    deleteNotification(notificationId);
+  }, [deleteNotification]);
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -188,24 +221,6 @@ export function NotificationSheet({ visible, onClose }: NotificationSheetProps) 
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Notifications</Text>
-            <View style={styles.headerActions}>
-              {unreadCount > 0 && (
-                <TouchableOpacity
-                  style={styles.headerButton}
-                  onPress={markAllAsRead}
-                >
-                  <Ionicons name="checkmark-done-outline" size={20} color={colors.primary} />
-                </TouchableOpacity>
-              )}
-              {notifications.length > 0 && (
-                <TouchableOpacity
-                  style={styles.headerButton}
-                  onPress={handleClearAll}
-                >
-                  <Ionicons name="trash-outline" size={20} color={colors.loss} />
-                </TouchableOpacity>
-              )}
-            </View>
           </View>
 
           {/* Notifications List */}
@@ -216,6 +231,7 @@ export function NotificationSheet({ visible, onClose }: NotificationSheetProps) 
               <NotificationItem
                 notification={item}
                 onPress={() => handleNotificationPress(item)}
+                onDismiss={() => handleDismiss(item.id)}
               />
             )}
             contentContainerStyle={[
@@ -272,24 +288,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textPrimary,
   },
-  headerActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   listContent: {
     padding: spacing.md,
     gap: spacing.sm,
   },
   emptyListContent: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  swipeContainer: {
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: borderRadius.lg,
+  },
+  deleteBackground: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 80,
+    backgroundColor: colors.loss,
+    borderRadius: borderRadius.lg,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   notificationItem: {
