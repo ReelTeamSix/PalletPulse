@@ -328,6 +328,86 @@ describe('ItemsStore', () => {
       expect(result.success).toBe(false);
       expect(result.error).toBe('Item not found');
     });
+
+    it('should reset listing_date when listing_price changes (clears stale status)', async () => {
+      // Set up an item with an old listing_date (stale)
+      const staleItem = {
+        ...mockItem,
+        listing_date: '2024-01-01', // Old date - would be stale
+        listing_price: 40,
+      };
+      useItemsStore.setState({ items: [staleItem] });
+
+      const today = new Date().toISOString().split('T')[0];
+      const updatedItem = {
+        ...staleItem,
+        listing_price: 35, // Price changed
+        listing_date: today, // Should be reset to today
+        version: 2,
+      };
+
+      const mockUpdate = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: updatedItem, error: null }),
+            }),
+          }),
+        }),
+      });
+      (supabase.from as jest.Mock).mockReturnValue({ update: mockUpdate });
+
+      const result = await useItemsStore.getState().updateItem('item-1', {
+        listing_price: 35, // Different price
+      });
+
+      expect(result.success).toBe(true);
+      // Verify the update was called with the new listing_date
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          listing_price: 35,
+          listing_date: today,
+        })
+      );
+    });
+
+    it('should NOT reset listing_date when listing_price stays the same', async () => {
+      const originalDate = '2024-01-01';
+      const itemWithDate = {
+        ...mockItem,
+        listing_date: originalDate,
+        listing_price: 40,
+      };
+      useItemsStore.setState({ items: [itemWithDate] });
+
+      const updatedItem = {
+        ...itemWithDate,
+        name: 'New Name', // Only name changed, not price
+        version: 2,
+      };
+
+      const mockUpdate = jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({
+              single: jest.fn().mockResolvedValue({ data: updatedItem, error: null }),
+            }),
+          }),
+        }),
+      });
+      (supabase.from as jest.Mock).mockReturnValue({ update: mockUpdate });
+
+      await useItemsStore.getState().updateItem('item-1', {
+        name: 'New Name', // Price not changing
+      });
+
+      // Verify the update was NOT called with a new listing_date
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          listing_date: expect.any(String),
+        })
+      );
+    });
   });
 
   describe('deleteItem', () => {
