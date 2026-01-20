@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   },
   itemTitle: {
     flex: 1,
-    fontSize: fontSize.sm,
+    fontSize: fontSize.md,
     fontWeight: '600',
     color: colors.textPrimary,
   },
@@ -335,15 +335,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   itemBody: {
-    fontSize: fontSize.xs,
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
     marginTop: 4,
-    lineHeight: 18,
+    lineHeight: 20,
   },
   itemTimestamp: {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     color: colors.textTertiary,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
   emptyState: {
     alignItems: 'center',
