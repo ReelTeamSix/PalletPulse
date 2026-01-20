@@ -21,7 +21,7 @@ import { useNotificationsStore } from '@/src/stores/notifications-store';
 import type { Notification, NotificationType } from '@/src/types/database';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SHEET_HEIGHT = SCREEN_HEIGHT * 0.6;
+const SHEET_HEIGHT = SCREEN_HEIGHT * 0.65;
 
 // Map notification types to icons and colors
 const notificationConfig: Record<NotificationType, { icon: string; color: string }> = {
@@ -158,8 +158,10 @@ export function NotificationSheet({ visible, onClose }: NotificationSheetProps) 
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
+      {/* Glow effect like ConfirmationModal */}
+      <View style={styles.emptyIconGlow} />
       <View style={styles.emptyIconContainer}>
-        <Ionicons name="notifications-off-outline" size={40} color={colors.textDisabled} />
+        <Ionicons name="notifications-off-outline" size={36} color={colors.textSecondary} />
       </View>
       <Text style={styles.emptyTitle}>No Notifications</Text>
       <Text style={styles.emptySubtitle}>
@@ -239,11 +241,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.overlay,
   },
   sheet: {
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     maxHeight: SHEET_HEIGHT,
-    minHeight: 300,
+    minHeight: 320,
     ...shadows.xl,
   },
   handleContainer: {
@@ -251,7 +253,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   handle: {
-    width: 40,
+    width: 36,
     height: 4,
     borderRadius: 2,
     backgroundColor: colors.border,
@@ -266,17 +268,19 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   headerTitle: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.xl,
     fontWeight: '700',
     color: colors.textPrimary,
   },
   headerActions: {
     flexDirection: 'row',
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
   headerButton: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -291,18 +295,18 @@ const styles = StyleSheet.create({
   notificationItem: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     padding: spacing.md,
   },
   unreadItem: {
-    backgroundColor: `${colors.primary}08`,
+    backgroundColor: colors.primaryLight,
     borderLeftWidth: 3,
     borderLeftColor: colors.primary,
   },
   itemIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.sm,
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
@@ -325,43 +329,54 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   unreadDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: colors.primary,
   },
   itemBody: {
     fontSize: fontSize.xs,
     color: colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 16,
+    marginTop: 4,
+    lineHeight: 18,
   },
   itemTimestamp: {
-    fontSize: 10,
-    color: colors.textDisabled,
+    fontSize: 11,
+    color: colors.textTertiary,
     marginTop: spacing.xs,
   },
   emptyState: {
     alignItems: 'center',
     paddingHorizontal: spacing.xl,
   },
+  emptyIconGlow: {
+    position: 'absolute',
+    top: -8,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: colors.surface,
+    opacity: 0.8,
+  },
   emptyIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
+    borderWidth: 3,
+    borderColor: colors.card,
   },
   emptyTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
+    fontSize: fontSize.lg,
+    fontWeight: '700',
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   emptySubtitle: {
-    fontSize: fontSize.sm,
+    fontSize: fontSize.md,
     color: colors.textSecondary,
     textAlign: 'center',
   },
