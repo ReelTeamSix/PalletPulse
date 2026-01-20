@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, RefreshControl } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,8 @@ import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
 import { useExpensesStore } from '@/src/stores/expenses-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
+import { useNotificationsStore } from '@/src/stores/notifications-store';
+import { NotificationSheet } from '@/src/components/ui';
 import {
   HeroCard,
   MetricCard,
@@ -44,9 +46,11 @@ export default function DashboardScreen() {
   const { pallets, fetchPallets, isLoading: palletsLoading } = usePalletsStore();
   const { items, fetchItems, isLoading: itemsLoading } = useItemsStore();
   const { expenses, fetchExpenses, isLoading: expensesLoading } = useExpensesStore();
+  const { unreadCount, fetchNotifications } = useNotificationsStore();
 
   // Time period filter for hero card
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -55,6 +59,7 @@ export default function DashboardScreen() {
       // Always fetch expenses for accurate profit calculation
       // (even if user doesn't have access to expenses UI)
       fetchExpenses();
+      fetchNotifications();
     }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
   );
 
@@ -227,9 +232,20 @@ export default function DashboardScreen() {
           <Text style={styles.title}>Dashboard</Text>
           <Text style={styles.greeting}>{getGreeting()}</Text>
         </View>
-        <View style={styles.notificationButton}>
+        <TouchableOpacity
+          style={styles.notificationButton}
+          onPress={() => setShowNotifications(true)}
+          activeOpacity={0.7}
+        >
           <Ionicons name="notifications-outline" size={24} color={colors.textSecondary} />
-        </View>
+          {unreadCount > 0 && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
       </View>
 
       <HeroCard
@@ -292,6 +308,11 @@ export default function DashboardScreen() {
         onActivityPress={handleActivityPress}
         onViewAll={() => router.push('/(tabs)/inventory')}
       />
+
+      <NotificationSheet
+        visible={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
     </ScrollView>
   );
 }
@@ -326,5 +347,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: colors.loss,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  notificationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
   },
 });

@@ -265,6 +265,14 @@ export const useItemsStore = create<ItemsState>()(
 
           let finalUpdates = { ...updates };
 
+          // Reset listing_date when listing_price changes (clears stale status on reprice)
+          if (
+            'listing_price' in updates &&
+            updates.listing_price !== currentItem.listing_price
+          ) {
+            finalUpdates.listing_date = new Date().toISOString().split('T')[0];
+          }
+
           if (palletChanging) {
             // Handle pallet reassignment
             if (newPalletId) {
