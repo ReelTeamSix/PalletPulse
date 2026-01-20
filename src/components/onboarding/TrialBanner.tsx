@@ -7,7 +7,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
@@ -39,8 +39,8 @@ export function TrialBanner({ onUpgrade }: TrialBannerProps) {
   return (
     <View style={[styles.container, { backgroundColor: bannerColor }]}>
       <View style={styles.content}>
-        <FontAwesome
-          name="clock-o"
+        <Ionicons
+          name="time-outline"
           size={16}
           color={colors.background}
           style={styles.icon}

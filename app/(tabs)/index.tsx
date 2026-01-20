@@ -13,6 +13,7 @@ import { useExpensesStore } from '@/src/stores/expenses-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { useNotificationsStore } from '@/src/stores/notifications-store';
 import { NotificationSheet } from '@/src/components/ui';
+import { TrialBanner } from '@/src/components/onboarding';
 import { checkStaleInventoryNotification, createTrialEndingNotification } from '@/src/lib/notification-triggers';
 import { useOnboardingStore } from '@/src/stores/onboarding-store';
 import {
@@ -240,14 +241,20 @@ export default function DashboardScreen() {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + spacing.md }]}
-      refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
-      }
-    >
-      <View style={styles.header}>
+    <View style={styles.container}>
+      {/* Trial Banner - shows in last 3 days of trial */}
+      <View style={{ marginTop: insets.top }}>
+        <TrialBanner />
+      </View>
+
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
+        }
+      >
+        <View style={styles.header}>
         <View>
           <Text style={styles.title}>Dashboard</Text>
           <Text style={styles.greeting}>{getGreeting()}</Text>
@@ -329,11 +336,12 @@ export default function DashboardScreen() {
         onViewAll={() => router.push('/(tabs)/inventory')}
       />
 
-      <NotificationSheet
-        visible={showNotifications}
-        onClose={() => setShowNotifications(false)}
-      />
-    </ScrollView>
+        <NotificationSheet
+          visible={showNotifications}
+          onClose={() => setShowNotifications(false)}
+        />
+      </ScrollView>
+    </View>
   );
 }
 
@@ -341,6 +349,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundSecondary,
+  },
+  scrollContainer: {
+    flex: 1,
   },
   scrollContent: {
     padding: spacing.lg,
