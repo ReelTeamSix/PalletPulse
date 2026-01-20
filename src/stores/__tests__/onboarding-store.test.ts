@@ -204,4 +204,89 @@ describe('OnboardingStore', () => {
       expect(state.trial.isActive).toBe(false);
     });
   });
+
+  describe('profile-to-tier mapping (new onboarding flow)', () => {
+    // The new quick-setup screen maps profiles to tiers:
+    // hobby -> free, side_hustle -> starter, business -> pro
+    // These tests verify the store handles these transitions correctly
+
+    it('should handle hobby profile selection (maps to free tier)', async () => {
+      const { startTrial, completeOnboarding } = useOnboardingStore.getState();
+
+      await startTrial('free'); // hobby profile maps to free
+      await completeOnboarding('pro', 'free'); // Trial gives pro, selected free
+
+      const state = useOnboardingStore.getState();
+      expect(state.hasCompletedOnboarding).toBe(true);
+      expect(state.trial.selectedTier).toBe('free');
+      expect(state.currentTier).toBe('pro'); // Pro during trial
+    });
+
+    it('should handle side_hustle profile selection (maps to starter tier)', async () => {
+      const { startTrial, completeOnboarding } = useOnboardingStore.getState();
+
+      await startTrial('starter'); // side_hustle profile maps to starter
+      await completeOnboarding('pro', 'starter');
+
+      const state = useOnboardingStore.getState();
+      expect(state.trial.selectedTier).toBe('starter');
+      expect(state.currentTier).toBe('pro');
+    });
+
+    it('should handle business profile selection (maps to pro tier)', async () => {
+      const { startTrial, completeOnboarding } = useOnboardingStore.getState();
+
+      await startTrial('pro'); // business profile maps to pro
+      await completeOnboarding('pro', 'pro');
+
+      const state = useOnboardingStore.getState();
+      expect(state.trial.selectedTier).toBe('pro');
+    });
+
+    it('should downgrade to selected tier after trial ends', async () => {
+      const store = useOnboardingStore.getState();
+
+      await store.startTrial('starter');
+      await store.completeOnboarding('pro', 'starter');
+
+      // Verify pro during trial
+      expect(store.currentTier).toBe('pro');
+
+      // End trial
+      store.endTrial();
+
+      const state = useOnboardingStore.getState();
+      // After trial, user is on free tier (would need to subscribe for starter)
+      expect(state.currentTier).toBe('free');
+      // But we remember what they selected
+      expect(state.trial.selectedTier).toBe('starter');
+    });
+  });
+
+  describe('onboarding flow state transitions', () => {
+    it('should support completing onboarding without starting trial (skip flow)', async () => {
+      const { completeOnboarding } = useOnboardingStore.getState();
+
+      // User skips trial and goes straight to free tier
+      await completeOnboarding('free', null);
+
+      const state = useOnboardingStore.getState();
+      expect(state.hasCompletedOnboarding).toBe(true);
+      expect(state.currentTier).toBe('free');
+      expect(state.trial.isActive).toBe(false);
+      expect(state.trial.selectedTier).toBeNull();
+    });
+
+    it('should allow trial start without immediate completion', async () => {
+      const { startTrial } = useOnboardingStore.getState();
+
+      await startTrial('starter');
+
+      const state = useOnboardingStore.getState();
+      expect(state.trial.isActive).toBe(true);
+      expect(state.currentTier).toBe('pro');
+      // Onboarding not yet complete - user is in the flow
+      expect(state.hasCompletedOnboarding).toBe(false);
+    });
+  });
 });

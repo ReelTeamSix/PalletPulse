@@ -119,7 +119,7 @@ function RootLayoutNav() {
       // User is signed in but on auth screen
       // Check if they need onboarding
       if (!hasCompletedOnboarding) {
-        router.replace('/onboarding/user-type');
+        router.replace('/onboarding/welcome');
       } else {
         // Check trial status on app launch
         checkTrialStatus();
@@ -127,7 +127,7 @@ function RootLayoutNav() {
       }
     } else if (session && !inOnboardingGroup && !hasCompletedOnboarding) {
       // User is signed in but hasn't completed onboarding
-      router.replace('/onboarding/user-type');
+      router.replace('/onboarding/welcome');
     }
   }, [session, segments, router, hasCompletedOnboarding, checkTrialStatus]);
 
