@@ -484,6 +484,16 @@ export default function InventoryScreen() {
     );
   }
 
+  // Show full-screen centered loading for initial data load
+  const hasNoData = activeSegment === 'pallets' ? activePallets.length === 0 : items.length === 0;
+  if (isLoading && hasNoData) {
+    return (
+      <View style={styles.loadingScreen}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
@@ -609,11 +619,7 @@ export default function InventoryScreen() {
       </View>
 
       {/* Content */}
-      {isLoading && (activeSegment === 'pallets' ? activePallets.length === 0 : items.length === 0) ? (
-        <View style={styles.loadingScreen}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      ) : error && (activeSegment === 'pallets' ? activePallets.length === 0 : items.length === 0) ? (
+      {error && hasNoData ? (
         renderErrorState()
       ) : activeSegment === 'pallets' ? (
         activePallets.length === 0 ? (
