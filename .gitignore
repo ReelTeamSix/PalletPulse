@@ -63,3 +63,4 @@ app_screens_current/
 # Project documentation (internal tracking)
 *.md
 !README.md
+supabase/.temp/
