@@ -109,6 +109,8 @@ export default function NewExpenseScreen() {
         options={{
           title: pallet ? `Add Expense to ${pallet.name}` : 'Add Expense',
           headerBackTitle: 'Cancel',
+          headerStyle: { backgroundColor: colors.backgroundSecondary },
+          headerShadowVisible: false,
         }}
       />
       <View style={styles.container}>
@@ -141,6 +143,6 @@ export default function NewExpenseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundSecondary,
   },
 });

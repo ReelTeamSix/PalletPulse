@@ -9,7 +9,6 @@ import {
   ScrollView,
   RefreshControl,
   Pressable,
-  Modal,
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -59,6 +58,7 @@ import {
   StaleInventoryList,
   TrendChartTeaser,
   TrendChart,
+  ExportDataModal,
 } from '@/src/features/analytics/components';
 
 // Date range filter
@@ -215,7 +215,6 @@ export default function AnalyticsScreen() {
   // Export handler (paid tier only)
   const handleExport = async (exportType: ExportType) => {
     setIsExporting(true);
-    setShowExportModal(false);
 
     try {
       let result;
@@ -240,7 +239,10 @@ export default function AnalyticsScreen() {
           throw new Error('Unknown export type');
       }
 
-      if (!result.success) {
+      if (result.success) {
+        // Close modal on success
+        setShowExportModal(false);
+      } else {
         setErrorModal({
           visible: true,
           title: 'Export Failed',
@@ -389,59 +391,14 @@ export default function AnalyticsScreen() {
       )}
 
       {/* Export Modal (Paid Tier Only) */}
-      <Modal
+      <ExportDataModal
         visible={showExportModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowExportModal(false)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowExportModal(false)}
-        >
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Export Data</Text>
-              <Pressable onPress={() => setShowExportModal(false)}>
-                <Ionicons name="close" size={24} color={colors.textSecondary} />
-              </Pressable>
-            </View>
-
-            <View style={styles.exportOptions}>
-              <ExportOption
-                icon="cube-outline"
-                label="Pallets"
-                description="All pallet data"
-                onPress={() => handleExport('pallets')}
-              />
-              <ExportOption
-                icon="pricetags-outline"
-                label="Items"
-                description="All items with profit data"
-                onPress={() => handleExport('items')}
-              />
-              <ExportOption
-                icon="receipt-outline"
-                label="Expenses"
-                description="All expense records"
-                onPress={() => handleExport('expenses')}
-              />
-              <ExportOption
-                icon="trophy-outline"
-                label="Pallet Performance"
-                description="Analytics by pallet"
-                onPress={() => handleExport('pallet_performance')}
-              />
-              <ExportOption
-                icon="grid-outline"
-                label="Type Comparison"
-                description="Analytics by source type"
-                onPress={() => handleExport('type_comparison')}
-              />
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        isExporting={isExporting}
+        canExportPDF={canPerform('pdfExport', 0)}
+        onUpgrade={handleUpgrade}
+      />
 
       {/* Error Modal */}
       <ConfirmationModal
@@ -461,32 +418,6 @@ export default function AnalyticsScreen() {
         requiredTier="starter"
       />
     </ScrollView>
-  );
-}
-
-// Export option component for modal
-function ExportOption({
-  icon,
-  label,
-  description,
-  onPress,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  description: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable style={styles.exportOption} onPress={onPress}>
-      <View style={styles.exportOptionIcon}>
-        <Ionicons name={icon} size={20} color={colors.primary} />
-      </View>
-      <View style={styles.exportOptionText}>
-        <Text style={styles.exportOptionLabel}>{label}</Text>
-        <Text style={styles.exportOptionDescription}>{description}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-    </Pressable>
   );
 }
 
@@ -561,61 +492,5 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '600',
     color: colors.primary,
-  },
-  // Export modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: colors.overlay,
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: colors.card,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  modalTitle: {
-    fontSize: fontSize.xl,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  exportOptions: {
-    gap: spacing.sm,
-  },
-  exportOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    backgroundColor: colors.backgroundSecondary,
-    borderRadius: borderRadius.lg,
-    gap: spacing.md,
-  },
-  exportOptionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary + '15',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  exportOptionText: {
-    flex: 1,
-  },
-  exportOptionLabel: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  exportOptionDescription: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    marginTop: 2,
   },
 });

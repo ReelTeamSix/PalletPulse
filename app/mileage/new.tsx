@@ -70,6 +70,8 @@ export default function NewMileageTripScreen() {
         options={{
           title: 'Log Mileage Trip',
           headerBackTitle: 'Cancel',
+          headerStyle: { backgroundColor: colors.backgroundSecondary },
+          headerShadowVisible: false,
         }}
       />
       <View style={styles.container}>
@@ -102,6 +104,6 @@ export default function NewMileageTripScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.backgroundSecondary,
   },
 });

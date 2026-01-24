@@ -21,11 +21,15 @@ import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
 import { useMileageStore, MileageTripWithPallets } from '@/src/stores/mileage-store';
 import { Card } from '@/src/components/ui/Card';
+import { ConfirmationModal } from '@/src/components/ui';
 import {
   SummaryCard,
   SummaryCardRow,
   TopCategoriesScroll,
   EXPENSE_CATEGORY_LABELS,
+  ExpenseExportModal,
+  ExpenseExportType,
+  ExportFormat,
 } from '@/src/features/expenses';
 import { formatCurrency } from '@/src/lib/profit-utils';
 import { ExpenseCategory } from '@/src/types/database';
@@ -36,6 +40,9 @@ import {
 } from '@/src/components/ui/DateRangeFilter';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
 import { UpgradePrompt } from '@/src/components/subscription';
+import { exportExpenses, exportMileageTrips, exportProfitLoss } from '@/src/features/analytics/utils/csv-export';
+import { exportExpensesPDF, exportMileagePDF, exportProfitLossPDF } from '@/src/features/analytics/utils/pdf-export';
+import { calculateProfitLoss } from '@/src/features/analytics/utils/profit-loss-calculations';
 
 // Unified activity item type
 type ActivityItem =
@@ -49,10 +56,12 @@ export default function ExpensesScreen() {
   // Check subscription tier for expense tracking access
   const { canPerform } = useSubscriptionStore();
   const canAccessExpenses = canPerform('expenseTracking', 0);
+  const canExportCSV = canPerform('csvExport', 0);
+  const canExportPDF = canPerform('pdfExport', 0);
 
   const { expenses, isLoading, error, fetchExpenses } = useExpensesStore();
-  const { getPalletById, fetchPallets } = usePalletsStore();
-  const { fetchItems } = useItemsStore();
+  const { pallets, getPalletById, fetchPallets } = usePalletsStore();
+  const { items, fetchItems } = useItemsStore();
   const {
     trips,
     isLoading: mileageLoading,
@@ -64,6 +73,13 @@ export default function ExpensesScreen() {
     start: null,
     end: null,
     preset: 'this_year',
+  });
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
   });
 
   // Fetch data on focus
@@ -167,6 +183,69 @@ export default function ExpensesScreen() {
   const handleExpensePress = (expense: ExpenseWithPallets) => router.push(`/expenses/${expense.id}`);
   const handleMileagePress = (trip: MileageTripWithPallets) => router.push(`/mileage/${trip.id}`);
   const handleViewAll = () => router.push('/expenses/list');
+
+  // Export handler for paid members
+  const handleExport = async (exportType: ExpenseExportType, format: ExportFormat) => {
+    setIsExporting(true);
+    try {
+      let result;
+      const palletMap = new Map(pallets.map(p => [p.id, p.name]));
+      const exportDateRange = { start: dateRange.start, end: dateRange.end };
+
+      if (format === 'pdf') {
+        // PDF exports
+        switch (exportType) {
+          case 'expenses':
+            result = await exportExpensesPDF(filteredExpenses, palletMap, exportDateRange);
+            break;
+          case 'mileage':
+            result = await exportMileagePDF(filteredTrips, palletMap, exportDateRange);
+            break;
+          case 'profit_loss':
+            const summaryPDF = calculateProfitLoss(items, pallets, expenses, trips, exportDateRange);
+            result = await exportProfitLossPDF(summaryPDF);
+            break;
+          default:
+            throw new Error('Unknown export type');
+        }
+      } else {
+        // CSV exports
+        switch (exportType) {
+          case 'expenses':
+            result = await exportExpenses(filteredExpenses, pallets);
+            break;
+          case 'mileage':
+            result = await exportMileageTrips(filteredTrips, pallets);
+            break;
+          case 'profit_loss':
+            const summaryCSV = calculateProfitLoss(items, pallets, expenses, trips, exportDateRange);
+            result = await exportProfitLoss(summaryCSV);
+            break;
+          default:
+            throw new Error('Unknown export type');
+        }
+      }
+
+      if (result.success) {
+        setShowExportModal(false);
+      } else {
+        setErrorModal({
+          visible: true,
+          title: 'Export Failed',
+          message: result.error || 'Failed to export data',
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to export data';
+      setErrorModal({
+        visible: true,
+        title: 'Export Failed',
+        message,
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const getPalletNames = (palletIds: string[]) => {
     return palletIds
@@ -324,24 +403,34 @@ export default function ExpensesScreen() {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + spacing.md }]}
-      refreshControl={
-        <RefreshControl
-          refreshing={isLoadingData}
-          onRefresh={handleRefresh}
-          colors={[colors.primary]}
-          tintColor={colors.primary}
-        />
-      }
-    >
-      {/* Header */}
+    <>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + spacing.md }]}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingData}
+            onRefresh={handleRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
+      >
+        {/* Header */}
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerLeft}>
           <Text style={styles.title}>Expenses</Text>
           <Text style={styles.subtitle}>Track overheads & mileage</Text>
         </View>
+        {canExportCSV && hasData && (
+          <Pressable
+            style={styles.exportButton}
+            onPress={() => setShowExportModal(true)}
+          >
+            <Ionicons name="download-outline" size={16} color={colors.primary} />
+            <Text style={styles.exportButtonText}>Export</Text>
+          </Pressable>
+        )}
       </View>
 
       {/* Date Filter */}
@@ -431,7 +520,32 @@ export default function ExpensesScreen() {
           )}
         </>
       )}
-    </ScrollView>
+      </ScrollView>
+
+      {/* Export Modal */}
+      <ExpenseExportModal
+        visible={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        isExporting={isExporting}
+        canExportPDF={canExportPDF}
+        onUpgrade={() => {
+          setShowExportModal(false);
+          router.push('/settings/subscription');
+        }}
+      />
+
+      {/* Error Modal */}
+      <ConfirmationModal
+        visible={errorModal.visible}
+        type="warning"
+        title={errorModal.title}
+        message={errorModal.message}
+        primaryLabel="OK"
+        onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+        onClose={() => setErrorModal({ ...errorModal, visible: false })}
+      />
+    </>
   );
 }
 
@@ -445,7 +559,27 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: spacing.md,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary + '15',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+  },
+  exportButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: colors.primary,
   },
   subtitle: {
     fontSize: fontSize.md,

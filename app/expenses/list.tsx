@@ -17,10 +17,16 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { useExpensesStore, ExpenseWithPallets } from '@/src/stores/expenses-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
+import { useItemsStore } from '@/src/stores/items-store';
 import { useMileageStore, MileageTripWithPallets } from '@/src/stores/mileage-store';
+import { useSubscriptionStore } from '@/src/stores/subscription-store';
 import { Card } from '@/src/components/ui/Card';
-import { EXPENSE_CATEGORY_LABELS } from '@/src/features/expenses';
+import { ConfirmationModal } from '@/src/components/ui';
+import { EXPENSE_CATEGORY_LABELS, ExpenseExportModal, ExpenseExportType, ExportFormat } from '@/src/features/expenses';
 import { formatCurrency } from '@/src/lib/profit-utils';
+import { exportExpenses, exportMileageTrips, exportProfitLoss } from '@/src/features/analytics/utils/csv-export';
+import { exportExpensesPDF, exportMileagePDF, exportProfitLossPDF } from '@/src/features/analytics/utils/pdf-export';
+import { calculateProfitLoss } from '@/src/features/analytics/utils/profit-loss-calculations';
 import {
   DateRangeFilter,
   DateRange,
@@ -40,8 +46,12 @@ export default function ExpensesListScreen() {
   const insets = useSafeAreaInsets();
 
   const { expenses, isLoading, fetchExpenses } = useExpensesStore();
-  const { getPalletById, fetchPallets } = usePalletsStore();
+  const { pallets, getPalletById, fetchPallets } = usePalletsStore();
+  const { items, fetchItems } = useItemsStore();
   const { trips, isLoading: mileageLoading, fetchTrips } = useMileageStore();
+  const { canPerform } = useSubscriptionStore();
+  const canExportCSV = canPerform('csvExport', 0);
+  const canExportPDF = canPerform('pdfExport', 0);
 
   const [dateRange, setDateRange] = useState<DateRange>({
     start: null,
@@ -49,12 +59,20 @@ export default function ExpensesListScreen() {
     preset: 'this_year',
   });
   const [filter, setFilter] = useState<ActivityFilter>('all');
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   // Fetch data on focus
   useFocusEffect(
     useCallback(() => {
       fetchExpenses();
       fetchPallets();
+      fetchItems();
       fetchTrips();
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
   );
@@ -102,13 +120,76 @@ export default function ExpensesListScreen() {
   }, [filteredExpenses, filteredTrips, filter]);
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([fetchExpenses(), fetchPallets(), fetchTrips()]);
+    await Promise.all([fetchExpenses(), fetchPallets(), fetchItems(), fetchTrips()]);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleExpensePress = (expense: ExpenseWithPallets) =>
     router.push(`/expenses/${expense.id}`);
   const handleMileagePress = (trip: MileageTripWithPallets) =>
     router.push(`/mileage/${trip.id}`);
+
+  // Export handler for paid members
+  const handleExport = async (exportType: ExpenseExportType, format: ExportFormat) => {
+    setIsExporting(true);
+    try {
+      let result;
+      const palletMap = new Map(pallets.map(p => [p.id, p.name]));
+      const exportDateRange = { start: dateRange.start, end: dateRange.end };
+
+      if (format === 'pdf') {
+        // PDF exports
+        switch (exportType) {
+          case 'expenses':
+            result = await exportExpensesPDF(filteredExpenses, palletMap, exportDateRange);
+            break;
+          case 'mileage':
+            result = await exportMileagePDF(filteredTrips, palletMap, exportDateRange);
+            break;
+          case 'profit_loss':
+            const summary = calculateProfitLoss(items, pallets, expenses, trips, exportDateRange);
+            result = await exportProfitLossPDF(summary);
+            break;
+          default:
+            throw new Error('Unknown export type');
+        }
+      } else {
+        // CSV exports
+        switch (exportType) {
+          case 'expenses':
+            result = await exportExpenses(filteredExpenses, pallets);
+            break;
+          case 'mileage':
+            result = await exportMileageTrips(filteredTrips, pallets);
+            break;
+          case 'profit_loss':
+            const summary = calculateProfitLoss(items, pallets, expenses, trips, exportDateRange);
+            result = await exportProfitLoss(summary);
+            break;
+          default:
+            throw new Error('Unknown export type');
+        }
+      }
+
+      if (result.success) {
+        setShowExportModal(false);
+      } else {
+        setErrorModal({
+          visible: true,
+          title: 'Export Failed',
+          message: result.error || 'Failed to export data',
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to export data';
+      setErrorModal({
+        visible: true,
+        title: 'Export Failed',
+        message,
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const getPalletNames = (palletIds: string[]) => {
     return palletIds
@@ -238,6 +319,17 @@ export default function ExpensesListScreen() {
           headerShown: true,
           headerStyle: { backgroundColor: colors.backgroundSecondary },
           headerShadowVisible: false,
+          headerRight: canExportCSV
+            ? () => (
+                <Pressable
+                  style={styles.exportButton}
+                  onPress={() => setShowExportModal(true)}
+                >
+                  <Ionicons name="download-outline" size={16} color={colors.primary} />
+                  <Text style={styles.exportButtonText}>Export</Text>
+                </Pressable>
+              )
+            : undefined,
         }}
       />
       <ScrollView
@@ -296,6 +388,30 @@ export default function ExpensesListScreen() {
           </Card>
         )}
       </ScrollView>
+
+      {/* Export Modal */}
+      <ExpenseExportModal
+        visible={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        isExporting={isExporting}
+        canExportPDF={canExportPDF}
+        onUpgrade={() => {
+          setShowExportModal(false);
+          router.push('/settings/subscription');
+        }}
+      />
+
+      {/* Error Modal */}
+      <ConfirmationModal
+        visible={errorModal.visible}
+        type="warning"
+        title={errorModal.title}
+        message={errorModal.message}
+        primaryLabel="OK"
+        onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
+        onClose={() => setErrorModal({ ...errorModal, visible: false })}
+      />
     </>
   );
 }
@@ -308,6 +424,21 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: spacing.lg,
     paddingBottom: spacing.xxl,
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.primary + '15',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    marginRight: spacing.sm,
+  },
+  exportButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    color: colors.primary,
   },
   filterRow: {
     flexDirection: 'row',

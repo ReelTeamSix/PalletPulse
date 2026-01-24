@@ -4,14 +4,16 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { isAvailableAsync, shareAsync } from 'expo-sharing';
 import type { Item, Pallet, SourceType, ItemCondition, ItemStatus, ExpenseCategory, SalesPlatform } from '@/src/types/database';
 import type { ExpenseWithPallets } from '@/src/stores/expenses-store';
+import type { MileageTripWithPallets } from '@/src/stores/mileage-store';
 import type { PalletAnalytics, TypeComparison } from '../types/analytics';
+import type { ProfitLossSummary } from './profit-loss-calculations';
 import { getSourceTypeLabel } from './analytics-calculations';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export type ExportType = 'pallets' | 'items' | 'expenses' | 'pallet_performance' | 'type_comparison';
+export type ExportType = 'pallets' | 'items' | 'expenses' | 'pallet_performance' | 'type_comparison' | 'mileage' | 'profit_loss';
 
 export interface ExportResult {
   success: boolean;
@@ -218,6 +220,107 @@ export function exportTypeComparisonToCSV(typeComparison: TypeComparison[]): str
   return toCSV(typeComparison as unknown as Record<string, unknown>[], columns);
 }
 
+/**
+ * Export mileage trips to CSV.
+ */
+export function exportMileageTripsToCSV(trips: MileageTripWithPallets[], palletMap: Map<string, string>): string {
+  const columns = [
+    { key: 'trip_date', header: 'Date', format: (v: unknown) => formatDate(v as string) },
+    { key: 'miles', header: 'Miles', format: (v: unknown) => formatNumber(v as number, 1) },
+    { key: 'mileage_rate', header: 'Rate ($/mi)', format: (v: unknown) => formatNumber(v as number, 3) },
+    { key: 'deduction', header: 'Deduction', format: (_v: unknown, row: Record<string, unknown>) => {
+      const trip = row as unknown as MileageTripWithPallets;
+      return formatNumber(trip.miles * trip.mileage_rate);
+    }},
+    { key: 'purpose', header: 'Purpose', format: (v: unknown) => formatTripPurpose(v as string) },
+    { key: 'notes', header: 'Notes' },
+    { key: 'pallet_ids', header: 'Linked Pallets', format: (v: unknown) => {
+      const ids = v as string[] | undefined;
+      if (!ids || ids.length === 0) return '';
+      return escapeCSVValue(ids.map(id => palletMap.get(id) || id).join('; '));
+    }},
+  ];
+
+  return toCSV(trips as unknown as Record<string, unknown>[], columns);
+}
+
+/**
+ * Export Profit & Loss Summary to CSV.
+ * Creates a formatted summary report suitable for tax preparation.
+ */
+export function exportProfitLossSummaryToCSV(summary: ProfitLossSummary): string {
+  const lines: string[] = [];
+
+  // Header
+  lines.push('Profit & Loss Summary');
+  lines.push(`Period: ${summary.periodStart} to ${summary.periodEnd}`);
+  lines.push(`Generated: ${new Date().toISOString().split('T')[0]}`);
+  lines.push('');
+
+  // Revenue Section
+  lines.push('REVENUE');
+  lines.push(`Gross Sales,${formatNumber(summary.revenue.grossSales)}`);
+  lines.push(`Items Sold,${summary.revenue.itemsSold}`);
+  lines.push(`Average Sale Price,${formatNumber(summary.revenue.avgSalePrice)}`);
+  lines.push('');
+
+  // Cost of Goods Sold Section
+  lines.push('COST OF GOODS SOLD');
+  lines.push(`Pallet Purchases (${summary.cogs.palletCount} pallets),${formatNumber(summary.cogs.palletPurchases)}`);
+  lines.push(`Individual Item Purchases (${summary.cogs.individualItemCount} items),${formatNumber(summary.cogs.individualItemPurchases)}`);
+  lines.push(`Sales Tax Paid,${formatNumber(summary.cogs.salesTax)}`);
+  lines.push(`Total COGS,${formatNumber(summary.cogs.totalCOGS)}`);
+  lines.push('');
+
+  // Gross Profit
+  lines.push('GROSS PROFIT');
+  lines.push(`Gross Profit,${formatNumber(summary.grossProfit)}`);
+  lines.push(`Gross Margin,${formatPercentage(summary.grossMargin)}`);
+  lines.push('');
+
+  // Selling Expenses Section
+  lines.push('SELLING EXPENSES');
+  lines.push(`Platform Fees,${formatNumber(summary.sellingExpenses.platformFees)}`);
+  lines.push(`Shipping Costs,${formatNumber(summary.sellingExpenses.shippingCosts)}`);
+  lines.push(`Total Selling Expenses,${formatNumber(summary.sellingExpenses.totalSellingExpenses)}`);
+  lines.push('');
+
+  // Platform Breakdown
+  if (summary.platformBreakdown.length > 0) {
+    lines.push('PLATFORM BREAKDOWN');
+    lines.push('Platform,Sales,Fees,Item Count');
+    summary.platformBreakdown.forEach(p => {
+      lines.push(`${escapeCSVValue(p.platform)},${formatNumber(p.sales)},${formatNumber(p.fees)},${p.count}`);
+    });
+    lines.push('');
+  }
+
+  // Operating Expenses Section
+  lines.push('OPERATING EXPENSES');
+  if (summary.operatingExpenses.byCategory.length > 0) {
+    summary.operatingExpenses.byCategory.forEach(c => {
+      lines.push(`${escapeCSVValue(c.label)} (${c.count} expenses),${formatNumber(c.amount)}`);
+    });
+  }
+  lines.push(`Total Operating Expenses,${formatNumber(summary.operatingExpenses.totalOperatingExpenses)}`);
+  lines.push('');
+
+  // Mileage Deductions Section
+  lines.push('MILEAGE DEDUCTIONS');
+  lines.push(`Total Miles (${summary.mileageDeductions.tripCount} trips),${formatNumber(summary.mileageDeductions.totalMiles, 1)}`);
+  lines.push(`Average Rate ($/mile),${formatNumber(summary.mileageDeductions.avgRate, 3)}`);
+  lines.push(`Total Mileage Deduction,${formatNumber(summary.mileageDeductions.totalDeduction)}`);
+  lines.push('');
+
+  // Summary Section
+  lines.push('NET PROFIT SUMMARY');
+  lines.push(`Total Expenses,${formatNumber(summary.totalExpenses)}`);
+  lines.push(`Net Profit,${formatNumber(summary.netProfit)}`);
+  lines.push(`Net Margin,${formatPercentage(summary.netMargin)}`);
+
+  return lines.join('\n');
+}
+
 // ============================================================================
 // File Operations
 // ============================================================================
@@ -321,6 +424,25 @@ export async function exportTypeComparison(typeComparison: TypeComparison[]): Pr
   return saveAndShareCSV(csvContent, filename);
 }
 
+/**
+ * Export mileage trips data.
+ */
+export async function exportMileageTrips(trips: MileageTripWithPallets[], pallets: Pallet[]): Promise<ExportResult> {
+  const palletMap = new Map(pallets.map(p => [p.id, p.name]));
+  const csvContent = exportMileageTripsToCSV(trips, palletMap);
+  const filename = generateFilename('palletpulse_mileage');
+  return saveAndShareCSV(csvContent, filename);
+}
+
+/**
+ * Export Profit & Loss Summary for tax preparation.
+ */
+export async function exportProfitLoss(summary: ProfitLossSummary): Promise<ExportResult> {
+  const csvContent = exportProfitLossSummaryToCSV(summary);
+  const filename = generateFilename('palletpulse_profit_loss');
+  return saveAndShareCSV(csvContent, filename);
+}
+
 // ============================================================================
 // Format Helpers
 // ============================================================================
@@ -389,4 +511,16 @@ function formatPlatform(platform: SalesPlatform | null | undefined): string {
     other: 'Other',
   };
   return labels[platform] || platform;
+}
+
+function formatTripPurpose(purpose: string | null | undefined): string {
+  if (!purpose) return '';
+  const labels: Record<string, string> = {
+    pickup: 'Pallet Pickup',
+    sourcing: 'Sourcing',
+    shipping: 'Shipping Drop-off',
+    supplies: 'Supplies Run',
+    other: 'Other',
+  };
+  return labels[purpose] || purpose;
 }

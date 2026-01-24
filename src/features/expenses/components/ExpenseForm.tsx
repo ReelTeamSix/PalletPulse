@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Input, Button } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
@@ -31,8 +31,17 @@ import {
   formatExpenseAmount,
   parseCurrencyInput,
 } from '../schemas/expense-form-schema';
-import { Expense } from '@/src/types/database';
+import { Expense, ExpenseCategory } from '@/src/types/database';
 import { usePalletsStore } from '@/src/stores/pallets-store';
+
+// Category icons for visual identification
+const CATEGORY_ICONS: Record<ExpenseCategory, keyof typeof Ionicons.glyphMap> = {
+  storage: 'home',
+  supplies: 'bag',
+  subscriptions: 'card',
+  equipment: 'build',
+  other: 'ellipsis-horizontal',
+};
 
 interface ExpenseFormProps {
   initialValues?: Partial<ExpenseFormData>;
@@ -195,6 +204,12 @@ export function ExpenseForm({
                   ]}
                   onPress={() => setValue('category', category)}
                 >
+                  <Ionicons
+                    name={CATEGORY_ICONS[category]}
+                    size={14}
+                    color={isSelected ? colors.background : colors.textSecondary}
+                    style={styles.categoryChipIcon}
+                  />
                   <Text
                     style={[
                       styles.categoryChipText,
@@ -242,7 +257,7 @@ export function ExpenseForm({
             style={styles.dateButton}
             onPress={() => setShowDatePicker(true)}
           >
-            <FontAwesome name="calendar" size={16} color={colors.textSecondary} style={styles.dateIcon} />
+            <Ionicons name="calendar" size={18} color={colors.textSecondary} style={styles.dateIcon} />
             <Text style={styles.dateText}>
               {watchExpenseDate ? formatDisplayDate(watchExpenseDate) : 'Select date'}
             </Text>
@@ -279,9 +294,9 @@ export function ExpenseForm({
             style={styles.palletButton}
             onPress={() => setShowPalletPicker(!showPalletPicker)}
           >
-            <FontAwesome
-              name="cubes"
-              size={16}
+            <Ionicons
+              name="layers"
+              size={18}
               color={linkedPallets.length > 0 ? colors.primary : colors.textSecondary}
               style={styles.palletIcon}
             />
@@ -292,9 +307,9 @@ export function ExpenseForm({
                   ? linkedPallets[0].name
                   : `${linkedPallets.length} pallets selected`}
             </Text>
-            <FontAwesome
+            <Ionicons
               name={showPalletPicker ? 'chevron-up' : 'chevron-down'}
-              size={12}
+              size={14}
               color={colors.textSecondary}
             />
           </Pressable>
@@ -306,7 +321,7 @@ export function ExpenseForm({
                 <View key={pallet.id} style={styles.selectedPalletChip}>
                   <Text style={styles.selectedPalletChipText}>{pallet.name}</Text>
                   <Pressable onPress={() => togglePalletSelection(pallet.id)}>
-                    <FontAwesome name="times" size={12} color={colors.textSecondary} />
+                    <Ionicons name="close" size={14} color={colors.textSecondary} />
                   </Pressable>
                 </View>
               ))}
@@ -330,7 +345,7 @@ export function ExpenseForm({
                     >
                       <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
                         {isSelected && (
-                          <FontAwesome name="check" size={10} color={colors.background} />
+                          <Ionicons name="checkmark" size={12} color={colors.background} />
                         )}
                       </View>
                       <View style={styles.palletOptionContent}>
@@ -362,7 +377,7 @@ export function ExpenseForm({
                 style={styles.removeReceiptButton}
                 onPress={onReceiptPhotoRemove}
               >
-                <FontAwesome name="times-circle" size={24} color={colors.loss} />
+                <Ionicons name="close-circle" size={24} color={colors.loss} />
               </Pressable>
             </View>
           ) : (
@@ -370,8 +385,9 @@ export function ExpenseForm({
               style={styles.addReceiptButton}
               onPress={onReceiptPhotoSelect}
             >
-              <FontAwesome name="camera" size={24} color={colors.textSecondary} />
+              <Ionicons name="camera" size={24} color={colors.textSecondary} />
               <Text style={styles.addReceiptText}>Add Receipt Photo</Text>
+              <Text style={styles.addReceiptHint}>PNG, JPG up to 10MB</Text>
             </Pressable>
           )}
         </View>
@@ -465,12 +481,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
+  },
+  categoryChipIcon: {
+    marginRight: spacing.xs,
   },
   categoryChipText: {
     fontSize: fontSize.sm,
@@ -591,6 +612,11 @@ const styles = StyleSheet.create({
   addReceiptText: {
     fontSize: fontSize.md,
     color: colors.textSecondary,
+  },
+  addReceiptHint: {
+    fontSize: fontSize.xs,
+    color: colors.textDisabled,
+    marginTop: spacing.xs,
   },
   summaryCard: {
     backgroundColor: colors.surface,

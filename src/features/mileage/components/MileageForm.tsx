@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Input, Button } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
@@ -168,9 +168,9 @@ export function MileageForm({
             style={styles.dateButton}
             onPress={() => setShowDatePicker(true)}
           >
-            <FontAwesome
+            <Ionicons
               name="calendar"
-              size={16}
+              size={18}
               color={colors.textSecondary}
               style={styles.dateIcon}
             />
@@ -212,9 +212,9 @@ export function MileageForm({
             <Text style={styles.purposeText}>
               {formatTripPurpose(watchPurpose)}
             </Text>
-            <FontAwesome
+            <Ionicons
               name={showPurposePicker ? 'chevron-up' : 'chevron-down'}
-              size={12}
+              size={14}
               color={colors.textSecondary}
             />
           </Pressable>
@@ -249,7 +249,7 @@ export function MileageForm({
                       </Text>
                     </View>
                     {isSelected && (
-                      <FontAwesome name="check" size={14} color={colors.primary} />
+                      <Ionicons name="checkmark" size={16} color={colors.primary} />
                     )}
                   </Pressable>
                 );
@@ -301,9 +301,9 @@ export function MileageForm({
             style={styles.palletButton}
             onPress={() => setShowPalletPicker(!showPalletPicker)}
           >
-            <FontAwesome
-              name="cubes"
-              size={16}
+            <Ionicons
+              name="layers"
+              size={18}
               color={linkedPallets.length > 0 ? colors.primary : colors.textSecondary}
               style={styles.palletIcon}
             />
@@ -319,9 +319,9 @@ export function MileageForm({
                 ? linkedPallets[0].name
                 : `${linkedPallets.length} pallets linked`}
             </Text>
-            <FontAwesome
+            <Ionicons
               name={showPalletPicker ? 'chevron-up' : 'chevron-down'}
-              size={12}
+              size={14}
               color={colors.textSecondary}
             />
           </Pressable>
@@ -338,7 +338,7 @@ export function MileageForm({
                     onPress={() => togglePallet(pallet.id)}
                     hitSlop={8}
                   >
-                    <FontAwesome name="times" size={12} color={colors.background} />
+                    <Ionicons name="close" size={14} color={colors.background} />
                   </Pressable>
                 </View>
               ))}
@@ -368,7 +368,7 @@ export function MileageForm({
                           ]}
                         >
                           {isSelected && (
-                            <FontAwesome name="check" size={10} color={colors.background} />
+                            <Ionicons name="checkmark" size={12} color={colors.background} />
                           )}
                         </View>
                         <View style={styles.palletOptionInfo}>
@@ -421,7 +421,7 @@ export function MileageForm({
         {watchMiles > 0 && (
           <View style={styles.summaryCard}>
             <View style={styles.summaryHeader}>
-              <FontAwesome name="car" size={20} color={colors.primary} />
+              <Ionicons name="car" size={20} color={colors.primary} />
               <Text style={styles.summaryTitle}>Trip Summary</Text>
             </View>
             <View style={styles.summaryDivider} />
