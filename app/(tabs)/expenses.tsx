@@ -77,6 +77,7 @@ export default function ExpensesScreen() {
   });
   const [showExportModal, setShowExportModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
     visible: false,
     title: '',
@@ -170,6 +171,7 @@ export default function ExpensesScreen() {
   }, [filteredExpenses, filteredTrips]);
 
   const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
     await Promise.all([
       fetchExpenses(),
       fetchPallets(),
@@ -177,6 +179,7 @@ export default function ExpensesScreen() {
       fetchTrips(),
       fetchCurrentMileageRate(),
     ]);
+    setRefreshing(false);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
 
   const handleAddExpense = () => router.push('/expenses/new');
@@ -421,7 +424,7 @@ export default function ExpensesScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + spacing.md }]}
         refreshControl={
           <RefreshControl
-            refreshing={isLoadingData}
+            refreshing={refreshing}
             onRefresh={handleRefresh}
             colors={[colors.primary]}
             tintColor={colors.primary}

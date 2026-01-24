@@ -95,6 +95,9 @@ export default function InventoryScreen() {
   // Thumbnail state for item images
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
 
+  // Refresh state (separate from isLoading to only trigger on user pull-to-refresh)
+  const [refreshing, setRefreshing] = useState(false);
+
   // Load saved segment from AsyncStorage
   useEffect(() => {
     const loadSegment = async () => {
@@ -234,7 +237,9 @@ export default function InventoryScreen() {
   };
 
   const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
     await Promise.all([fetchPallets(), fetchItems(), fetchExpenses()]);
+    setRefreshing(false);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
 
   // Quick sell handlers
@@ -627,7 +632,7 @@ export default function InventoryScreen() {
             ListHeaderComponent={renderCompletionPromptBanner}
             refreshControl={
               <RefreshControl
-                refreshing={isLoading}
+                refreshing={refreshing}
                 onRefresh={handleRefresh}
                 colors={[colors.primary]}
                 tintColor={colors.primary}
@@ -663,7 +668,7 @@ export default function InventoryScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              refreshing={isLoading}
+              refreshing={refreshing}
               onRefresh={handleRefresh}
               colors={[colors.primary]}
               tintColor={colors.primary}

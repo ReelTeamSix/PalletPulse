@@ -55,6 +55,7 @@ export default function DashboardScreen() {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
   const [showNotifications, setShowNotifications] = useState(false);
   const [showGoalModal, setShowGoalModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Get profit goals and settings from user settings store
   const { profitGoals, setProfitGoal, profitGoalsEnabled, setProfitGoalsEnabled, settings } = useUserSettingsStore();
@@ -241,7 +242,9 @@ export default function DashboardScreen() {
   }, [items, pallets]);
 
   const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
     await Promise.all([fetchPallets(), fetchItems(), fetchExpenses()]);
+    setRefreshing(false);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
 
   const handleActivityPress = (activity: Activity) => {
@@ -270,7 +273,7 @@ export default function DashboardScreen() {
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
         <View style={styles.header}>
