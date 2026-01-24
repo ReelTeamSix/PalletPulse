@@ -267,6 +267,15 @@ export default function AnalyticsScreen() {
   // Empty state check
   const hasData = pallets.length > 0 || items.length > 0;
 
+  // Show full-screen centered loading for initial data load
+  if (isLoading && !hasData) {
+    return (
+      <View style={styles.loadingScreen}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   if (!hasData && !isLoading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
@@ -425,6 +434,12 @@ export default function AnalyticsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.backgroundSecondary,
+  },
+  loadingScreen: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: colors.backgroundSecondary,
   },
   contentContainer: {
