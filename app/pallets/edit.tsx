@@ -8,9 +8,11 @@ import { fontFamily } from '@/src/constants/fonts';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { PalletForm, PalletFormData } from '@/src/features/pallets';
 import { ConfirmationModal } from '@/src/components/ui';
+import { useToast } from '@/src/lib/toast';
 
 export default function EditPalletScreen() {
   const router = useRouter();
+  const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { pallets, getPalletById, updatePallet, isLoading, fetchPallets } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,6 +56,7 @@ export default function EditPalletScreen() {
       });
 
       if (result.success) {
+        toast.success('Pallet Updated');
         router.back();
       } else {
         setErrorModal({

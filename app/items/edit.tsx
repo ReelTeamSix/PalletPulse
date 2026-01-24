@@ -13,9 +13,11 @@ import { PhotoItem } from '@/src/components/ui/PhotoPicker';
 import { getPhotoUrl } from '@/src/lib/photo-utils';
 import { ItemPhoto } from '@/src/types/database';
 import { Button, ConfirmationModal } from '@/src/components/ui';
+import { useToast } from '@/src/lib/toast';
 
 export default function EditItemScreen() {
   const router = useRouter();
+  const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
   const {
     items,
@@ -137,6 +139,7 @@ export default function EditItemScreen() {
           await uploadItemPhotos(id, newPhotos);
         }
 
+        toast.success('Item Updated');
         router.back();
       } else {
         setErrorModal({

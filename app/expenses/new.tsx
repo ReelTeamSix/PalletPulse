@@ -8,10 +8,12 @@ import { useExpensesStore } from '@/src/stores/expenses-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { ExpenseForm, ExpenseFormData } from '@/src/features/expenses';
 import { ConfirmationModal } from '@/src/components/ui';
+import { useToast } from '@/src/lib/toast';
 
 export default function NewExpenseScreen() {
   const { palletId } = useLocalSearchParams<{ palletId?: string }>();
   const router = useRouter();
+  const toast = useToast();
   const { addExpense, isLoading } = useExpensesStore();
   const { getPalletById } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,6 +87,7 @@ export default function NewExpenseScreen() {
       });
 
       if (result.success) {
+        toast.success('Expense Saved');
         router.dismiss();
       } else {
         setErrorModal({

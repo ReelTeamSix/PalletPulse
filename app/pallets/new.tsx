@@ -12,9 +12,11 @@ import {
 import { ConfirmationModal } from '@/src/components/ui';
 import { PaywallModal } from '@/src/components/subscription';
 import { SubscriptionTier } from '@/src/constants/tier-limits';
+import { useToast } from '@/src/lib/toast';
 
 export default function NewPalletScreen() {
   const router = useRouter();
+  const toast = useToast();
   const { pallets, addPallet, isLoading } = usePalletsStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
@@ -47,6 +49,7 @@ export default function NewPalletScreen() {
       });
 
       if (result.success) {
+        toast.success('Pallet Created');
         router.dismiss();
         // Navigate to the new pallet detail if we have the ID
         if (result.data?.id) {

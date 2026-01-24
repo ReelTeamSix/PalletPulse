@@ -7,9 +7,11 @@ import { fontFamily } from '@/src/constants/fonts';
 import { useMileageStore } from '@/src/stores/mileage-store';
 import { MileageForm, MileageFormData } from '@/src/features/mileage';
 import { ConfirmationModal } from '@/src/components/ui';
+import { useToast } from '@/src/lib/toast';
 
 export default function EditMileageTripScreen() {
   const router = useRouter();
+  const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
   const {
     trips,
@@ -58,6 +60,7 @@ export default function EditMileageTripScreen() {
       });
 
       if (result.success) {
+        toast.success('Trip Updated');
         router.back();
       } else {
         setErrorModal({

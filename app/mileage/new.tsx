@@ -6,10 +6,12 @@ import { fontFamily } from '@/src/constants/fonts';
 import { useMileageStore } from '@/src/stores/mileage-store';
 import { MileageForm, MileageFormData } from '@/src/features/mileage';
 import { ConfirmationModal } from '@/src/components/ui';
+import { useToast } from '@/src/lib/toast';
 
 export default function NewMileageTripScreen() {
   const { palletId } = useLocalSearchParams<{ palletId?: string }>();
   const router = useRouter();
+  const toast = useToast();
   const { addTrip, isLoading, fetchCurrentMileageRate, currentMileageRate } = useMileageStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
@@ -46,6 +48,7 @@ export default function NewMileageTripScreen() {
       });
 
       if (result.success) {
+        toast.success('Trip Logged');
         router.dismiss();
       } else {
         setErrorModal({

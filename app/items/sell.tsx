@@ -22,6 +22,7 @@ import { fontFamily } from '@/src/constants/fonts';
 import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { Button, Input, ConfirmationModal } from '@/src/components/ui';
+import { useToast } from '@/src/lib/toast';
 import {
   formatCondition,
   getConditionColor,
@@ -48,6 +49,7 @@ import {
 export default function SellItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const toast = useToast();
   const insets = useSafeAreaInsets();
   const { items, getItemById, markAsSold, isLoading, fetchItems } = useItemsStore();
   const { getPalletById, pallets } = usePalletsStore();
@@ -176,6 +178,7 @@ export default function SellItemScreen() {
       });
 
       if (result.success) {
+        toast.success('Item Sold!');
         router.back();
       } else {
         setErrorModal({

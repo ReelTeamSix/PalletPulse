@@ -995,6 +995,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: spacing.xxl,
   },
   loadingText: {
     marginTop: spacing.md,

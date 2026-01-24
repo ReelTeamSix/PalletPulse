@@ -9,9 +9,11 @@ import { useExpensesStore } from '@/src/stores/expenses-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { ExpenseForm, ExpenseFormData } from '@/src/features/expenses';
 import { ConfirmationModal } from '@/src/components/ui';
+import { useToast } from '@/src/lib/toast';
 
 export default function EditExpenseScreen() {
   const router = useRouter();
+  const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { expenses, getExpenseById, updateExpense, isLoading, fetchExpenses } = useExpensesStore();
   const { getPalletById } = usePalletsStore();
@@ -102,6 +104,7 @@ export default function EditExpenseScreen() {
       });
 
       if (result.success) {
+        toast.success('Expense Updated');
         router.back();
       } else {
         setErrorModal({

@@ -410,8 +410,10 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: spacing.xxl,
   },
   loadingText: {
     marginTop: spacing.md,

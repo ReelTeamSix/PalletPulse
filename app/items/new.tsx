@@ -11,10 +11,12 @@ import { PhotoItem } from '@/src/components/ui/PhotoPicker';
 import { ConfirmationModal } from '@/src/components/ui';
 import { PaywallModal } from '@/src/components/subscription';
 import { SubscriptionTier, isUnlimited } from '@/src/constants/tier-limits';
+import { useToast } from '@/src/lib/toast';
 
 export default function NewItemScreen() {
   const { palletId } = useLocalSearchParams<{ palletId?: string }>();
   const router = useRouter();
+  const toast = useToast();
   const { items, addItem, uploadItemPhotos, isLoading } = useItemsStore();
   const { getPalletById } = usePalletsStore();
   const { getLimitForAction, getEffectiveTier } = useSubscriptionStore();
@@ -71,6 +73,7 @@ export default function NewItemScreen() {
           await uploadItemPhotos(result.data.id, photos);
         }
 
+        toast.success('Item Created');
         router.dismiss();
         // Navigate to the new item detail
         setTimeout(() => {
