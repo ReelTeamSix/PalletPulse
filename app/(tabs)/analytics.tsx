@@ -275,7 +275,7 @@ export default function AnalyticsScreen() {
 
   if (!hasData && !isLoading) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top + spacing.md }]}>
+      <View style={[styles.container, { paddingTop: insets.top + spacing.md, paddingHorizontal: spacing.lg }]}>
         <Text style={styles.title}>Analytics</Text>
         <Text style={styles.subtitle}>Track your business performance</Text>
         <View style={styles.emptyState}>
@@ -434,7 +434,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundSecondary,
   },
   contentContainer: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
   },
   header: {
     marginBottom: spacing.md,
