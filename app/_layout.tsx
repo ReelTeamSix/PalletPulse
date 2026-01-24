@@ -18,6 +18,7 @@ import { initializeSentry } from '@/src/lib/sentry';
 import logger from '@/src/lib/logger';
 import { ErrorFallback } from '@/src/components/ui';
 import { initializeHaptics } from '@/src/lib/haptics';
+import { ToastProvider } from '@/src/lib/toast';
 
 // Initialize Sentry as early as possible
 initializeSentry();
@@ -142,8 +143,9 @@ function RootLayoutNav() {
   }, [session, segments, router, hasCompletedOnboarding, checkTrialStatus]);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack
+    <ToastProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack
         screenOptions={{
           headerShown: false,
           headerStyle: {
@@ -234,8 +236,9 @@ function RootLayoutNav() {
           }}
         />
         <Stack.Screen name="modal" options={{ presentation: 'modal', headerShown: true }} />
-      </Stack>
-    </ThemeProvider>
+        </Stack>
+      </ThemeProvider>
+    </ToastProvider>
   );
 }
 
