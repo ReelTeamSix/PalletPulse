@@ -61,6 +61,10 @@ export const colors = {
   warningBackground: '#FEF3C7', // Light amber for warning states
   errorBackground: '#FEE2E2',   // Light red for error states
   successBackground: '#DCFCE7', // Light green for success states
+
+  // Skeleton loading
+  skeletonBase: '#E8E8E8',      // Base skeleton color
+  skeletonHighlight: '#F5F5F5', // Highlighted skeleton color (shimmer)
 } as const;
 
 export type ColorKey = keyof typeof colors;
