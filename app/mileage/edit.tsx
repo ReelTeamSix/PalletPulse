@@ -3,6 +3,7 @@ import { StyleSheet, View, ActivityIndicator, Text } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { colors } from '@/src/constants/colors';
 import { fontSize } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { useMileageStore } from '@/src/stores/mileage-store';
 import { MileageForm, MileageFormData } from '@/src/features/mileage';
 import { ConfirmationModal } from '@/src/components/ui';
@@ -137,6 +138,7 @@ const styles = StyleSheet.create({
   },
   notFoundText: {
     fontSize: fontSize.lg,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
 });

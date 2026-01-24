@@ -13,6 +13,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 
 export interface InputProps extends Omit<TextInputProps, 'style'> {
   label?: string;
@@ -116,6 +117,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   label: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.textPrimary,
@@ -137,6 +139,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textPrimary,
     paddingVertical: spacing.md,
@@ -155,11 +158,13 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   error: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     color: colors.loss,
     marginTop: spacing.xs,
   },
   hint: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.sm,
     color: colors.textSecondary,
     marginTop: spacing.xs,

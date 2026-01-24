@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 
 interface TrendChartTeaserProps {
   onUpgrade: () => void;
@@ -83,6 +84,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   proBadge: {
@@ -97,6 +99,7 @@ const styles = StyleSheet.create({
   proBadgeText: {
     fontSize: 10,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: colors.background,
   },
   // Chart preview
@@ -149,11 +152,13 @@ const styles = StyleSheet.create({
   teaserTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   teaserDescription: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.md,
@@ -171,6 +176,7 @@ const styles = StyleSheet.create({
   upgradeText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.background,
   },
 });

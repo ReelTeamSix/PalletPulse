@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { colors } from '@/src/constants/colors';
+import { fontFamily } from '@/src/constants/fonts';
 import { useItemsStore, ITEM_ERROR_CODES } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';

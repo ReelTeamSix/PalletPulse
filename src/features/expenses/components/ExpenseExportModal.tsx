@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
+import { fontFamily } from '@/src/constants/fonts';
 
 // ============================================================================
 // Types
@@ -287,6 +288,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xl,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
   },
   closeButton: {
@@ -332,11 +334,13 @@ const styles = StyleSheet.create({
   optionLabel: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: 2,
   },
   optionDescription: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   radioOuter: {
@@ -361,6 +365,7 @@ const styles = StyleSheet.create({
   formatLabel: {
     fontSize: fontSize.xs,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     letterSpacing: 0.5,
     marginBottom: spacing.sm,
@@ -389,6 +394,7 @@ const styles = StyleSheet.create({
   formatOptionText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
   },
   formatOptionTextActive: {
@@ -406,6 +412,7 @@ const styles = StyleSheet.create({
   proBadgeText: {
     fontSize: 9,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: colors.background,
     letterSpacing: 0.5,
   },
@@ -424,6 +431,7 @@ const styles = StyleSheet.create({
   exportButtonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.background,
   },
 });

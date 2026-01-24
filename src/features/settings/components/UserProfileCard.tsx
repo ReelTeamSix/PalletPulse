@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { TIER_DISPLAY, type SubscriptionTier } from '@/src/constants/tier-limits';
 import { Card } from '@/src/components/ui/Card';
 
@@ -128,6 +129,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.background,
   },
   profileContent: {
@@ -144,6 +146,7 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     flexShrink: 1,
   },
@@ -159,10 +162,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.background,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   profileEmail: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
   },
   divider: {
     height: 1,
@@ -188,5 +193,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textPrimary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
 });

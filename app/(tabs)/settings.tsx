@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
+import { fontFamily } from '@/src/constants/fonts';
 import { Card } from '@/src/components/ui/Card';
 import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Button, ConfirmationModal, SettingRow, ToggleRow } from '@/src/components/ui';
@@ -416,6 +417,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     fontSize: fontSize.md,
     color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
   },
   title: {
     ...typography.screenTitle,
@@ -440,6 +442,7 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: fontSize.sm,
     color: colors.textPrimary,
+    fontFamily: fontFamily.regular,
   },
   signOutButton: {
     marginTop: spacing.lg,
@@ -454,6 +457,7 @@ const styles = StyleSheet.create({
   disclaimerText: {
     fontSize: fontSize.xs,
     color: colors.textDisabled,
+    fontFamily: fontFamily.regular,
   },
   bottomPadding: {
     height: spacing.xxl,
@@ -474,12 +478,14 @@ const styles = StyleSheet.create({
   upgradeTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   upgradeSubtitle: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
     marginTop: 2,
+    fontFamily: fontFamily.regular,
   },
   upgradeButton: {
     marginBottom: spacing.sm,
@@ -492,5 +498,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
 });

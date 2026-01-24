@@ -20,6 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Input, Button } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import {
   expenseFormSchema,
   ExpenseFormData,
@@ -468,16 +469,19 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   hint: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   error: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.loss,
     marginTop: spacing.xs,
   },
@@ -501,11 +505,13 @@ const styles = StyleSheet.create({
   },
   categoryChipText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
   categoryChipTextSelected: {
     color: colors.background,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   descriptionInput: {
     minHeight: 80,
@@ -526,6 +532,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
     flex: 1,
   },
@@ -544,12 +551,14 @@ const styles = StyleSheet.create({
   },
   palletText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     flex: 1,
   },
   palletTextSelected: {
     color: colors.textPrimary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   palletList: {
     backgroundColor: colors.background,
@@ -573,14 +582,17 @@ const styles = StyleSheet.create({
   },
   palletOptionText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
   palletOptionTextSelected: {
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
   },
   palletOptionSubtext: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -617,10 +629,12 @@ const styles = StyleSheet.create({
   },
   addReceiptText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   addReceiptHint: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textDisabled,
     marginTop: spacing.xs,
   },
@@ -638,11 +652,13 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   summaryValue: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
   },
   categoryBadge: {
@@ -654,14 +670,17 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.background,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   summaryPallet: {
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   summarySplitAmount: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
   },
@@ -674,6 +693,7 @@ const styles = StyleSheet.create({
   },
   clearLink: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.primary,
   },
   selectedPalletsRow: {
@@ -693,6 +713,7 @@ const styles = StyleSheet.create({
   },
   selectedPalletChipText: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
   checkbox: {
@@ -715,10 +736,12 @@ const styles = StyleSheet.create({
   },
   emptyPalletText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   categoryHint: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
     marginTop: spacing.xs,

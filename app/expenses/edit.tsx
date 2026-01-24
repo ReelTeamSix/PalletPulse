@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '@/src/constants/colors';
 import { fontSize } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { useExpensesStore } from '@/src/stores/expenses-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { ExpenseForm, ExpenseFormData } from '@/src/features/expenses';
@@ -183,6 +184,7 @@ const styles = StyleSheet.create({
   },
   notFoundText: {
     fontSize: fontSize.lg,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
 });

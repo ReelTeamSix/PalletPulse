@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
+import { fontFamily } from '@/src/constants/fonts';
 
 interface SectionHeaderProps {
   title: string;
@@ -60,6 +61,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   action: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.primary,

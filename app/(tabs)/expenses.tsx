@@ -16,6 +16,7 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
 import { typography } from '@/src/constants/typography';
+import { fontFamily } from '@/src/constants/fonts';
 import { useExpensesStore, ExpenseWithPallets } from '@/src/stores/expenses-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
@@ -585,11 +586,13 @@ const styles = StyleSheet.create({
   exportButtonText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
   },
   subtitle: {
     fontSize: fontSize.md,
     color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
   },
   title: {
     ...typography.screenTitle,
@@ -605,6 +608,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     fontSize: fontSize.md,
     color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
   },
   emptyState: {
     alignItems: 'center',
@@ -613,6 +617,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
@@ -622,6 +627,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     maxWidth: 280,
+    fontFamily: fontFamily.regular,
   },
   retryButton: {
     marginTop: spacing.lg,
@@ -634,6 +640,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   actionButtons: {
     flexDirection: 'row',
@@ -661,11 +668,13 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.background,
   },
   secondaryButtonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
   },
   buttonPressed: {
@@ -684,12 +693,14 @@ const styles = StyleSheet.create({
   activityHeaderTitle: {
     fontSize: fontSize.xs,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     letterSpacing: 0.5,
   },
   viewAllLink: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
   },
   activityRow: {
@@ -719,16 +730,19 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: 2,
   },
   activitySubtitle: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
   },
   activityValue: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   disclaimer: {
     flexDirection: 'row',
@@ -740,6 +754,7 @@ const styles = StyleSheet.create({
   disclaimerText: {
     fontSize: fontSize.xs,
     color: colors.textDisabled,
+    fontFamily: fontFamily.regular,
   },
   featurePreview: {
     marginTop: spacing.md,
@@ -750,6 +765,7 @@ const styles = StyleSheet.create({
   featurePreviewTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: spacing.md,
   },
@@ -763,5 +779,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textSecondary,
     flex: 1,
+    fontFamily: fontFamily.regular,
   },
 });

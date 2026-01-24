@@ -2,6 +2,7 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
+// Inter fonts loaded from assets/fonts (copied from @expo-google-fonts/inter)
 import { Stack, useRouter, useSegments, ErrorBoundary } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as NavigationBar from 'expo-navigation-bar';
@@ -40,6 +41,13 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
+    // Inter font family for app typography (loaded from assets)
+    Inter_400Regular: require('../assets/fonts/Inter_400Regular.ttf'),
+    Inter_500Medium: require('../assets/fonts/Inter_500Medium.ttf'),
+    Inter_600SemiBold: require('../assets/fonts/Inter_600SemiBold.ttf'),
+    Inter_700Bold: require('../assets/fonts/Inter_700Bold.ttf'),
+    Inter_800ExtraBold: require('../assets/fonts/Inter_800ExtraBold.ttf'),
+    // Legacy fonts
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });

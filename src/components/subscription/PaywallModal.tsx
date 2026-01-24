@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { PurchasesPackage } from 'react-native-purchases';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { shadows } from '@/src/constants/shadows';
 import { SubscriptionTier, TIER_LIMITS, TIER_PRICING } from '@/src/constants/tier-limits';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
@@ -415,6 +416,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   limitWarning: {
@@ -427,6 +429,7 @@ const styles = StyleSheet.create({
   limitWarningText: {
     flex: 1,
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
   cycleToggle: {
@@ -453,6 +456,7 @@ const styles = StyleSheet.create({
   cycleOptionText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
+    fontFamily: fontFamily.medium,
     color: colors.textSecondary,
   },
   cycleOptionTextActive: {
@@ -467,6 +471,7 @@ const styles = StyleSheet.create({
   savingsBadgeText: {
     fontSize: 10,
     fontWeight: fontWeight.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.profit,
   },
   loadingContainer: {
@@ -477,6 +482,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   scrollView: {
@@ -513,6 +519,7 @@ const styles = StyleSheet.create({
   popularBadgeText: {
     fontSize: 10,
     fontWeight: fontWeight.bold,
+    fontFamily: fontFamily.bold,
     color: colors.background,
     letterSpacing: 0.5,
   },
@@ -528,6 +535,7 @@ const styles = StyleSheet.create({
   tierTitle: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
   },
   recommendedBadge: {
@@ -540,10 +548,12 @@ const styles = StyleSheet.create({
   recommendedBadgeText: {
     fontSize: 10,
     fontWeight: fontWeight.bold,
+    fontFamily: fontFamily.bold,
     color: colors.warning,
   },
   tierSubtitle: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   priceRow: {
@@ -555,15 +565,18 @@ const styles = StyleSheet.create({
   price: {
     fontSize: fontSize.xxxl,
     fontWeight: fontWeight.bold,
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
   },
   priceUnit: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginLeft: spacing.xs,
   },
   billedAnnually: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     width: '100%',
     marginTop: spacing.xs,
@@ -579,6 +592,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
   subscribeButton: {
@@ -590,6 +604,7 @@ const styles = StyleSheet.create({
     color: colors.profit,
     marginTop: spacing.sm,
     fontWeight: fontWeight.medium,
+    fontFamily: fontFamily.medium,
   },
   errorContainer: {
     backgroundColor: colors.loss + '20',
@@ -602,12 +617,14 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.loss,
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     flex: 1,
   },
   errorDismiss: {
     color: colors.loss,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
+    fontFamily: fontFamily.semibold,
   },
   restoreButton: {
     alignSelf: 'center',
@@ -617,6 +634,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: fontWeight.medium,
+    fontFamily: fontFamily.medium,
   },
   manageButton: {
     alignSelf: 'center',
@@ -624,11 +642,13 @@ const styles = StyleSheet.create({
   },
   manageButtonText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textDecorationLine: 'underline',
   },
   termsText: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
@@ -644,5 +664,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textSecondary,
     fontWeight: fontWeight.medium,
+    fontFamily: fontFamily.medium,
   },
 });

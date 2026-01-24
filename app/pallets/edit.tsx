@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { PalletForm, PalletFormData } from '@/src/features/pallets';
 import { ConfirmationModal } from '@/src/components/ui';
@@ -152,12 +153,14 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
   },
   errorText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
   },

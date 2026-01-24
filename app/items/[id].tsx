@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
+import { fontFamily } from '@/src/constants/fonts';
 import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { Button, ConfirmationModal } from '@/src/components/ui';
@@ -705,12 +706,14 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
   },
   errorText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -725,6 +728,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -777,6 +781,7 @@ const styles = StyleSheet.create({
   heroStatusText: {
     fontSize: fontSize.xs,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: colors.background,
     letterSpacing: 0.5,
   },
@@ -791,6 +796,7 @@ const styles = StyleSheet.create({
   heroConditionText: {
     fontSize: 10,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: colors.background,
     letterSpacing: 0.5,
   },
@@ -802,12 +808,14 @@ const styles = StyleSheet.create({
   },
   heroSku: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: 'rgba(255,255,255,0.7)',
     marginBottom: 4,
   },
   heroTitle: {
     fontSize: 24,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.background,
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 1 },
@@ -839,6 +847,7 @@ const styles = StyleSheet.create({
   },
   heroPlaceholderText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.neutral,
     marginTop: spacing.sm,
   },
@@ -851,6 +860,7 @@ const styles = StyleSheet.create({
   noPhotoTitle: {
     fontSize: fontSize.xl,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
@@ -866,6 +876,7 @@ const styles = StyleSheet.create({
   noPhotoStatusText: {
     fontSize: fontSize.xs,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.background,
   },
   noPhotoConditionBadge: {
@@ -876,6 +887,7 @@ const styles = StyleSheet.create({
   noPhotoConditionText: {
     fontSize: fontSize.xs,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
 
   // Financial Snapshot Card
@@ -896,6 +908,7 @@ const styles = StyleSheet.create({
   financialTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   priceBoxRow: {
@@ -912,6 +925,7 @@ const styles = StyleSheet.create({
   priceBoxLabel: {
     fontSize: 10,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     letterSpacing: 0.5,
     marginBottom: spacing.xs,
@@ -919,6 +933,7 @@ const styles = StyleSheet.create({
   priceBoxValue: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
   },
   costValue: {
@@ -938,12 +953,14 @@ const styles = StyleSheet.create({
   },
   profitLabel: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginBottom: 4,
   },
   profitValue: {
     fontSize: 28,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   marginIndicator: {
     alignItems: 'center',
@@ -960,10 +977,12 @@ const styles = StyleSheet.create({
   marginPercent: {
     fontSize: fontSize.md,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   marginLabel: {
     fontSize: 10,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     letterSpacing: 0.5,
   },
@@ -979,6 +998,7 @@ const styles = StyleSheet.create({
   },
   costAllocationText: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
     flex: 1,
@@ -999,6 +1019,7 @@ const styles = StyleSheet.create({
   platformTagText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
   },
   saleDetailsCard: {
@@ -1029,16 +1050,19 @@ const styles = StyleSheet.create({
   saleDetailTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   saleDetailSubtitle: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: 2,
   },
   saleDetailAmount: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.loss,
   },
   dateInfoRow: {
@@ -1051,6 +1075,7 @@ const styles = StyleSheet.create({
   dateInfoLabel: {
     fontSize: 10,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     letterSpacing: 0.5,
     marginBottom: 4,
@@ -1058,6 +1083,7 @@ const styles = StyleSheet.create({
   dateInfoValue: {
     fontSize: fontSize.md,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
   },
 
@@ -1079,6 +1105,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.primary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
 
   // Section Styles
@@ -1090,6 +1117,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
 
@@ -1110,12 +1138,14 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   detailValue: {
     fontSize: fontSize.md,
     color: colors.textPrimary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     textAlign: 'right',
     flex: 1,
     marginLeft: spacing.md,
@@ -1130,6 +1160,7 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
     lineHeight: 22,
   },
@@ -1140,6 +1171,7 @@ const styles = StyleSheet.create({
   },
   notesText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
     lineHeight: 22,
@@ -1167,6 +1199,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.background,
   },
   editButtonHalf: {
@@ -1215,5 +1248,6 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
 });

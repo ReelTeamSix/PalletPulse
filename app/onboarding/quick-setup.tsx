@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
+import { fontFamily } from '@/src/constants/fonts';
 import { useOnboardingStore } from '@/src/stores/onboarding-store';
 
 interface FlipperProfile {
@@ -213,12 +214,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xxl,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
   },
@@ -252,6 +255,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.xs,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
     letterSpacing: 0.5,
   },
   profileContent: {
@@ -272,14 +276,17 @@ const styles = StyleSheet.create({
   profileTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold as any,
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: 2,
   },
   profileTitleSelected: {
     color: colors.primary,
+    fontFamily: fontFamily.semibold,
   },
   profileSubtitle: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   radioOuter: {
@@ -318,9 +325,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.profit,
     fontWeight: fontWeight.semibold as any,
+    fontFamily: fontFamily.semibold,
   },
   trialDetails: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.profit,
     textAlign: 'center',
     opacity: 0.9,
@@ -344,5 +353,6 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
   },
 });

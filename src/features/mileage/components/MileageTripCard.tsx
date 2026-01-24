@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { MileageTripWithPallets } from '@/src/stores/mileage-store';
 import {
   formatDeduction,
@@ -97,6 +98,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   purposeBadge: {
@@ -108,6 +110,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.background,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   content: {
     flexDirection: 'row',
@@ -130,10 +133,12 @@ const styles = StyleSheet.create({
   milesValue: {
     fontSize: fontSize.xl,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
   },
   milesLabel: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   deductionSection: {
@@ -141,12 +146,14 @@ const styles = StyleSheet.create({
   },
   deductionLabel: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginBottom: 2,
   },
   deductionValue: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.profit,
   },
   palletsRow: {
@@ -157,6 +164,7 @@ const styles = StyleSheet.create({
   },
   palletsText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.primary,
     flex: 1,
   },
@@ -167,6 +175,7 @@ const styles = StyleSheet.create({
   },
   notesText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
     flex: 1,

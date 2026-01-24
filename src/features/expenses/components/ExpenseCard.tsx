@@ -5,6 +5,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { ExpenseWithPallets } from '@/src/stores/expenses-store';
 import {
   formatExpenseAmount,
@@ -194,10 +195,12 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   splitIndicator: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
   },
@@ -210,9 +213,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.background,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   description: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginBottom: spacing.sm,
   },
@@ -223,6 +228,7 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   indicators: {
@@ -247,12 +253,14 @@ const styles = StyleSheet.create({
   },
   palletName: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.primary,
     maxWidth: 80,
   },
   multiPalletText: {
     color: colors.background,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   // Compact styles
   compactContainer: {
@@ -279,11 +287,13 @@ const styles = StyleSheet.create({
   },
   compactDescription: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
     flex: 1,
   },
   compactDate: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   compactAmountContainer: {
@@ -293,10 +303,12 @@ const styles = StyleSheet.create({
   compactAmount: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   compactTotal: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
   },
@@ -311,6 +323,7 @@ const styles = StyleSheet.create({
   },
   sharedText: {
     fontSize: 9,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
 });

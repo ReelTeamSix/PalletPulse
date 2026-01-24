@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { useTrialBanner } from '@/src/stores/onboarding-store';
 
 interface TrialBannerProps {
@@ -78,6 +79,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium as any,
+    fontFamily: fontFamily.medium,
     flex: 1,
   },
   upgradeButton: {
@@ -91,6 +93,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold as any,
+    fontFamily: fontFamily.semibold,
   },
 });
 

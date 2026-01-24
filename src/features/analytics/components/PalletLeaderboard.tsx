@@ -5,6 +5,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { shadows } from '@/src/constants/shadows';
 import type { PalletAnalytics } from '../types/analytics';
 import { formatCurrency, formatROI, getROIColor } from '@/src/lib/profit-utils';
@@ -174,6 +175,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   seeAllButton: {
@@ -185,6 +187,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   // Item styles
   itemContainer: {
@@ -210,6 +213,7 @@ const styles = StyleSheet.create({
   rankNumber: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
   },
   palletContent: {
@@ -225,10 +229,12 @@ const styles = StyleSheet.create({
   palletName: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
   },
   palletMeta: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -238,6 +244,7 @@ const styles = StyleSheet.create({
   profitValue: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   secondaryMetrics: {
     flexDirection: 'row',
@@ -247,9 +254,11 @@ const styles = StyleSheet.create({
   roiValue: {
     fontSize: fontSize.xs,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   retailRecovery: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   // Progress bar styles
@@ -272,11 +281,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: fontSize.md,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
     marginTop: spacing.sm,
   },
   emptySubtext: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },

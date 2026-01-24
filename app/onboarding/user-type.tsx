@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { TierCard, TierType, TierFeature } from '@/src/components/onboarding';
 import { useOnboardingStore } from '@/src/stores/onboarding-store';
 import { TIER_PRICING } from '@/src/constants/tier-limits';
@@ -200,12 +201,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xxl,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
   },
@@ -232,10 +235,12 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
   },
   primaryButtonSubtext: {
     color: colors.background,
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     opacity: 0.9,
     marginTop: 2,
   },
@@ -246,10 +251,12 @@ const styles = StyleSheet.create({
   skipButtonText: {
     color: colors.textSecondary,
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     textDecorationLine: 'underline',
   },
   footer: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textDisabled,
     textAlign: 'center',
   },

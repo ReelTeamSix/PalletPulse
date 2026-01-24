@@ -19,6 +19,7 @@ import { Input, Button, PhotoPicker, PhotoItem } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
+import { fontFamily } from '@/src/constants/fonts';
 import type { SalesPlatform } from '@/src/types/database';
 import {
   itemFormSchema,
@@ -959,6 +960,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   sectionLabel: {
+    fontFamily: fontFamily.semibold,
     fontSize: 12,
     fontWeight: '600',
     color: colors.textSecondary,
@@ -966,6 +968,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   fieldLabel: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.textPrimary,
@@ -978,6 +981,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   photoCount: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     color: colors.textSecondary,
     fontWeight: '500',
@@ -997,6 +1001,7 @@ const styles = StyleSheet.create({
     backgroundColor: TIER_DISPLAY.enterprise.color,
   },
   tierBadgeText: {
+    fontFamily: fontFamily.bold,
     fontSize: 10,
     fontWeight: '700',
     color: colors.background,
@@ -1017,6 +1022,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   palletBannerText: {
+    fontFamily: fontFamily.semibold,
     color: colors.background,
     fontSize: fontSize.sm,
     fontWeight: '600',
@@ -1031,6 +1037,7 @@ const styles = StyleSheet.create({
     borderColor: colors.profit,
   },
   saleDetailsTitle: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.md,
     fontWeight: '600',
     color: colors.profit,
@@ -1046,11 +1053,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   saleDetailLabel: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     marginBottom: 2,
   },
   saleDetailValue: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.textPrimary,
@@ -1071,6 +1080,7 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   palletPickerText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
@@ -1110,6 +1120,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   palletOptionText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
@@ -1118,6 +1129,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   label: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.textPrimary,
@@ -1155,6 +1167,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   conditionPillText: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     color: colors.textPrimary,
     fontWeight: '500',
@@ -1189,6 +1202,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   suggestionText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
@@ -1225,6 +1239,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   statusPickerText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
@@ -1257,6 +1272,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary + '10',
   },
   statusOptionText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
@@ -1266,6 +1282,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   statusHint: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     marginTop: spacing.xs,
@@ -1287,6 +1304,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   platformPickerText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
@@ -1326,10 +1344,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   platformOptionText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
   platformOptionDesc: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     marginTop: 2,

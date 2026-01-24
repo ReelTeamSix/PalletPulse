@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { typography } from '@/src/constants/typography';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
@@ -379,6 +380,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   greeting: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textSecondary,
     marginTop: spacing.xs,
@@ -404,8 +406,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   notificationBadgeText: {
+    fontFamily: fontFamily.bold,
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   sectionHeader: {
@@ -415,7 +418,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   sectionHeaderText: {
-    fontSize: 12,
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.sm,
     fontWeight: '600',
     color: colors.textSecondary,
     letterSpacing: 0.5,

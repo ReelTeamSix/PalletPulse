@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { useMileageStore, MileageTripWithPallets } from '@/src/stores/mileage-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { MileageTripCard, formatDeduction, formatMiles } from '@/src/features/mileage';
@@ -332,6 +333,7 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   rateTag: {
@@ -344,6 +346,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.primary,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   summaryStats: {
     flexDirection: 'row',
@@ -361,10 +364,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: fontSize.xl,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
   },
   statLabel: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -381,6 +386,7 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     flex: 1,
   },
@@ -391,12 +397,14 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginTop: spacing.lg,
     marginBottom: spacing.xs,
   },
   emptySubtitle: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -413,6 +421,7 @@ const styles = StyleSheet.create({
   emptyButtonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.background,
   },
   fab: {
@@ -445,6 +454,7 @@ const styles = StyleSheet.create({
   featurePreviewTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: spacing.md,
   },
@@ -456,6 +466,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     flex: 1,
   },

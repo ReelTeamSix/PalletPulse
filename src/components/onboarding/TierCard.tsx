@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 
 export type TierType = 'free' | 'starter' | 'pro';
 
@@ -183,6 +184,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.xs,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
     letterSpacing: 0.5,
   },
   header: {
@@ -205,12 +207,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginLeft: 36 + spacing.sm, // iconContainer width + margin
   },
@@ -237,11 +241,13 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
     flex: 1,
   },
   featureTextDisabled: {
     color: colors.textDisabled,
+    fontFamily: fontFamily.regular,
   },
   pricing: {
     alignItems: 'center',
@@ -285,6 +291,7 @@ const styles = StyleSheet.create({
   priceAmount: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
     color: colors.textSecondary,
   },
   priceAmountHighlighted: {
@@ -292,6 +299,7 @@ const styles = StyleSheet.create({
   },
   pricePeriod: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginLeft: 2,
   },
@@ -308,15 +316,18 @@ const styles = StyleSheet.create({
   savingsText: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold as any,
+    fontFamily: fontFamily.semibold,
     color: colors.background,
   },
   trialText: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   freeText: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
     color: colors.profit,
     paddingVertical: spacing.sm,
   },

@@ -7,6 +7,7 @@ import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { Button } from './Button';
 
 type EmptyStateVariant =
@@ -242,6 +243,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   title: {
+    fontFamily: fontFamily.bold,
     fontSize: fontSize.xl,
     fontWeight: '700',
     color: colors.textPrimary,
@@ -255,6 +257,7 @@ const styles = StyleSheet.create({
     color: colors.profit,
   },
   message: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textSecondary,
     textAlign: 'center',

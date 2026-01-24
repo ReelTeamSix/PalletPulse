@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { shadows } from '@/src/constants/shadows';
 import { useNotificationsStore } from '@/src/stores/notifications-store';
 import type { Notification, NotificationType } from '@/src/types/database';
@@ -286,6 +287,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: fontSize.xl,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
   },
   listContent: {
@@ -343,10 +345,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   unreadText: {
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   unreadDot: {
     width: 8,
@@ -356,12 +360,14 @@ const styles = StyleSheet.create({
   },
   itemBody: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: 4,
     lineHeight: 20,
   },
   itemTimestamp: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textTertiary,
     marginTop: spacing.sm,
   },
@@ -392,11 +398,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: fontSize.lg,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   emptySubtitle: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
   },

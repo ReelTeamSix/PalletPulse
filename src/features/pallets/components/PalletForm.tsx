@@ -19,6 +19,7 @@ import { Input, Button } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
+import { fontFamily } from '@/src/constants/fonts';
 import {
   palletFormSchema,
   PalletFormData,
@@ -480,6 +481,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sourceTypeLabel: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.xs,
     fontWeight: '600',
     color: colors.textSecondary,
@@ -507,6 +509,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   segmentedOptionText: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.textSecondary,
@@ -518,6 +521,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   label: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.xs,
     fontWeight: '600',
     color: colors.textSecondary,
@@ -550,6 +554,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   suggestionText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
@@ -570,11 +575,13 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   sourceChipText: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: '500',
   },
   sourceChipsHint: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     marginTop: spacing.xs,
@@ -610,6 +617,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   taxToggleText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.sm,
     color: colors.textSecondary,
   },
@@ -622,11 +630,13 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   totalLabel: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.textSecondary,
   },
   totalValue: {
+    fontFamily: fontFamily.bold,
     fontSize: fontSize.lg,
     fontWeight: '700',
     color: colors.primary,
@@ -643,6 +653,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   dateText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
@@ -651,6 +662,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   error: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.sm,
     color: colors.loss,
     marginTop: spacing.xs,

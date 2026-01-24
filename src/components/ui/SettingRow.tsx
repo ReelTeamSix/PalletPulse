@@ -6,6 +6,7 @@ import { StyleSheet, View, Text, Pressable, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { haptics } from '@/src/lib/haptics';
 import { TOUCH_TARGET, getValueLabel } from '@/src/constants/accessibility';
 
@@ -204,6 +205,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   label: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textPrimary,
   },
@@ -211,6 +213,7 @@ const styles = StyleSheet.create({
     color: colors.textDisabled,
   },
   hint: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     marginTop: 2,
@@ -221,6 +224,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   value: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textSecondary,
   },

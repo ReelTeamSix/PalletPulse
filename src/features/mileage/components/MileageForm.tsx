@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Input, Button } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import {
   mileageFormSchema,
   MileageFormData,
@@ -501,16 +502,19 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   hint: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
   error: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.loss,
     marginTop: spacing.xs,
   },
@@ -529,6 +533,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
     flex: 1,
   },
@@ -550,6 +555,7 @@ const styles = StyleSheet.create({
   },
   purposeText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
     flex: 1,
   },
@@ -577,10 +583,12 @@ const styles = StyleSheet.create({
   },
   purposeOptionText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
   purposeOptionTextSelected: {
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
   },
   rateCard: {
@@ -596,15 +604,18 @@ const styles = StyleSheet.create({
   },
   rateLabel: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   rateValue: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
   },
   rateHint: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
@@ -623,12 +634,14 @@ const styles = StyleSheet.create({
   },
   palletText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     flex: 1,
   },
   palletTextSelected: {
     color: colors.textPrimary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   selectedPallets: {
     flexDirection: 'row',
@@ -650,6 +663,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.background,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     flex: 1,
   },
   palletList: {
@@ -666,6 +680,7 @@ const styles = StyleSheet.create({
   },
   emptyPalletsText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   palletOption: {
@@ -701,14 +716,17 @@ const styles = StyleSheet.create({
   },
   palletOptionText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
   palletOptionTextSelected: {
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
   },
   palletOptionSubtext: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -731,6 +749,7 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   summaryDivider: {
@@ -746,11 +765,13 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   summaryValue: {
     fontSize: fontSize.md,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
   },
   purposeBadge: {
@@ -762,11 +783,13 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.background,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   summaryPallet: {
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     flex: 1,
     textAlign: 'right',
     marginLeft: spacing.sm,
@@ -774,15 +797,18 @@ const styles = StyleSheet.create({
   deductionLabel: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   deductionValue: {
     fontSize: fontSize.xl,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.profit,
   },
   deductionFormula: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.xs,

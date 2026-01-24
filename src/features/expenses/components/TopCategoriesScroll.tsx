@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
+import { fontFamily } from '@/src/constants/fonts';
 import { formatCurrency } from '@/src/lib/profit-utils';
 import { ExpenseCategory } from '@/src/types/database';
 
@@ -79,6 +80,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: fontSize.xs,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     letterSpacing: 0.5,
     marginBottom: spacing.sm,
@@ -105,11 +107,13 @@ const styles = StyleSheet.create({
   chipLabel: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
   },
   chipAmount: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
   },
 });

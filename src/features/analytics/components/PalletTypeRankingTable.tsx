@@ -6,6 +6,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { shadows } from '@/src/constants/shadows';
 import type { PalletTypeComparison } from '../types/analytics';
 import { formatROI, getROIColor, formatCurrency } from '@/src/lib/profit-utils';
@@ -167,6 +168,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   // Table styles
@@ -183,6 +185,7 @@ const styles = StyleSheet.create({
   headerCell: {
     fontSize: fontSize.xs,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
   },
@@ -217,6 +220,7 @@ const styles = StyleSheet.create({
   rankBadge: {
     fontSize: fontSize.xs,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
   },
   typeInfo: {
@@ -229,6 +233,7 @@ const styles = StyleSheet.create({
   typeName: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
     flex: 1,
   },
@@ -237,11 +242,13 @@ const styles = StyleSheet.create({
   },
   typeMeta: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   metricValue: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   // Placeholder styles for blurred rows
@@ -269,11 +276,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: fontSize.md,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
     marginTop: spacing.sm,
   },
   emptySubtext: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },

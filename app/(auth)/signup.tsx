@@ -17,6 +17,7 @@ import { Button, Input } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
+import { fontFamily } from '@/src/constants/fonts';
 import { useAuthStore } from '@/src/stores/auth-store';
 import { signupSchema, SignupFormData } from '@/src/features/auth/schemas/auth-schemas';
 
@@ -222,10 +223,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textSecondary,
     textAlign: 'center',
+    fontFamily: fontFamily.regular,
   },
   brandText: {
     color: colors.primary,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   form: {
     marginBottom: spacing.xl,
@@ -243,6 +246,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.loss,
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
   },
   button: {
     marginTop: spacing.md,
@@ -255,11 +259,13 @@ const styles = StyleSheet.create({
   footerText: {
     color: colors.textSecondary,
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
   },
   linkText: {
     color: colors.primary,
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   verificationContainer: {
     flex: 1,
@@ -289,5 +295,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     lineHeight: 24,
     maxWidth: 280,
+    fontFamily: fontFamily.regular,
   },
 });

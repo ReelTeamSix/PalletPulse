@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
+import { fontFamily } from '@/src/constants/fonts';
 
 const { width } = Dimensions.get('window');
 
@@ -180,6 +181,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: fontSize.md,
     fontWeight: fontWeight.medium as any,
+    fontFamily: fontFamily.medium,
   },
   carousel: {
     flex: 1,
@@ -207,12 +209,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xxl,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.md,
   },
   description: {
     fontSize: fontSize.lg,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 26,
@@ -230,6 +234,7 @@ const styles = StyleSheet.create({
   highlight: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold as any,
+    fontFamily: fontFamily.semibold,
     color: colors.profit,
   },
   pagination: {
@@ -268,5 +273,6 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
   },
 });

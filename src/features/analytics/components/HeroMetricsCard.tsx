@@ -5,6 +5,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import type { HeroMetrics } from '../types/analytics';
 import { formatCurrency, formatROI, getROIColor } from '@/src/lib/profit-utils';
 
@@ -119,6 +120,7 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: 22, // Slightly larger for emphasis
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     marginBottom: 4,
   },
@@ -127,5 +129,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
 });

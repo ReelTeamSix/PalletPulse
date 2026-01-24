@@ -18,6 +18,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { useItemsStore } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { Button, Input, ConfirmationModal } from '@/src/components/ui';
@@ -644,12 +645,14 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
   },
   errorText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -664,6 +667,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   scrollView: {
     flex: 1,
@@ -680,6 +684,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: fontSize.xl,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
@@ -698,11 +703,13 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.background,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   quantity: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   priceInfo: {
     flexDirection: 'row',
@@ -710,10 +717,12 @@ const styles = StyleSheet.create({
   },
   listingPrice: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   costInfo: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   section: {
@@ -723,6 +732,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: spacing.md,
   },
@@ -732,6 +742,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
@@ -746,17 +757,20 @@ const styles = StyleSheet.create({
   },
   currencySymbol: {
     fontSize: fontSize.xl,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginRight: spacing.xs,
   },
   currencyInput: {
     flex: 1,
     fontSize: fontSize.xl,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
     paddingVertical: spacing.md,
   },
   helperText: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
@@ -768,10 +782,12 @@ const styles = StyleSheet.create({
   },
   warningText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.warning,
   },
   discountText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
@@ -793,6 +809,7 @@ const styles = StyleSheet.create({
   },
   suggestionChipText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
   suggestionChipTextSelected: {
@@ -811,20 +828,24 @@ const styles = StyleSheet.create({
   },
   profitLabel: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   profitLabelBold: {
     fontSize: fontSize.md,
     color: colors.textPrimary,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   profitValue: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
   profitValueBold: {
     fontSize: fontSize.lg,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
   },
   profitDivider: {
     height: 1,
@@ -833,6 +854,7 @@ const styles = StyleSheet.create({
   },
   profitValueRed: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.loss,
   },
   footer: {
@@ -871,6 +893,7 @@ const styles = StyleSheet.create({
   platformOptionLabel: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
     marginBottom: 2,
   },
@@ -879,6 +902,7 @@ const styles = StyleSheet.create({
   },
   platformOptionDesc: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   platformOptionDescSelected: {
@@ -922,6 +946,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   inputDisabled: {
     opacity: 0.6,

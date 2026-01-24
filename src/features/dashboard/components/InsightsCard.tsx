@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import {
   Insight,
   InsightIcon,
@@ -123,11 +124,13 @@ const styles = StyleSheet.create({
   insightTitle: {
     fontSize: fontSize.md,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: '#FFFFFF',
     marginBottom: 2,
   },
   insightMessage: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: 'rgba(255, 255, 255, 0.85)',
     lineHeight: fontSize.sm * 1.4,
   },
@@ -140,6 +143,7 @@ const styles = StyleSheet.create({
   viewButtonText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: '#6366F1',
   },
   // Empty state styles
@@ -159,11 +163,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: fontSize.lg,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: '#FFFFFF',
     marginBottom: spacing.xs,
   },
   emptyMessage: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
     lineHeight: fontSize.sm * 1.5,
@@ -182,6 +188,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: '#6366F1',
   },
 });

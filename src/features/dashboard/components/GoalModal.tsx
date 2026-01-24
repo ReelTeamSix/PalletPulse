@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
+import { fontFamily } from '@/src/constants/fonts';
 
 type GoalPeriod = 'week' | 'month' | 'year';
 
@@ -285,12 +286,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xl,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -302,6 +305,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 11,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     letterSpacing: 0.5,
     marginBottom: spacing.sm,
@@ -322,6 +326,7 @@ const styles = StyleSheet.create({
   dollarSign: {
     fontSize: fontSize.xl,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: colors.textSecondary,
     marginRight: spacing.sm,
   },
@@ -329,6 +334,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.xl,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     padding: 0,
   },
@@ -340,6 +346,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.loss,
   },
   presetsSection: {
@@ -349,6 +356,7 @@ const styles = StyleSheet.create({
   presetsLabel: {
     fontSize: 11,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     letterSpacing: 0.5,
     marginBottom: spacing.sm,
@@ -373,6 +381,7 @@ const styles = StyleSheet.create({
   presetChipText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
   },
   presetChipTextSelected: {
@@ -395,6 +404,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.background,
   },
   cancelButton: {
@@ -404,6 +414,7 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
   },
   clearButton: {
@@ -414,6 +425,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.loss,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   disableButton: {
     paddingVertical: spacing.sm,
@@ -424,5 +436,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
 });

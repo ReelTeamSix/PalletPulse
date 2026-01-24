@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
+import { fontFamily } from '@/src/constants/fonts';
 
 export default function GetStartedScreen() {
   const router = useRouter();
@@ -165,12 +166,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xxl,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
   },
@@ -213,21 +216,25 @@ const styles = StyleSheet.create({
   actionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold as any,
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: 2,
   },
   actionTitlePrimary: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold as any,
+    fontFamily: fontFamily.semibold,
     color: colors.background,
     marginBottom: 2,
   },
   actionSubtitle: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   actionSubtitlePrimary: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: 'rgba(255, 255, 255, 0.8)',
   },
   tips: {
@@ -245,6 +252,7 @@ const styles = StyleSheet.create({
   tipsTitle: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold as any,
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     letterSpacing: 0.5,
   },
@@ -269,11 +277,13 @@ const styles = StyleSheet.create({
   tipTitle: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold as any,
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: 2,
   },
   tipDescription: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     lineHeight: 18,
   },

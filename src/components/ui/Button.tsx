@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { haptics } from '@/src/lib/haptics';
 import { TOUCH_TARGET } from '@/src/constants/accessibility';
 
@@ -143,6 +144,7 @@ const styles = StyleSheet.create({
 
   // Text styles
   text: {
+    fontFamily: fontFamily.semibold,
     fontWeight: '600',
   },
   text_primary: {

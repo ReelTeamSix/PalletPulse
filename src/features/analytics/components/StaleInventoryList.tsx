@@ -5,6 +5,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { shadows } from '@/src/constants/shadows';
 import type { StaleItem } from '../types/analytics';
 import { formatCurrency } from '@/src/lib/profit-utils';
@@ -138,6 +139,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   countBadge: {
@@ -149,6 +151,7 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: fontSize.xs,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.warning,
   },
   // Item row styles
@@ -171,10 +174,12 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
   },
   palletName: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -184,9 +189,11 @@ const styles = StyleSheet.create({
   daysText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   priceText: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -198,11 +205,13 @@ const styles = StyleSheet.create({
   healthyText: {
     fontSize: fontSize.md,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.profit,
     marginTop: spacing.xs,
   },
   healthySubtext: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },

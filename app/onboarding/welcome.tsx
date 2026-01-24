@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
+import { fontFamily } from '@/src/constants/fonts';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -188,6 +189,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold as any,
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
     letterSpacing: 1,
     marginBottom: spacing.sm,
@@ -195,12 +197,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xxxl,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.md,
   },
   subtitle: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
@@ -233,10 +237,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textPrimary,
     fontWeight: fontWeight.semibold as any,
+    fontFamily: fontFamily.semibold,
     marginBottom: 2,
   },
   featureDescription: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     lineHeight: 18,
   },
@@ -258,6 +264,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold as any,
+    fontFamily: fontFamily.bold,
   },
   skipButton: {
     alignItems: 'center',
@@ -267,5 +274,6 @@ const styles = StyleSheet.create({
   skipButtonText: {
     color: colors.textSecondary,
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
   },
 });

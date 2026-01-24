@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { shadows } from '@/src/constants/shadows';
 import { haptics } from '@/src/lib/haptics';
 
@@ -196,6 +197,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.md,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   actionButton: {
     paddingHorizontal: spacing.sm,
@@ -204,6 +206,7 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: fontSize.sm,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     textDecorationLine: 'underline',
   },
 });

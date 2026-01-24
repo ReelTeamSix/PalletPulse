@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/src/components/ui/Card';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { typography } from '@/src/constants/typography';
 import { shadows } from '@/src/constants/shadows';
 import { formatCurrency } from '@/src/lib/profit-utils';
@@ -243,11 +244,13 @@ const styles = StyleSheet.create({
     ...shadows.sm,
   },
   periodPillText: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.textSecondary,
   },
   periodPillTextSelected: {
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
     fontWeight: '600',
   },
@@ -273,10 +276,12 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
   },
   roiBadgeText: {
+    fontFamily: fontFamily.bold,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
   subtitle: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textSecondary,
     textAlign: 'center',
@@ -299,16 +304,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   goalLabel: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.sm,
     fontWeight: '600',
     color: colors.textPrimary,
   },
   goalPercent: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.sm,
     fontWeight: '600',
     color: colors.textSecondary,
   },
   goalTarget: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     marginTop: spacing.xs,
@@ -330,6 +338,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   setGoalText: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.primary,
@@ -347,7 +356,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   inlineMetricLabel: {
-    fontSize: 10,
+    fontFamily: fontFamily.semibold,
+    fontSize: fontSize.xs,
     fontWeight: '600',
     color: colors.textSecondary,
     letterSpacing: 0.5,
@@ -359,6 +369,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   inlineMetricNumber: {
+    fontFamily: fontFamily.extrabold,
     fontSize: fontSize.xl,
     fontWeight: '800',
   },

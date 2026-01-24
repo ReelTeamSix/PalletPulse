@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
+import { fontFamily } from '@/src/constants/fonts';
 import { haptics } from '@/src/lib/haptics';
 
 type ModalType = 'delete' | 'warning' | 'success' | 'info';
@@ -199,6 +200,7 @@ const styles = StyleSheet.create({
     borderColor: colors.card,
   },
   title: {
+    fontFamily: fontFamily.bold,
     fontSize: fontSize.xl,
     fontWeight: '700',
     color: colors.textPrimary,
@@ -206,6 +208,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   message: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textSecondary,
     textAlign: 'center',
@@ -225,6 +228,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   infoText: {
+    fontFamily: fontFamily.regular,
     flex: 1,
     fontSize: fontSize.sm,
     color: colors.primary,
@@ -249,6 +253,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   primaryButtonText: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.md,
     fontWeight: '600',
     color: colors.background,
@@ -259,6 +264,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   secondaryButtonText: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.md,
     fontWeight: '600',
     color: colors.textSecondary,

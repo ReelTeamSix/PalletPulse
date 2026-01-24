@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 
 type BadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
 type BadgeSize = 'sm' | 'md';
@@ -68,6 +69,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   label: {
+    fontFamily: fontFamily.semibold,
     fontWeight: '600',
   },
   labelSm: {

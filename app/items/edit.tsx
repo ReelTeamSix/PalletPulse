@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { isUnlimited } from '@/src/constants/tier-limits';
 import { useItemsStore } from '@/src/stores/items-store';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
@@ -284,12 +285,14 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
   },
   errorText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
   },
@@ -311,12 +314,14 @@ const styles = StyleSheet.create({
   confirmTitle: {
     fontSize: fontSize.xxl,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: spacing.md,
     textAlign: 'center',
   },
   confirmText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -333,6 +338,7 @@ const styles = StyleSheet.create({
   warningText: {
     flex: 1,
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     lineHeight: 20,
   },

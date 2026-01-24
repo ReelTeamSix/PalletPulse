@@ -18,6 +18,7 @@ import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler'
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
+import { fontFamily } from '@/src/constants/fonts';
 import { ConfirmationModal, ProgressBar } from '@/src/components/ui';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { usePalletsStore } from '@/src/stores/pallets-store';
@@ -839,12 +840,14 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
   },
   errorText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -859,6 +862,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -880,11 +884,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xxxl,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: fontSize.lg,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   statsRow: {
@@ -908,10 +914,12 @@ const styles = StyleSheet.create({
   progressValue: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   progressLabel: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -930,11 +938,13 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: fontSize.xl,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   statLabel: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   section: {
@@ -949,10 +959,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   swipeHint: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
   },
@@ -965,6 +977,7 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.md,
@@ -977,6 +990,7 @@ const styles = StyleSheet.create({
   },
   itemsProgressText: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
@@ -1014,6 +1028,7 @@ const styles = StyleSheet.create({
   itemStatusOverlayText: {
     fontSize: 10,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.background,
   },
   itemContent: {
@@ -1029,6 +1044,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     flex: 1,
     marginRight: spacing.sm,
@@ -1044,6 +1060,7 @@ const styles = StyleSheet.create({
   itemConditionLabel: {
     fontSize: 10,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     letterSpacing: 0.5,
     marginBottom: 4,
@@ -1057,6 +1074,7 @@ const styles = StyleSheet.create({
   itemConditionText: {
     fontSize: fontSize.xs,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   itemPriceColumn: {
     alignItems: 'flex-end',
@@ -1064,6 +1082,7 @@ const styles = StyleSheet.create({
   itemPriceLabel: {
     fontSize: 10,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     letterSpacing: 0.5,
     marginBottom: 4,
@@ -1071,6 +1090,7 @@ const styles = StyleSheet.create({
   itemPriceValue: {
     fontSize: fontSize.lg,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
   },
   swipeAction: {
@@ -1091,6 +1111,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.xs,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginTop: 4,
   },
   swipeActionLeft: {
@@ -1111,6 +1132,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.xs,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginTop: 4,
   },
   detailsCard: {
@@ -1128,12 +1150,14 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   detailValue: {
     fontSize: fontSize.md,
     color: colors.textPrimary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     textAlign: 'right',
     flex: 1,
     marginLeft: spacing.md,
@@ -1144,6 +1168,7 @@ const styles = StyleSheet.create({
   },
   notesValue: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
     marginTop: spacing.xs,
   },
@@ -1161,6 +1186,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.background,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   fab: {
     position: 'absolute',
@@ -1194,6 +1220,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: spacing.md,
     textAlign: 'center',
@@ -1217,11 +1244,13 @@ const styles = StyleSheet.create({
   },
   statusOptionText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
     flex: 1,
   },
   statusOptionTextSelected: {
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   // Quick Sell Modal
   quickSellModal: {
@@ -1240,16 +1269,19 @@ const styles = StyleSheet.create({
   quickSellTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   quickSellListing: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   quickSellLabel: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
@@ -1265,12 +1297,14 @@ const styles = StyleSheet.create({
   },
   currencySymbol: {
     fontSize: fontSize.xxl,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginRight: spacing.xs,
   },
   quickSellInput: {
     flex: 1,
     fontSize: fontSize.xxl,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
     paddingVertical: spacing.md,
   },
@@ -1287,11 +1321,13 @@ const styles = StyleSheet.create({
   },
   quickSellPreviewLabel: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   quickSellPreviewValue: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   quickSellButton: {
     backgroundColor: colors.profit,
@@ -1309,10 +1345,12 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   // Expenses Section
   expensesTotalInline: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     fontWeight: '400',
   },
@@ -1339,6 +1377,7 @@ const styles = StyleSheet.create({
   },
   quickSellPlatformText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
   quickSellPlatformTextSelected: {

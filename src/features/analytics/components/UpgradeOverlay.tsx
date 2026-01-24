@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 
 interface UpgradeOverlayProps {
   visible: boolean;
@@ -124,6 +125,7 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.md,
@@ -141,6 +143,7 @@ const styles = StyleSheet.create({
   upgradeText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.background,
   },
   // Inline styles
@@ -157,6 +160,7 @@ const styles = StyleSheet.create({
   },
   inlineText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   inlineLink: {
@@ -168,5 +172,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
 });

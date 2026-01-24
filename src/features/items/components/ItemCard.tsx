@@ -6,6 +6,7 @@ import { Card } from '@/src/components/ui/Card';
 import { ThumbnailImage } from '@/src/components/ui/ThumbnailImage';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { Item, ItemStatus } from '@/src/types/database';
 import {
   formatCondition,
@@ -177,6 +178,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   name: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.md,
     fontWeight: '600',
     color: colors.textPrimary,
@@ -194,6 +196,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statusText: {
+    fontFamily: fontFamily.bold,
     fontSize: fontSize.xs,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -210,10 +213,12 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
   },
   conditionText: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
   quantity: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     color: colors.textSecondary,
     fontWeight: '500',
@@ -229,6 +234,7 @@ const styles = StyleSheet.create({
     maxWidth: 100,
   },
   palletText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.xs,
     color: colors.textSecondary,
   },
@@ -244,6 +250,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   priceLabel: {
+    fontFamily: fontFamily.semibold,
     fontSize: 10,
     fontWeight: '600',
     color: colors.textDisabled,
@@ -251,6 +258,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   priceValue: {
+    fontFamily: fontFamily.semibold,
     fontSize: fontSize.sm,
     fontWeight: '600',
     color: colors.textPrimary,
@@ -268,6 +276,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   locationText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.xs,
     color: colors.textDisabled,
   },

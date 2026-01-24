@@ -13,6 +13,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 
 export type DateRangePreset =
   | 'this_month'
@@ -385,14 +386,17 @@ const styles = StyleSheet.create({
   selectedText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
   },
   totalText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   totalAmount: {
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   presetsContainer: {
@@ -417,6 +421,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textSecondary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   presetTextActive: {
     color: colors.background,
@@ -438,6 +443,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -447,6 +453,7 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
@@ -466,6 +473,7 @@ const styles = StyleSheet.create({
   },
   dateButtonText: {
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
   pickerContainer: {
@@ -488,6 +496,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textSecondary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   confirmButton: {
     flex: 1,
@@ -500,5 +509,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.background,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
 });

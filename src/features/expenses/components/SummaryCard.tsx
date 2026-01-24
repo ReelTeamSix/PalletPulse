@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/src/components/ui/Card';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { formatCurrency } from '@/src/lib/profit-utils';
 
 interface SummaryCardProps {
@@ -74,6 +75,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.xs,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -81,9 +83,11 @@ const styles = StyleSheet.create({
   value: {
     fontSize: fontSize.xl,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   subtitle: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textDisabled,
     marginTop: 2,
   },

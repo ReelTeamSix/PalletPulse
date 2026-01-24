@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { useMileageStore } from '@/src/stores/mileage-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { Button, ConfirmationModal } from '@/src/components/ui';
@@ -270,6 +271,7 @@ const styles = StyleSheet.create({
   },
   notFoundText: {
     fontSize: fontSize.lg,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   headerButton: {
@@ -302,10 +304,12 @@ const styles = StyleSheet.create({
   milesValue: {
     fontSize: 36,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.textPrimary,
   },
   milesLabel: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   purposeBadge: {
@@ -317,6 +321,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.background,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   deductionCard: {
     backgroundColor: colors.profit + '15',
@@ -329,17 +334,20 @@ const styles = StyleSheet.create({
   },
   deductionLabel: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
   deductionValue: {
     fontSize: 32,
     fontWeight: 'bold',
+    fontFamily: fontFamily.bold,
     color: colors.profit,
     marginBottom: spacing.xs,
   },
   deductionFormula: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   section: {
@@ -351,6 +359,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     marginBottom: spacing.md,
     textTransform: 'uppercase',
@@ -365,6 +374,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     flex: 1,
   },
@@ -372,20 +382,24 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textPrimary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     textAlign: 'right',
   },
   detailValueWrap: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textPrimary,
     flex: 2,
     textAlign: 'right',
   },
   detailValueSmall: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   noPalletsText: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
     fontStyle: 'italic',
     textAlign: 'center',
@@ -406,9 +420,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   palletSupplier: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   actionSection: {

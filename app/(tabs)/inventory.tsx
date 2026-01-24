@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
+import { fontFamily } from '@/src/constants/fonts';
 import { ConfirmationModal } from '@/src/components/ui';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
@@ -860,11 +861,13 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     fontStyle: 'italic',
+    fontFamily: fontFamily.regular,
   },
   subtitle: {
     fontSize: fontSize.lg,
     color: colors.textSecondary,
     marginBottom: spacing.md,
+    fontFamily: fontFamily.regular,
   },
   // Segmented Control
   segmentedControl: {
@@ -891,10 +894,12 @@ const styles = StyleSheet.create({
   segmentText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   segmentTextActive: {
     color: colors.background,
+    fontFamily: fontFamily.semibold,
   },
   // Search
   searchContainer: {
@@ -911,6 +916,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     fontSize: fontSize.md,
     color: colors.textPrimary,
+    fontFamily: fontFamily.regular,
   },
   // Filter
   filterContainer: {
@@ -937,9 +943,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textSecondary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   filterChipTextActive: {
     color: colors.background,
+    fontFamily: fontFamily.medium,
   },
   filterChipWarning: {
     backgroundColor: colors.warning + '15',
@@ -947,6 +955,7 @@ const styles = StyleSheet.create({
   },
   filterChipTextWarning: {
     color: colors.warning,
+    fontFamily: fontFamily.medium,
   },
   // Completion Banner
   completionBanner: {
@@ -968,12 +977,14 @@ const styles = StyleSheet.create({
   completionBannerTitle: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: 2,
   },
   completionBannerText: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
   },
   // List
   listContent: {
@@ -989,6 +1000,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     fontSize: fontSize.md,
     color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
   },
   // Empty/Error states
   placeholder: {
@@ -1003,6 +1015,7 @@ const styles = StyleSheet.create({
   placeholderTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginTop: spacing.md,
     marginBottom: spacing.sm,
@@ -1012,6 +1025,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.xl,
+    fontFamily: fontFamily.regular,
   },
   retryButton: {
     paddingHorizontal: spacing.lg,
@@ -1023,6 +1037,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   noResults: {
     flex: 1,
@@ -1033,6 +1048,7 @@ const styles = StyleSheet.create({
   noResultsTitle: {
     fontSize: fontSize.lg,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginTop: spacing.md,
     marginBottom: spacing.xs,
@@ -1042,6 +1058,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.lg,
+    fontFamily: fontFamily.regular,
   },
   clearFilterButton: {
     paddingHorizontal: spacing.lg,
@@ -1053,6 +1070,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.primary,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
   // FAB
   fab: {
@@ -1096,6 +1114,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.xs,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginTop: 4,
   },
   deleteButton: {
@@ -1111,6 +1130,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.xs,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginTop: 4,
   },
   // Quick Sell Modal
@@ -1133,16 +1153,19 @@ const styles = StyleSheet.create({
   quickSellTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   quickSellListing: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
   },
   quickSellLabel: {
     fontSize: fontSize.sm,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
@@ -1160,12 +1183,14 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xxl,
     color: colors.textSecondary,
     marginRight: spacing.xs,
+    fontFamily: fontFamily.regular,
   },
   quickSellInput: {
     flex: 1,
     fontSize: fontSize.xxl,
     color: colors.textPrimary,
     paddingVertical: spacing.md,
+    fontFamily: fontFamily.regular,
   },
   quickSellPreview: {
     backgroundColor: colors.surface,
@@ -1181,10 +1206,12 @@ const styles = StyleSheet.create({
   quickSellPreviewLabel: {
     fontSize: fontSize.md,
     color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
   },
   quickSellPreviewValue: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   quickSellButton: {
     backgroundColor: colors.profit,
@@ -1202,6 +1229,7 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   quickSellPlatformScroll: {
     marginBottom: spacing.md,
@@ -1222,8 +1250,10 @@ const styles = StyleSheet.create({
   quickSellPlatformText: {
     fontSize: fontSize.sm,
     color: colors.textPrimary,
+    fontFamily: fontFamily.regular,
   },
   quickSellPlatformTextSelected: {
     color: colors.background,
+    fontFamily: fontFamily.regular,
   },
 });

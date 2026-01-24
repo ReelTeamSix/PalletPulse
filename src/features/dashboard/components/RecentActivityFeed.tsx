@@ -5,6 +5,7 @@ import { Card } from '@/src/components/ui/Card';
 import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { formatCurrency } from '@/src/lib/profit-utils';
 
 export type ActivityType = 'sale' | 'listed' | 'pallet' | 'expense';
@@ -172,11 +173,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textSecondary,
     marginTop: spacing.sm,
   },
   emptySubtext: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textDisabled,
     marginTop: spacing.xs,
   },
@@ -200,11 +203,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: 2,
   },
   subtitle: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
   rightContent: {
@@ -214,6 +219,7 @@ const styles = StyleSheet.create({
   value: {
     fontSize: fontSize.md,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
     marginBottom: 2,
   },
   valueProfit: {
@@ -225,11 +231,13 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: 2,
   },
   time: {
     fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
     color: colors.textDisabled,
   },
 });

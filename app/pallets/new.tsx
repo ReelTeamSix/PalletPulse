@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { colors } from '@/src/constants/colors';
+import { fontFamily } from '@/src/constants/fonts';
 import { usePalletsStore, PALLET_ERROR_CODES } from '@/src/stores/pallets-store';
 import {
   PalletForm,

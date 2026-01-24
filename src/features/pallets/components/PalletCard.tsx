@@ -7,6 +7,7 @@ import { Badge } from '@/src/components/ui/Badge';
 import { ProgressBar } from '@/src/components/ui/ProgressBar';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { Pallet, PalletStatus } from '@/src/types/database';
 import { formatCurrency } from '@/src/lib/profit-utils';
 
@@ -155,6 +156,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   name: {
+    fontFamily: fontFamily.bold,
     fontSize: fontSize.xl,
     fontWeight: '700',
     color: colors.textPrimary,
@@ -162,6 +164,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   date: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.md,
     color: colors.textSecondary,
   },
@@ -178,6 +181,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statLabel: {
+    fontFamily: fontFamily.medium,
     fontSize: fontSize.sm,
     fontWeight: '500',
     color: colors.textDisabled,
@@ -186,6 +190,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   statValue: {
+    fontFamily: fontFamily.bold,
     fontSize: fontSize.lg,
     fontWeight: '700',
     color: colors.textPrimary,
@@ -202,6 +207,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   supplierText: {
+    fontFamily: fontFamily.regular,
     fontSize: fontSize.sm,
     color: colors.textDisabled,
   },

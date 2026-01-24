@@ -17,6 +17,7 @@ import { Button, Input } from '@/src/components/ui';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
+import { fontFamily } from '@/src/constants/fonts';
 import { useAuthStore } from '@/src/stores/auth-store';
 import { forgotPasswordSchema, ForgotPasswordFormData } from '@/src/features/auth/schemas/auth-schemas';
 
@@ -190,6 +191,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: 'center',
     maxWidth: 300,
+    fontFamily: fontFamily.regular,
   },
   form: {
     marginBottom: spacing.xl,
@@ -207,6 +209,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.loss,
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
   },
   button: {
     marginTop: spacing.md,
@@ -219,11 +222,13 @@ const styles = StyleSheet.create({
   footerText: {
     color: colors.textSecondary,
     fontSize: fontSize.md,
+    fontFamily: fontFamily.regular,
   },
   linkText: {
     color: colors.primary,
     fontSize: fontSize.md,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
   },
   successContainer: {
     flex: 1,
@@ -251,9 +256,11 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.sm,
+    fontFamily: fontFamily.regular,
   },
   emailText: {
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
   },
   hintText: {
@@ -263,6 +270,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     lineHeight: 20,
     maxWidth: 280,
+    fontFamily: fontFamily.regular,
   },
   resendButton: {
     marginTop: spacing.md,
@@ -272,5 +280,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: fontSize.sm,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
   },
 });

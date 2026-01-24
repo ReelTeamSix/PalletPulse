@@ -5,6 +5,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 import { shadows } from '@/src/constants/shadows';
 import { SubscriptionTier, TierLimits } from '@/src/constants/tier-limits';
 import { PaywallModal } from './PaywallModal';
@@ -207,6 +208,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: fontWeight.medium,
+    fontFamily: fontFamily.medium,
   },
 
   // Card variant
@@ -233,11 +235,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: fontSize.md,
     fontWeight: fontWeight.semibold,
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: 2,
   },
   cardSubtitle: {
     fontSize: fontSize.sm,
+    fontFamily: fontFamily.regular,
     color: colors.textSecondary,
   },
 
@@ -259,6 +263,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.background,
     fontWeight: fontWeight.medium,
+    fontFamily: fontFamily.medium,
     flex: 1,
   },
   bannerButton: {
@@ -271,5 +276,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.primary,
     fontWeight: fontWeight.semibold,
+    fontFamily: fontFamily.semibold,
   },
 });

@@ -18,13 +18,26 @@ export const borderRadius = {
   full: 9999,
 } as const;
 
+/**
+ * Font sizes following mobile accessibility best practices
+ * - Minimum body text: 16px (WCAG 2.0, Material Design)
+ * - Minimum readable: 11px (accessibility threshold)
+ * - Large text: 18px+ (WCAG large text threshold)
+ */
 export const fontSize = {
-  xs: 10,
+  /** Minimum readable - use sparingly (badges, timestamps) */
+  xs: 11,
+  /** Small text - labels, captions */
   sm: 12,
-  md: 14,
-  lg: 16,
+  /** Body text - primary content (WCAG compliant) */
+  md: 16,
+  /** Large body - emphasized content */
+  lg: 17,
+  /** Subheadings */
   xl: 18,
+  /** Section titles */
   xxl: 24,
+  /** Screen titles */
   xxxl: 32,
 } as const;
 

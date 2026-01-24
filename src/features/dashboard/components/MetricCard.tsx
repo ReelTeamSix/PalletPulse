@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/src/components/ui/Card';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius } from '@/src/constants/spacing';
+import { fontFamily } from '@/src/constants/fonts';
 
 interface MetricCardProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -102,16 +103,19 @@ const styles = StyleSheet.create({
   trendText: {
     fontSize: 11,
     fontWeight: '700',
+    fontFamily: fontFamily.bold,
   },
   label: {
     fontSize: 13,
     fontWeight: '500',
+    fontFamily: fontFamily.medium,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
   value: {
     fontSize: 26,
     fontWeight: '800',
+    fontFamily: fontFamily.extrabold,
     color: colors.textPrimary,
     letterSpacing: -0.5,
   },

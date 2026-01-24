@@ -18,6 +18,7 @@ import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
 import { shadows } from '@/src/constants/shadows';
+import { fontFamily } from '@/src/constants/fonts';
 // UI components from analytics feature
 import { TIER_LIMITS } from '@/src/constants/tier-limits';
 
@@ -440,6 +441,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: fontSize.md,
     color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
   },
   emptyState: {
     flex: 1,
@@ -450,6 +452,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: fontSize.xl,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
     marginBottom: spacing.sm,
   },
@@ -457,6 +460,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: colors.textSecondary,
     textAlign: 'center',
+    fontFamily: fontFamily.regular,
   },
   retentionNotice: {
     backgroundColor: colors.card,
@@ -470,6 +474,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textSecondary,
     textAlign: 'center',
+    fontFamily: fontFamily.regular,
   },
   // Header with export button
   headerTop: {
@@ -491,6 +496,7 @@ const styles = StyleSheet.create({
   exportButtonText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
+    fontFamily: fontFamily.semibold,
     color: colors.primary,
   },
 });

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { colors } from '@/src/constants/colors';
+import { fontFamily } from '@/src/constants/fonts';
 import { useMileageStore } from '@/src/stores/mileage-store';
 import { MileageForm, MileageFormData } from '@/src/features/mileage';
 import { ConfirmationModal } from '@/src/components/ui';
