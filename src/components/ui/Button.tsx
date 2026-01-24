@@ -7,10 +7,12 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  AccessibilityRole,
 } from 'react-native';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { haptics } from '@/src/lib/haptics';
+import { TOUCH_TARGET } from '@/src/constants/accessibility';
 
 export interface ButtonProps {
   title: string;
@@ -23,6 +25,12 @@ export interface ButtonProps {
   textStyle?: TextStyle;
   /** Disable haptic feedback for this button */
   noHaptics?: boolean;
+  /** Custom accessibility label (defaults to title) */
+  accessibilityLabel?: string;
+  /** Accessibility hint describing the result of the action */
+  accessibilityHint?: string;
+  /** Test ID for testing */
+  testID?: string;
 }
 
 export function Button({
@@ -35,6 +43,9 @@ export function Button({
   style,
   textStyle,
   noHaptics = false,
+  accessibilityLabel,
+  accessibilityHint,
+  testID,
 }: ButtonProps) {
   const isDisabled = disabled || loading;
 
@@ -57,6 +68,11 @@ export function Button({
       onPress={handlePress}
       disabled={isDisabled}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: isDisabled }}
+      testID={testID}
     >
       {loading ? (
         <ActivityIndicator
@@ -103,11 +119,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
 
-  // Sizes
+  // Sizes - All sizes meet WCAG 2.1 minimum touch target (44px)
   size_sm: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    minHeight: 36,
+    minHeight: TOUCH_TARGET.MIN,
   },
   size_md: {
     paddingVertical: spacing.md,

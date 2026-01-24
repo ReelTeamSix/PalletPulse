@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { haptics } from '@/src/lib/haptics';
+import { TOUCH_TARGET, getValueLabel } from '@/src/constants/accessibility';
 
 // Base props shared by all row types
 interface BaseRowProps {
@@ -20,6 +21,12 @@ interface BaseRowProps {
   isLast?: boolean;
   /** Whether the row is disabled */
   disabled?: boolean;
+  /** Custom accessibility label */
+  accessibilityLabel?: string;
+  /** Accessibility hint */
+  accessibilityHint?: string;
+  /** Test ID for testing */
+  testID?: string;
 }
 
 // Props for standard setting row (with value and/or navigation)
@@ -52,7 +59,12 @@ export function SettingRow({
   hint,
   isLast = false,
   disabled = false,
+  accessibilityLabel,
+  accessibilityHint,
+  testID,
 }: SettingRowProps) {
+  // Generate accessibility label including value if present
+  const a11yLabel = accessibilityLabel || (value ? getValueLabel(label, value) : label);
   const content = (
     <View style={[styles.row, !isLast && styles.rowBorder, disabled && styles.rowDisabled]}>
       {icon && (
@@ -89,12 +101,17 @@ export function SettingRow({
       <Pressable
         onPress={handlePress}
         style={({ pressed }) => pressed && styles.pressed}
+        accessibilityRole="button"
+        accessibilityLabel={a11yLabel}
+        accessibilityHint={accessibilityHint}
+        accessibilityState={{ disabled }}
+        testID={testID}
       >
         {content}
       </Pressable>
     );
   }
-  return content;
+  return <View testID={testID} accessibilityLabel={a11yLabel}>{content}</View>;
 }
 
 /**
@@ -108,14 +125,24 @@ export function ToggleRow({
   hint,
   disabled = false,
   isLast = false,
+  accessibilityLabel,
+  accessibilityHint,
+  testID,
 }: ToggleRowProps) {
   const handleValueChange = (newValue: boolean) => {
     haptics.selection();
     onValueChange(newValue);
   };
 
+  // Generate accessibility label including current state
+  const a11yLabel = accessibilityLabel || `${label}, ${value ? 'on' : 'off'}`;
+
   return (
-    <View style={[styles.row, !isLast && styles.rowBorder, disabled && styles.rowDisabled]}>
+    <View
+      style={[styles.row, !isLast && styles.rowBorder, disabled && styles.rowDisabled]}
+      testID={testID}
+      accessibilityLabel={a11yLabel}
+    >
       {icon && (
         <View style={styles.iconContainer}>
           <Ionicons
@@ -137,6 +164,10 @@ export function ToggleRow({
         trackColor={{ false: colors.border, true: colors.primary }}
         thumbColor={colors.background}
         disabled={disabled}
+        accessibilityLabel={label}
+        accessibilityHint={accessibilityHint || `Double tap to toggle ${label}`}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: value, disabled }}
       />
     </View>
   );
