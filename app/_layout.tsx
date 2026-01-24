@@ -17,6 +17,7 @@ import { colors } from '@/src/constants/colors';
 import { initializeSentry } from '@/src/lib/sentry';
 import logger from '@/src/lib/logger';
 import { ErrorFallback } from '@/src/components/ui';
+import { initializeHaptics } from '@/src/lib/haptics';
 
 // Initialize Sentry as early as possible
 initializeSentry();
@@ -45,9 +46,10 @@ export default function RootLayout() {
   const { initialize, isInitialized, session } = useAuthStore();
   const { initialize: initializeSubscription } = useSubscriptionStore();
 
-  // Initialize auth on app start
+  // Initialize auth and haptics on app start
   useEffect(() => {
     initialize();
+    initializeHaptics();
   }, [initialize]);
 
   // Configure Android navigation bar to be transparent

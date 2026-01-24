@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { haptics } from '@/src/lib/haptics';
 
 export interface ButtonProps {
   title: string;
@@ -20,6 +21,8 @@ export interface ButtonProps {
   loading?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  /** Disable haptic feedback for this button */
+  noHaptics?: boolean;
 }
 
 export function Button({
@@ -31,8 +34,16 @@ export function Button({
   loading = false,
   style,
   textStyle,
+  noHaptics = false,
 }: ButtonProps) {
   const isDisabled = disabled || loading;
+
+  const handlePress = () => {
+    if (!noHaptics) {
+      haptics.light();
+    }
+    onPress();
+  };
 
   return (
     <TouchableOpacity
@@ -43,7 +54,7 @@ export function Button({
         isDisabled && styles.disabled,
         style,
       ]}
-      onPress={onPress}
+      onPress={handlePress}
       disabled={isDisabled}
       activeOpacity={0.7}
     >

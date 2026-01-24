@@ -26,6 +26,7 @@ import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
 import { useOnboardingStore } from '@/src/stores/onboarding-store';
 import { PaywallModal } from '@/src/components/subscription';
+import { isHapticsEnabled, setHapticsEnabled } from '@/src/lib/haptics';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -54,6 +55,7 @@ export default function SettingsScreen() {
   const [expenseModalVisible, setExpenseModalVisible] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [hapticsEnabled, setHapticsEnabledState] = useState(isHapticsEnabled());
   const { resetOnboarding } = useOnboardingStore();
 
   const currentTier = getEffectiveTier();
@@ -153,6 +155,11 @@ export default function SettingsScreen() {
       month: 'short',
       day: 'numeric',
     });
+  };
+
+  const handleHapticsToggle = async (enabled: boolean) => {
+    setHapticsEnabledState(enabled);
+    await setHapticsEnabled(enabled);
   };
 
   if (isLoading && !settings) {
@@ -269,6 +276,13 @@ export default function SettingsScreen() {
           value={settings?.include_unsellable_in_cost ?? false}
           onValueChange={setIncludeUnsellableInCost}
           hint="Allocate pallet cost to unsellable items"
+        />
+        <ToggleRow
+          icon="radio-button-on"
+          label="Haptic Feedback"
+          value={hapticsEnabled}
+          onValueChange={handleHapticsToggle}
+          hint="Tactile feedback on button presses"
           isLast
         />
       </Card>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
+import { haptics } from '@/src/lib/haptics';
 
 type ModalType = 'delete' | 'warning' | 'success' | 'info';
 
@@ -74,7 +75,31 @@ export function ConfirmationModal({
 }: ConfirmationModalProps) {
   const config = modalConfig[type];
 
+  // Trigger haptic when modal becomes visible
+  useEffect(() => {
+    if (visible) {
+      if (type === 'delete' || type === 'warning') {
+        haptics.warning();
+      } else if (type === 'success') {
+        haptics.success();
+      }
+    }
+  }, [visible, type]);
+
+  const handlePrimary = () => {
+    // Haptic feedback based on action type
+    if (type === 'delete') {
+      haptics.medium();
+    } else if (type === 'success') {
+      haptics.success();
+    } else {
+      haptics.light();
+    }
+    onPrimary();
+  };
+
   const handleSecondary = () => {
+    haptics.light();
     if (onSecondary) {
       onSecondary();
     } else if (onClose) {
@@ -119,7 +144,7 @@ export function ConfirmationModal({
           <View style={styles.buttons}>
             <Pressable
               style={[styles.button, styles.primaryButton, { backgroundColor: config.primaryBg }]}
-              onPress={onPrimary}
+              onPress={handlePrimary}
             >
               <Text style={styles.primaryButtonText}>{primaryLabel}</Text>
             </Pressable>

@@ -6,6 +6,7 @@ import { StyleSheet, View, Text, Pressable, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
+import { haptics } from '@/src/lib/haptics';
 
 // Base props shared by all row types
 interface BaseRowProps {
@@ -79,9 +80,14 @@ export function SettingRow({
   );
 
   if (onPress && !disabled) {
+    const handlePress = () => {
+      haptics.light();
+      onPress();
+    };
+
     return (
       <Pressable
-        onPress={onPress}
+        onPress={handlePress}
         style={({ pressed }) => pressed && styles.pressed}
       >
         {content}
@@ -103,6 +109,11 @@ export function ToggleRow({
   disabled = false,
   isLast = false,
 }: ToggleRowProps) {
+  const handleValueChange = (newValue: boolean) => {
+    haptics.selection();
+    onValueChange(newValue);
+  };
+
   return (
     <View style={[styles.row, !isLast && styles.rowBorder, disabled && styles.rowDisabled]}>
       {icon && (
@@ -122,7 +133,7 @@ export function ToggleRow({
       </View>
       <Switch
         value={value}
-        onValueChange={onValueChange}
+        onValueChange={handleValueChange}
         trackColor={{ false: colors.border, true: colors.primary }}
         thumbColor={colors.background}
         disabled={disabled}
