@@ -18,16 +18,20 @@ interface UpgradePromptProps {
 
 // Human-readable limit type names
 const LIMIT_TYPE_NAMES: Partial<Record<keyof TierLimits, string>> = {
-  pallets: 'pallets',
-  items: 'items',
+  activePallets: 'active pallets',
+  archivedPallets: 'archived pallets',
+  activeItems: 'active items',
+  archivedItems: 'archived items',
   photosPerItem: 'photos per item',
   aiDescriptionsPerMonth: 'AI descriptions',
 };
 
 // Feature names for each limit type
 const FEATURE_NAMES: Partial<Record<keyof TierLimits, string>> = {
-  pallets: 'more pallets',
-  items: 'more items',
+  activePallets: 'more active pallets',
+  archivedPallets: 'more archived pallets',
+  activeItems: 'more active items',
+  archivedItems: 'more archived items',
   photosPerItem: 'more photos',
   aiDescriptionsPerMonth: 'more AI descriptions',
   csvExport: 'CSV export',

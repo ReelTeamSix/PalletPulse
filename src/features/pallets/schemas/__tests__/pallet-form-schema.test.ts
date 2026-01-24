@@ -12,6 +12,7 @@ import {
 
 describe('palletFormSchema', () => {
   const validData: PalletFormData = {
+    source_type: 'pallet',
     name: 'Test Pallet',
     supplier: 'Test Supplier',
     source_name: 'Amazon Monster',

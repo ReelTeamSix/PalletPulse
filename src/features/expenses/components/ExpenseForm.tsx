@@ -35,12 +35,18 @@ import { Expense, ExpenseCategory } from '@/src/types/database';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 
 // Category icons for visual identification
+// Note: gas, mileage, fees, shipping are deprecated but included for TypeScript completeness
 const CATEGORY_ICONS: Record<ExpenseCategory, keyof typeof Ionicons.glyphMap> = {
   storage: 'home',
   supplies: 'bag',
   subscriptions: 'card',
   equipment: 'build',
   other: 'ellipsis-horizontal',
+  // Deprecated categories - kept for type completeness
+  gas: 'car',
+  mileage: 'speedometer',
+  fees: 'receipt',
+  shipping: 'cube',
 };
 
 interface ExpenseFormProps {

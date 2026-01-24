@@ -129,7 +129,7 @@ function getBestIndividualItemInsight(soldItems: Item[]): Insight | null {
   let bestItem: Item | null = null;
   let bestROI = -Infinity;
 
-  individualItems.forEach(item => {
+  for (const item of individualItems) {
     const salePrice = item.sale_price ?? 0;
     const cost = item.purchase_cost ?? 0;
     const platformFee = item.platform_fee ?? 0;
@@ -143,7 +143,7 @@ function getBestIndividualItemInsight(soldItems: Item[]): Insight | null {
         bestItem = item;
       }
     }
-  });
+  }
 
   if (bestItem && bestROI > 20) {
     return {
@@ -182,11 +182,11 @@ function getBestPalletInsight(soldItems: Item[], pallets: Pallet[]): Insight | n
   let bestPallet: Pallet | null = null;
   let bestROI = -Infinity;
 
-  Object.entries(palletStats).forEach(([palletId, stats]) => {
-    if (stats.count < 2) return; // Need at least 2 sales
+  for (const [palletId, stats] of Object.entries(palletStats)) {
+    if (stats.count < 2) continue; // Need at least 2 sales
 
     const pallet = pallets.find(p => p.id === palletId);
-    if (!pallet) return;
+    if (!pallet) continue;
 
     const totalCost = pallet.purchase_cost + (pallet.sales_tax ?? 0) + stats.fees;
     if (totalCost > 0) {
@@ -197,7 +197,7 @@ function getBestPalletInsight(soldItems: Item[], pallets: Pallet[]): Insight | n
         bestPallet = pallet;
       }
     }
-  });
+  }
 
   if (bestPallet && bestROI > 0) {
     return {
@@ -366,7 +366,7 @@ function getFastestFlipInsight(soldItems: Item[]): Insight | null {
   let fastestItem: Item | null = null;
   let fastestDays = Infinity;
 
-  recentSales.forEach(item => {
+  for (const item of recentSales) {
     const listingDate = new Date(item.listing_date!);
     const saleDate = new Date(item.sale_date!);
     const daysToSell = Math.floor((saleDate.getTime() - listingDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -375,7 +375,7 @@ function getFastestFlipInsight(soldItems: Item[]): Insight | null {
       fastestDays = daysToSell;
       fastestItem = item;
     }
-  });
+  }
 
   if (fastestItem && fastestDays <= 3) {
     const dayText = fastestDays === 0 ? 'same day' : fastestDays === 1 ? '1 day' : `${fastestDays} days`;

@@ -40,8 +40,8 @@ function createMockProfitLossSummary(overrides?: Partial<ProfitLossSummary>): Pr
     },
     operatingExpenses: {
       byCategory: [
-        { category: 'supplies', label: 'Supplies', amount: 100 },
-        { category: 'storage', label: 'Storage', amount: 50 },
+        { category: 'supplies', label: 'Supplies', amount: 100, count: 5 },
+        { category: 'storage', label: 'Storage', amount: 50, count: 2 },
       ],
       totalOperatingExpenses: 150,
     },
@@ -55,7 +55,10 @@ function createMockProfitLossSummary(overrides?: Partial<ProfitLossSummary>): Pr
       { platform: 'eBay', sales: 3000, fees: 150, count: 30 },
       { platform: 'Mercari', sales: 2000, fees: 100, count: 20 },
     ],
+    totalExpenses: 935, // 450 selling + 150 operating + 335 mileage
     netProfit: 1415,
+    netMargin: 28.3,
+    effectiveTaxRate: null,
     ...overrides,
   };
 }
@@ -201,8 +204,8 @@ describe('generateProfitLossHTML', () => {
       const summary = createMockProfitLossSummary({
         operatingExpenses: {
           byCategory: [
-            { category: 'supplies', label: 'Supplies', amount: 150 },
-            { category: 'storage', label: 'Storage', amount: 100 },
+            { category: 'supplies', label: 'Supplies', amount: 150, count: 6 },
+            { category: 'storage', label: 'Storage', amount: 100, count: 4 },
           ],
           totalOperatingExpenses: 250,
         },

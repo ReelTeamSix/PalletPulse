@@ -457,7 +457,7 @@ export default function ItemDetailScreen() {
                       <Text style={styles.saleDetailTitle}>Platform Fees</Text>
                       {item.platform && PLATFORM_PRESETS[item.platform] && (
                         <Text style={styles.saleDetailSubtitle}>
-                          {PLATFORM_PRESETS[item.platform].defaultFeePercent}% + ${PLATFORM_PRESETS[item.platform].fixedFee?.toFixed(2) || '0.00'} fixed fee
+                          {PLATFORM_PRESETS[item.platform].description}
                         </Text>
                       )}
                     </View>

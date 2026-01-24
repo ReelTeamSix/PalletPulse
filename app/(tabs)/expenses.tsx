@@ -190,7 +190,13 @@ export default function ExpensesScreen() {
     try {
       let result;
       const palletMap = new Map(pallets.map(p => [p.id, p.name]));
-      const exportDateRange = { start: dateRange.start, end: dateRange.end };
+      // Convert Date objects to ISO strings for export functions
+      // Only pass dateRange if both start and end are set
+      const startStr = dateRange.start?.toISOString().split('T')[0];
+      const endStr = dateRange.end?.toISOString().split('T')[0];
+      const exportDateRange = startStr && endStr ? { start: startStr, end: endStr } : undefined;
+      // Also keep nullable version for calculateProfitLoss which accepts nulls
+      const profitLossDateRange = { start: startStr ?? null, end: endStr ?? null };
 
       if (format === 'pdf') {
         // PDF exports
@@ -202,7 +208,7 @@ export default function ExpensesScreen() {
             result = await exportMileagePDF(filteredTrips, palletMap, exportDateRange);
             break;
           case 'profit_loss':
-            const summaryPDF = calculateProfitLoss(items, pallets, expenses, trips, exportDateRange);
+            const summaryPDF = calculateProfitLoss(items, pallets, expenses, trips, profitLossDateRange);
             result = await exportProfitLossPDF(summaryPDF);
             break;
           default:
@@ -218,7 +224,7 @@ export default function ExpensesScreen() {
             result = await exportMileageTrips(filteredTrips, pallets);
             break;
           case 'profit_loss':
-            const summaryCSV = calculateProfitLoss(items, pallets, expenses, trips, exportDateRange);
+            const summaryCSV = calculateProfitLoss(items, pallets, expenses, trips, profitLossDateRange);
             result = await exportProfitLoss(summaryCSV);
             break;
           default:
