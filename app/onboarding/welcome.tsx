@@ -40,7 +40,7 @@ export default function WelcomeScreen() {
               <Ionicons name="cube-outline" size={56} color={colors.primary} />
             </View>
           </View>
-          <Text style={styles.appName}>PalletPulse</Text>
+          <Text style={styles.appName}>Pallet Pro</Text>
           <Text style={styles.title}>Track Your Flipping Business</Text>
           <Text style={styles.subtitle}>
             Know exactly what you're making on every pallet and item you sell

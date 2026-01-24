@@ -161,9 +161,14 @@ export default function QuickSetupScreen() {
 
         {/* Trial Info */}
         <View style={styles.trialInfo}>
-          <Ionicons name="gift-outline" size={20} color={colors.profit} />
-          <Text style={styles.trialText}>
-            Start with a free 7-day Pro trial - no credit card needed
+          <View style={styles.trialHeader}>
+            <Ionicons name="gift-outline" size={20} color={colors.profit} />
+            <Text style={styles.trialText}>
+              Start with a free 7-day Pro trial
+            </Text>
+          </View>
+          <Text style={styles.trialDetails}>
+            Unlimited pallets, photos & detailed analytics - no credit card needed
           </Text>
         </View>
 
@@ -296,20 +301,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   trialInfo: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
     backgroundColor: colors.successBackground,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.lg,
     marginTop: spacing.lg,
   },
+  trialHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
   trialText: {
     fontSize: fontSize.sm,
     color: colors.profit,
-    fontWeight: fontWeight.medium as any,
+    fontWeight: fontWeight.semibold as any,
+  },
+  trialDetails: {
+    fontSize: fontSize.xs,
+    color: colors.profit,
+    textAlign: 'center',
+    opacity: 0.9,
   },
   cta: {
     paddingTop: spacing.lg,
