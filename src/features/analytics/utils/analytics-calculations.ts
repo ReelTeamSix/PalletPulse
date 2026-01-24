@@ -210,15 +210,25 @@ export function calculateRetailMetrics(
  * @param pallets - All pallets
  * @param items - All items
  * @param expenses - All expenses (with pallet_ids)
+ * @param dateRange - Optional date range to filter sold items by sale date
  * @returns Sorted array of pallet analytics (by profit descending)
  */
 export function calculatePalletLeaderboard(
   pallets: Pallet[],
   items: Item[],
-  expenses: ExpenseWithPallets[]
+  expenses: ExpenseWithPallets[],
+  dateRange?: DateRange
 ): PalletAnalytics[] {
+  // Filter sold items by sale date if dateRange provided
+  const filteredItems = dateRange?.start || dateRange?.end
+    ? [
+        ...filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date'),
+        ...items.filter(i => i.status !== 'sold'), // Include non-sold items for counts
+      ]
+    : items;
+
   const analytics: PalletAnalytics[] = pallets.map((pallet) => {
-    const palletItems = items.filter((item) => item.pallet_id === pallet.id);
+    const palletItems = filteredItems.filter((item) => item.pallet_id === pallet.id);
     const palletExpenses = expenses.filter(
       (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
     );
@@ -277,13 +287,23 @@ export function calculatePalletLeaderboard(
  * @param pallets - All pallets
  * @param items - All items
  * @param expenses - All expenses (with pallet_ids)
+ * @param dateRange - Optional date range to filter sold items by sale date
  * @returns Array of type comparisons sorted by average ROI descending
  */
 export function calculateTypeComparison(
   pallets: Pallet[],
   items: Item[],
-  expenses: ExpenseWithPallets[]
+  expenses: ExpenseWithPallets[],
+  dateRange?: DateRange
 ): TypeComparison[] {
+  // Filter sold items by sale date if dateRange provided
+  const filteredItems = dateRange?.start || dateRange?.end
+    ? [
+        ...filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date'),
+        ...items.filter(i => i.status !== 'sold'),
+      ]
+    : items;
+
   // Get unique source types from pallets
   const sourceTypes = [...new Set(pallets.map((p) => p.source_type))];
 
@@ -298,7 +318,7 @@ export function calculateTypeComparison(
     let soldItemsWithDays = 0;
 
     typePallets.forEach((pallet) => {
-      const palletItems = items.filter((item) => item.pallet_id === pallet.id);
+      const palletItems = filteredItems.filter((item) => item.pallet_id === pallet.id);
       const palletExpenses = expenses.filter(
         (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
       );
@@ -361,13 +381,23 @@ export function calculateTypeComparison(
  * @param pallets - All pallets
  * @param items - All items
  * @param expenses - All expenses (with pallet_ids)
+ * @param dateRange - Optional date range to filter sold items by sale date
  * @returns Array of supplier comparisons sorted by total profit descending
  */
 export function calculateSupplierComparison(
   pallets: Pallet[],
   items: Item[],
-  expenses: ExpenseWithPallets[]
+  expenses: ExpenseWithPallets[],
+  dateRange?: DateRange
 ): SupplierComparison[] {
+  // Filter sold items by sale date if dateRange provided
+  const filteredItems = dateRange?.start || dateRange?.end
+    ? [
+        ...filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date'),
+        ...items.filter(i => i.status !== 'sold'),
+      ]
+    : items;
+
   // Get unique suppliers from pallets (normalize null/empty to "Unknown")
   const normalizeSupplier = (supplier: string | null): string => {
     return supplier && supplier.trim() ? supplier.trim() : 'Unknown';
@@ -388,7 +418,7 @@ export function calculateSupplierComparison(
     let soldItemsWithDays = 0;
 
     supplierPallets.forEach((pallet) => {
-      const palletItems = items.filter((item) => item.pallet_id === pallet.id);
+      const palletItems = filteredItems.filter((item) => item.pallet_id === pallet.id);
       const palletExpenses = expenses.filter(
         (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
       );
@@ -447,13 +477,23 @@ export function calculateSupplierComparison(
  * @param pallets - All pallets
  * @param items - All items
  * @param expenses - All expenses (with pallet_ids)
+ * @param dateRange - Optional date range to filter sold items by sale date
  * @returns Array of pallet type comparisons sorted by total profit descending
  */
 export function calculatePalletTypeComparison(
   pallets: Pallet[],
   items: Item[],
-  expenses: ExpenseWithPallets[]
+  expenses: ExpenseWithPallets[],
+  dateRange?: DateRange
 ): PalletTypeComparison[] {
+  // Filter sold items by sale date if dateRange provided
+  const filteredItems = dateRange?.start || dateRange?.end
+    ? [
+        ...filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date'),
+        ...items.filter(i => i.status !== 'sold'),
+      ]
+    : items;
+
   // Get unique pallet types from pallets (normalize null/empty to "Unspecified")
   const normalizePalletType = (sourceName: string | null): string => {
     return sourceName && sourceName.trim() ? sourceName.trim() : 'Unspecified';
@@ -477,7 +517,7 @@ export function calculatePalletTypeComparison(
     let soldItemsWithDays = 0;
 
     typePallets.forEach((pallet) => {
-      const palletItems = items.filter((item) => item.pallet_id === pallet.id);
+      const palletItems = filteredItems.filter((item) => item.pallet_id === pallet.id);
       const palletExpenses = expenses.filter(
         (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
       );

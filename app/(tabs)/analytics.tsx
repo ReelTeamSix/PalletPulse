@@ -133,23 +133,23 @@ export default function AnalyticsScreen() {
   );
 
   const leaderboard = useMemo(
-    () => calculatePalletLeaderboard(pallets, items, expenses),
-    [pallets, items, expenses]
+    () => calculatePalletLeaderboard(pallets, items, expenses, dateRange),
+    [pallets, items, expenses, dateRange]
   );
 
   const typeComparison = useMemo(
-    () => calculateTypeComparison(pallets, items, expenses),
-    [pallets, items, expenses]
+    () => calculateTypeComparison(pallets, items, expenses, dateRange),
+    [pallets, items, expenses, dateRange]
   );
 
   const supplierComparison = useMemo(
-    () => calculateSupplierComparison(pallets, items, expenses),
-    [pallets, items, expenses]
+    () => calculateSupplierComparison(pallets, items, expenses, dateRange),
+    [pallets, items, expenses, dateRange]
   );
 
   const palletTypeComparison = useMemo(
-    () => calculatePalletTypeComparison(pallets, items, expenses),
-    [pallets, items, expenses]
+    () => calculatePalletTypeComparison(pallets, items, expenses, dateRange),
+    [pallets, items, expenses, dateRange]
   );
 
   const staleThreshold = settings?.stale_threshold_days ?? 30;
