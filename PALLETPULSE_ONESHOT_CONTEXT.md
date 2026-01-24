@@ -1,12 +1,14 @@
-# PalletPulse - Comprehensive One-Shot Project Context
+# PalletPro - Comprehensive One-Shot Project Context
 
-> **Purpose:** This document provides complete context for building PalletPulse, a SaaS platform for pallet/mystery box resellers. It is designed to enable autonomous development with minimal clarification needed.
+> **Purpose:** This document provides complete context for building PalletPro, a SaaS platform for pallet/mystery box resellers. It is designed to enable autonomous development with minimal clarification needed.
+
+> **Note:** The app was originally named "PalletPro" but has been rebranded to "PalletPro". All user-facing text, PDFs, and branding should use "PalletPro".
 
 ---
 
 ## 🎯 Executive Summary
 
-**PalletPulse** is a mobile-first SaaS application that helps resellers track inventory, calculate profits, and optimize their sourcing strategies across pallets, mystery boxes, and individual item acquisitions (thrift stores, garage sales, retail arbitrage).
+**PalletPro** is a mobile-first SaaS application that helps resellers track inventory, calculate profits, and optimize their sourcing strategies across pallets, mystery boxes, and individual item acquisitions (thrift stores, garage sales, retail arbitrage).
 
 **Target Market:** Home-based resellers (primary), warehouse operators (future)  
 **Primary Sales Channel:** Facebook Marketplace  
@@ -457,6 +459,7 @@ Pro - $24.99/month
 **Export Options:**
 - CSV (all data)
 - PDF (profit/loss statement for taxes)
+- PDF Expenses Report with Receipt Appendix (Pro tier)
 
 **Future: Intelligent Pricing Model**
 - Tracks what sells quickly vs. slowly
@@ -993,11 +996,16 @@ subscriptions (managed by RevenueCat, mirrored in DB)
 ### Key Screens
 
 **1. Dashboard (Home)**
-- Header: "Dashboard" title with notification icon
-- Hero card: Total Profit (large, color-coded green/red) with items sold count
-- Metric cards: Items Sold, Active Inventory Value
-- Action buttons: "Add Pallet", "Process Items"
+- Header: "Dashboard" title with greeting, notification icon with badge
+- Hero card (HeroCard component):
+  - Time period selector pills: Week | Month | Year | All
+  - Total Profit (large, color-coded green/red) with ROI badge
+  - Items sold count for selected period
+  - Profit goal progress bar (when goals enabled)
+  - Pending to list / Stale items metric cards
+- Strategy Insights section (InsightsCard) with contextual tips
 - Recent activity feed with sales, listings, and new pallets
+- Trial banner (shows in last 3 days of trial)
 
 **2. Inventory Tab (Combined Pallets + Items)**
 - Segmented control: Pallets | Items (persisted selection)
@@ -1036,7 +1044,7 @@ subscriptions (managed by RevenueCat, mirrored in DB)
 
 **6. Settings**
 - **Subscription section:** Current plan with badge, tier description, feature list, Upgrade/Manage button, Restore Purchases
-- **App Settings:** Stale inventory threshold, include unsellable items toggle
+- **App Settings:** Stale inventory threshold, profit goals toggle, include unsellable items toggle
 - **Expense Tracking toggle:** (Starter+ only) Enable/disable expense tracking with disclaimer
 - **About section:** App version, Terms of Service, Privacy Policy
 - Note: Business Type selection removed - subscription tier is now the authoritative feature gate
@@ -1054,10 +1062,10 @@ subscriptions (managed by RevenueCat, mirrored in DB)
 
 ### Expense Tracking Disclaimer
 
-**IMPORTANT:** PalletPulse must include clear disclaimers that it is NOT tax software.
+**IMPORTANT:** PalletPro must include clear disclaimers that it is NOT tax software.
 
 **Required Disclaimer Text (display at key touchpoints):**
-> **Important:** PalletPulse is an inventory tracking tool, not tax software. Expense tracking features are provided for organizational purposes only and should not be considered tax advice. Always consult a qualified tax professional for tax-related decisions. PalletPulse is not liable for any tax reporting errors, omissions, or IRS audit outcomes. Users are solely responsible for maintaining accurate records and consulting with tax professionals.
+> **Important:** PalletPro is an inventory tracking tool, not tax software. Expense tracking features are provided for organizational purposes only and should not be considered tax advice. Always consult a qualified tax professional for tax-related decisions. PalletPro is not liable for any tax reporting errors, omissions, or IRS audit outcomes. Users are solely responsible for maintaining accurate records and consulting with tax professionals.
 
 **Where to Display Disclaimers:**
 
@@ -1075,6 +1083,9 @@ subscriptions (managed by RevenueCat, mirrored in DB)
 
 **Disclaimer for Platform Fees:**
 > Platform fee estimates are based on publicly available fee structures and may not reflect your actual fees due to seller tiers, promotions, or fee changes. Always verify fees with your actual platform invoices.
+
+**Disclaimer for Receipt Appendix (PDF Export):**
+> These receipt images are provided as a convenience only and should not be relied upon as official tax documentation. PalletPro makes no guarantees regarding the accuracy, completeness, or legibility of these images. You are solely responsible for maintaining original receipts and documentation as required by the IRS and applicable tax regulations. Consult a qualified tax professional for guidance on record-keeping requirements.
 
 ### General Liability
 
@@ -1559,13 +1570,13 @@ When faced with technical decisions, prioritize in this order:
 ## 🎉 Success Stories (Aspirational)
 
 **Sarah's Story:**
-> "Before PalletPulse, I was tracking everything in a notebook. I had no idea which pallets were actually making me money. Now I can see that Amazon Monster pallets give me 40% ROI, while Walmart Medium only gives 20%. I've completely changed my sourcing strategy and doubled my profits in 3 months."
+> "Before PalletPro, I was tracking everything in a notebook. I had no idea which pallets were actually making me money. Now I can see that Amazon Monster pallets give me 40% ROI, while Walmart Medium only gives 20%. I've completely changed my sourcing strategy and doubled my profits in 3 months."
 
 **Mike's Story:**
-> "I was nervous to start reselling, but PalletPulse made it so easy. I bought my first pallet for $250, processed it in the app, and sold everything for $450. Seeing that $200 profit in the app gave me the confidence to keep going. Now I'm doing 5 pallets a month."
+> "I was nervous to start reselling, but PalletPro made it so easy. I bought my first pallet for $250, processed it in the app, and sold everything for $450. Seeing that $200 profit in the app gave me the confidence to keep going. Now I'm doing 5 pallets a month."
 
 **GRPL Partnership:**
-> "Our customers love PalletPulse. They're making smarter buying decisions and coming back more often because they can see what's working. It's a win-win - they make more money, we sell more pallets."
+> "Our customers love PalletPro. They're making smarter buying decisions and coming back more often because they can see what's working. It's a win-win - they make more money, we sell more pallets."
 
 ---
 
@@ -1577,19 +1588,27 @@ Features captured for future development. Prioritization will be based on user f
 
 Enable users to set and track business targets:
 
-| Goal Type | Example | Dashboard Display |
-|-----------|---------|-------------------|
-| Profit Target | "Make $500 this month" | Progress bar with % complete |
-| Sales Volume | "Sell 20 items this week" | Items sold vs target |
-| Listing Target | "List 10 items per day" | Daily/weekly listing count |
-| ROI Target | "Maintain 50%+ ROI" | Current ROI vs target |
+| Goal Type | Example | Dashboard Display | Status |
+|-----------|---------|-------------------|--------|
+| Profit Target | "Make $500 this month" | Progress bar with % complete | ✅ Implemented |
+| Sales Volume | "Sell 20 items this week" | Items sold vs target | Future |
+| Listing Target | "List 10 items per day" | Daily/weekly listing count | Future |
+| ROI Target | "Maintain 50%+ ROI" | Current ROI vs target | Future |
 
-**Key Features:**
-- Goal creation wizard
-- Progress tracking widgets on dashboard
+**Implemented (Phase 11H):**
+- ✅ Profit goals for week/month/year periods
+- ✅ Progress bar visualization in HeroCard
+- ✅ Goal percentage display
+- ✅ GoalModal with preset amounts and custom input
+- ✅ Enable/disable goals toggle in Settings
+- ✅ Goals stored locally (AsyncStorage, no cloud sync)
+
+**Future Enhancements:**
+- Goal creation wizard with multiple goal types
 - Notifications when goals are met or at risk
 - Historical goal tracking (hit rate over time)
 - Integration with InsightsCard for motivation
+- Cloud sync for goals across devices
 
 ### Categories System (v1.1+)
 
@@ -1611,6 +1630,37 @@ Organize inventory and unlock category-based analytics:
 - Analytics: ROI by category, best/worst performers
 - Track category performance by pallet source
 - User-defined categories (Pro tier)
+
+### Gamification System (v1.2+)
+
+Increase engagement through achievements, streaks, and social sharing.
+
+**Badges:**
+| Badge | Trigger |
+|-------|---------|
+| First Sale | Sell your first item |
+| Streak Master | 7-day listing streak |
+| Profit Pro | Hit $1,000 total profit |
+| Goal Crusher | Complete 5 profit goals |
+| Quick Flipper | Sell item within 24 hours |
+| ROI Rockstar | 100%+ ROI on a pallet |
+| Century Club | Sell 100 items |
+
+**Streaks:**
+- Daily listing streaks
+- Weekly sales streaks
+- Goal completion streaks
+- Streak freeze tokens (Pro tier)
+
+**Social Sharing:**
+- "Share Win" button after achievements
+- Pre-formatted share cards (Instagram, Twitter, Facebook)
+- Optional profit amount display (privacy control)
+- Referral code integration
+
+**Leaderboards (Pro):**
+- Opt-in anonymous rankings
+- Weekly profit, monthly sales, best ROI
 
 ### Other Roadmap Ideas
 

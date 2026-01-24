@@ -1,8 +1,8 @@
 # Pallet Pro Development Progress
 
 ## Current Phase: Phase 11 - Polish
-**Status:** In Progress (Logging & Diagnostics Complete)
-**Branch:** feature/polish
+**Status:** In Progress (Dashboard Goals & UX Improvements Complete)
+**Branch:** feature/onboarding-redesign
 
 ---
 
@@ -1356,6 +1356,7 @@ Tests:       783 passed, 783 total
 ### Should Add
 - [x] Dashboard time period selector (Week/Month/Year/All-Time profit) ✅
 - [x] Smart insights on dashboard (rules-based) ✅
+- [x] Profit goals on dashboard (local-only, week/month/year) ✅
 - [ ] AI-powered deep analysis (Premium feature)
   - LLM-generated insights on request
   - Analyze trends, suggest actions
@@ -1376,17 +1377,21 @@ Features captured for future development after MVP launch. Prioritization based 
 
 **Purpose:** Help users set and track business targets for motivation and accountability.
 
-**Potential Features:**
-- Profit targets (weekly/monthly/quarterly)
-- Sales volume goals (items sold per period)
-- Listing targets (items to list per day/week)
-- ROI targets (maintain minimum ROI)
-- Progress tracking on dashboard (progress bars, percentage)
-- Goal history and achievement tracking
-- Notifications when goals are met or at risk
+**Implemented (Phase 11H):**
+- [x] Profit targets (weekly/monthly/yearly) - stored locally
+- [x] Progress tracking on dashboard (progress bar, percentage)
+
+**Future Enhancements:**
+- [ ] Sales volume goals (items sold per period)
+- [ ] Listing targets (items to list per day/week)
+- [ ] ROI targets (maintain minimum ROI)
+- [ ] Goal history and achievement tracking
+- [ ] Notifications when goals are met or at risk
+- [ ] Cloud sync for goals (requires database table)
 
 **Implementation Notes:**
-- New `goals` table: `id, user_id, type, target_value, period, start_date, end_date, status`
+- Current: Goals stored in AsyncStorage (local-only, no cloud sync)
+- Future: New `goals` table: `id, user_id, type, target_value, period, start_date, end_date, status`
 - Dashboard widget showing goal progress
 - InsightsCard integration for goal-related tips
 - Consider gamification (streaks, badges)
@@ -1409,6 +1414,51 @@ Features captured for future development after MVP launch. Prioritization based 
 - Category dropdown in item form
 - New analytics section for category breakdown
 - Consider allowing user-defined categories (Pro feature?)
+
+### Gamification System (v1.2+)
+
+**Purpose:** Increase user engagement and motivation through achievements, streaks, and social sharing.
+
+**Badges & Achievements:**
+| Badge | Trigger | Icon Idea |
+|-------|---------|-----------|
+| First Sale | Sell your first item | 🎉 Party popper |
+| Streak Master | 7-day listing streak | 🔥 Fire |
+| Profit Pro | Hit $1,000 total profit | 💰 Money bag |
+| Goal Crusher | Complete 5 profit goals | 🎯 Target |
+| Pallet Pioneer | Process 10 pallets | 📦 Box stack |
+| Quick Flipper | Sell item within 24 hours | ⚡ Lightning |
+| ROI Rockstar | Achieve 100%+ ROI on a pallet | 🚀 Rocket |
+| Century Club | Sell 100 items | 💯 100 |
+| Consistent Closer | Sell items 30 days in a row | 📈 Chart up |
+
+**Streaks & Progress:**
+- Daily listing streaks (list X items per day)
+- Weekly sales streaks (sell at least 1 item per week)
+- Goal completion streaks (hit monthly goal X months in a row)
+- Visual streak counter on dashboard
+- Streak freeze tokens (Pro tier) to preserve streaks
+
+**Social Sharing:**
+- "Share Win" button after hitting a goal or earning a badge
+- Pre-formatted share cards with:
+  - Achievement unlocked message
+  - Profit milestone (optional, user can hide amount)
+  - PalletPro branding/watermark
+- Share to: Instagram Stories, Twitter/X, Facebook, copy image
+- Referral program integration (share code with wins)
+
+**Leaderboards (Pro tier):**
+- Opt-in anonymous leaderboards
+- Categories: Weekly profit, Monthly sales, Best ROI
+- Privacy: Show rank without revealing actual numbers
+
+**Implementation Notes:**
+- New `achievements` table: `id, user_id, badge_type, earned_at`
+- New `streaks` table: `id, user_id, streak_type, current_count, best_count, last_activity_date`
+- Badge unlock notifications
+- Achievement showcase on profile (optional)
+- Consider partnership with social platforms for native sharing
 
 ### Other Post-MVP Ideas
 
@@ -1625,6 +1675,185 @@ Lint: passes
 **Commits:**
 - `feat(items): update Item Detail status indicator and condition badge`
 - `feat(items): comprehensive Item Detail screen redesign`
+
+---
+
+### 11G: Expenses Screen Redesign ✅
+**Completed:** Jan 19, 2026
+
+**Overview:**
+Comprehensive redesign of the Expenses screen with new export capabilities including PDF export with receipt appendix and reusable expense components.
+
+**Files Created:**
+- `src/features/expenses/components/ExpenseCard.tsx` - Redesigned expense card and compact variant
+- `src/features/expenses/components/SummaryCard.tsx` - Reusable summary card with rows
+- `src/features/expenses/components/TopCategoriesScroll.tsx` - Horizontal scrolling category overview
+- `src/features/expenses/components/ExpenseExportModal.tsx` - Export modal for CSV/PDF
+- `src/features/expenses/index.ts` - Feature exports
+
+**Files Modified:**
+- `src/features/analytics/utils/pdf-export.ts` - Added receipt appendix support with:
+  - `localUriToBase64()` - Convert local file URIs to base64
+  - `loadReceiptImages()` - Load receipt photos for PDF embedding
+  - `generateReceiptAppendixPages()` - Generate 2x2 grid of receipt images
+  - Legal disclaimer for receipt accuracy
+  - Null date handling fix
+  - Branding updated to "PalletPro"
+
+**Key Features:**
+
+1. **Export Modal**
+   - Three export types: Expenses, Mileage Trips, Profit & Loss Summary
+   - Format selector: CSV (all tiers) / PDF (Pro tier gated)
+   - Professional card-based option selection
+   - Pro badge on locked PDF option
+
+2. **Receipt Appendix in PDF Export**
+   - Expenses with receipts automatically included in PDF
+   - 2x2 grid layout (4 receipts per page)
+   - Receipt metadata: date, category, amount
+   - **Legal Disclaimer:** "These receipt images are provided as a convenience only and should not be relied upon as official tax documentation. PalletPro makes no guarantees regarding the accuracy, completeness, or legibility of these images."
+
+3. **Reusable Components**
+   - `SummaryCard` with `SummaryCardRow` for consistent summary displays
+   - `ExpenseCardCompact` for list views
+   - `TopCategoriesScroll` for category overview
+
+**Unit Tests Created:**
+- `src/features/analytics/utils/__tests__/pdf-export.test.ts` - Comprehensive tests including:
+  - `generateProfitLossHTML` tests (rendering, financial data, platform breakdown, mileage, page structure)
+  - `generateExpensesHTML` tests (metrics, category grouping, null date handling, receipt appendix)
+  - `generateMileageHTML` tests (metrics, IRS rate info, trip list, empty state)
+
+**Test Results:**
+```
+TypeScript: passes
+Lint: passes
+All tests: pass
+```
+
+**Commits:**
+- `feat(expenses): add receipt appendix to PDF export with legal disclaimer`
+
+---
+
+### 11H: Dashboard Profit Goals & UX Improvements ✅
+**Completed:** Jan 23, 2026
+
+**Overview:**
+Added profit goals tracking to the dashboard with progress visualization, removed QuickActions based on UX research, and fixed the toggle flicker bug with optimistic updates.
+
+**Files Modified:**
+- `app/(tabs)/index.tsx` - Dashboard screen
+  - Added profit goal display in HeroCard
+  - Added GoalModal trigger for setting goals
+  - Removed QuickActions component (UX decision)
+  - Integrated profitGoalsEnabled from user settings
+- `src/features/dashboard/components/HeroCard.tsx` - Enhanced HeroCard
+  - Added goal progress bar visualization
+  - Added goal percentage display
+  - "Set Goal" CTA when no goal is set
+  - Pencil icon for editing existing goal
+- `src/features/dashboard/components/GoalModal.tsx` - **NEW** Goal setting modal
+  - Set goals for week/month/year
+  - Quick-select preset amounts ($100, $250, $500, $1000 for weekly, etc.)
+  - Input validation (positive numbers, max $10M)
+  - Clear goal option
+  - Disable goals option
+- `src/stores/user-settings-store.ts` - Added profit goals state
+  - `profitGoals: { week, month, year }` - Local-only settings (AsyncStorage)
+  - `profitGoalsEnabled` - Toggle to show/hide goal tracking
+  - `setProfitGoal(period, goal)` - Set goal for a period
+  - `getProfitGoal(period)` - Get goal for a period
+  - Optimistic updates for settings changes (fixes toggle flicker)
+- `app/(tabs)/settings.tsx` - Added Profit Goals toggle
+  - Settings row to enable/disable goal tracking on dashboard
+
+**Features:**
+1. **Profit Goals Tracking**
+   - Set weekly, monthly, or yearly profit targets
+   - Visual progress bar in HeroCard
+   - Percentage complete display
+   - Quick-select presets for common goal amounts
+   - Goals stored locally (not synced to cloud)
+
+2. **QuickActions Removal** (UX Research Decision)
+   - Removed redundant QuickActions section from dashboard
+   - Research findings (UserPilot, Mobile UX studies):
+     - 66% of user attention is below the fold
+     - 90% of mobile users scroll within 14 seconds
+     - Tab bar is in thumb zone (more accessible than mid-screen buttons)
+     - Quick actions were redundant with tab navigation
+   - Result: Recent Activity now visible above the fold
+
+3. **Toggle Flicker Fix**
+   - Problem: Settings toggles would flicker (off→on→off or on→off→on)
+   - Cause: UI re-rendered before API call completed
+   - Solution: Optimistic updates - apply changes immediately, revert on error
+   - Tested and verified on device
+
+**Unit Tests Added:**
+- `src/stores/__tests__/user-settings-store.test.ts` - Added 20 new tests:
+  - Profit goals initial state tests
+  - `setProfitGoal()` tests for week/month/year
+  - `getProfitGoal()` tests for each period
+  - `setProfitGoalsEnabled()` enable/disable tests
+  - Optimistic update behavior tests
+  - Revert on error tests
+
+**Test Results:**
+```
+TypeScript: passes
+Lint: passes
+All tests: pass
+```
+
+**Commits:**
+- `feat(dashboard): add profit goals with progress tracking and settings toggle`
+- `refactor(dashboard): remove QuickActions in favor of tab navigation`
+
+---
+
+## Summary: PalletPro Application
+
+### What is PalletPro?
+
+PalletPro (formerly PalletPulse) is a mobile-first SaaS application for pallet and mystery box resellers. It helps users:
+
+- **Track Inventory:** Manage pallets, individual items, photos, conditions, and storage locations
+- **Calculate Profits:** Automatic cost allocation, ROI calculation, and profit tracking by pallet
+- **Track Expenses:** Mileage trips (IRS rate deduction), overhead expenses, per-item platform fees
+- **Analyze Performance:** Dashboard metrics, supplier comparison, pallet type analytics
+- **Export for Taxes:** CSV and professional PDF reports with receipt appendix
+
+### Target Users
+
+1. **Home-Based Resellers:** Buy pallets from liquidation companies (GRPL, Bulq), process items at home, sell on Facebook Marketplace/eBay
+2. **Side Hustlers:** Part-time resellers wanting to track profitability
+3. **Business Operators:** Full-time resellers needing tax-ready expense tracking
+
+### Subscription Tiers
+
+| Tier | Price | Features |
+|------|-------|----------|
+| Free | $0 | 1 pallet, 20 items, 1 photo/item, basic analytics |
+| Starter | $9.99/mo | 25 pallets, 500 items, 3 photos, expense tracking, CSV export |
+| Pro | $24.99/mo | Unlimited, 10 photos, PDF export, advanced analytics, AI descriptions |
+
+### Tech Stack
+
+- **Frontend:** React Native + Expo (TypeScript)
+- **Backend:** Supabase (PostgreSQL, Auth, Storage)
+- **State Management:** Zustand with persistence
+- **Subscriptions:** RevenueCat
+- **Error Tracking:** Sentry
+
+### Key Workflows
+
+1. **Add Pallet → Add Items → Mark Sold → View Profit**
+2. **Track Mileage → Export for Taxes**
+3. **Log Expenses → Link to Pallets → View Deductions**
+4. **Analyze → Compare Suppliers → Optimize Sourcing**
 
 ---
 
