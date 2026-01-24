@@ -2,6 +2,7 @@
 // This file initializes and exports the Supabase client for use throughout the app
 
 import { createClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import logger from './logger';
 
@@ -18,13 +19,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 // Create Supabase client
 // Note: Type safety can be added later using `npx supabase gen types typescript`
+// AsyncStorage is only used on native platforms (iOS/Android), not web/Node.js
+// This prevents "window is not defined" errors during EAS Update export
 export const supabase = createClient(
   supabaseUrl ?? '',
   supabaseAnonKey ?? '',
   {
     auth: {
-      // Use AsyncStorage for session persistence on mobile
-      storage: AsyncStorage,
+      // Only use AsyncStorage on native platforms
+      ...(Platform.OS !== 'web' ? { storage: AsyncStorage } : {}),
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,
