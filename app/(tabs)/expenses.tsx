@@ -409,20 +409,11 @@ export default function ExpensesScreen() {
     );
   }
 
-  // Show loading state for initial data load (header visible, loading centered)
+  // Show full-screen centered loading for initial data load
   if (isLoadingData && !hasData) {
     return (
-      <View style={styles.container}>
-        <View style={[styles.headerFixed, { paddingTop: insets.top + spacing.md }]}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.title}>Expenses</Text>
-            <Text style={styles.subtitle}>Track overheads & mileage</Text>
-          </View>
-        </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading expenses...</Text>
-        </View>
+      <View style={styles.loadingScreen}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -584,10 +575,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: spacing.md,
   },
-  headerFixed: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-  },
   headerLeft: {
     flex: 1,
   },
@@ -615,17 +602,11 @@ const styles = StyleSheet.create({
     ...typography.screenTitle,
     color: colors.textPrimary,
   },
-  loadingContainer: {
+  loadingScreen: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.xxl,
-  },
-  loadingText: {
-    marginTop: spacing.md,
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-    fontFamily: fontFamily.regular,
+    backgroundColor: colors.backgroundSecondary,
   },
   emptyState: {
     alignItems: 'center',

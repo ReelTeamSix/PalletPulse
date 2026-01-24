@@ -253,23 +253,11 @@ export default function DashboardScreen() {
     }
   };
 
-  // Show loading state for initial data load
+  // Show full-screen centered loading for initial data load
   if (isLoading && pallets.length === 0 && items.length === 0) {
     return (
-      <View style={styles.container}>
-        <View style={{ marginTop: insets.top }}>
-          <TrialBanner />
-        </View>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Dashboard</Text>
-            <Text style={styles.greeting}>{getGreeting()}</Text>
-          </View>
-        </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading data...</Text>
-        </View>
+      <View style={styles.loadingScreen}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -445,16 +433,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     letterSpacing: 0.5,
   },
-  loadingContainer: {
+  loadingScreen: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.xxl,
-  },
-  loadingText: {
-    marginTop: spacing.md,
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-    fontFamily: fontFamily.regular,
+    backgroundColor: colors.backgroundSecondary,
   },
 });

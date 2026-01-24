@@ -165,9 +165,8 @@ export default function SettingsScreen() {
 
   if (isLoading && !settings) {
     return (
-      <View style={[styles.container, styles.loadingContainer, { paddingTop: insets.top }]}>
+      <View style={styles.loadingScreen}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading settings...</Text>
       </View>
     );
   }
@@ -409,17 +408,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: spacing.lg,
   },
-  loadingContainer: {
+  loadingScreen: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.xxl,
-  },
-  loadingText: {
-    marginTop: spacing.md,
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-    fontFamily: fontFamily.regular,
+    backgroundColor: colors.backgroundSecondary,
   },
   title: {
     ...typography.screenTitle,

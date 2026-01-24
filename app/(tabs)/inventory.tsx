@@ -478,7 +478,7 @@ export default function InventoryScreen() {
   // Don't render until segment is loaded from storage
   if (!segmentLoaded) {
     return (
-      <View style={[styles.container, styles.loadingContainer]}>
+      <View style={styles.loadingScreen}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -610,11 +610,8 @@ export default function InventoryScreen() {
 
       {/* Content */}
       {isLoading && (activeSegment === 'pallets' ? activePallets.length === 0 : items.length === 0) ? (
-        <View style={styles.loadingContainer}>
+        <View style={styles.loadingScreen}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>
-            Loading {activeSegment === 'pallets' ? 'pallets' : 'items'}...
-          </Text>
         </View>
       ) : error && (activeSegment === 'pallets' ? activePallets.length === 0 : items.length === 0) ? (
         renderErrorState()
@@ -991,17 +988,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xxl,
   },
-  loadingContainer: {
+  loadingScreen: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: spacing.xxl,
-  },
-  loadingText: {
-    marginTop: spacing.md,
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-    fontFamily: fontFamily.regular,
+    backgroundColor: colors.backgroundSecondary,
   },
   // Empty/Error states
   placeholder: {
