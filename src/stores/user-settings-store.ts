@@ -13,7 +13,7 @@ const DEFAULT_SETTINGS: Omit<UserSettings, 'id' | 'user_id' | 'created_at' | 'up
   default_sales_tax_rate: null,
   mileage_rate: 0.725, // 2026 IRS rate
   include_unsellable_in_cost: false,
-  expense_tracking_enabled: false, // Off by default
+  expense_tracking_enabled: true, // On by default (users get Pro trial)
   user_type: 'hobby', // Default to hobby flipper
   notification_stale_inventory: true,
   notification_weekly_summary: true,

@@ -20,7 +20,7 @@ const mockSettings: UserSettings = {
   default_sales_tax_rate: null,
   mileage_rate: 0.725,
   include_unsellable_in_cost: false,
-  expense_tracking_enabled: false,
+  expense_tracking_enabled: true,
   user_type: 'hobby',
   notification_stale_inventory: true,
   notification_weekly_summary: true,
@@ -577,9 +577,9 @@ describe('UserSettingsStore', () => {
       expect(mockSettings.mileage_rate).toBe(0.725);
     });
 
-    it('should have expense tracking disabled by default', () => {
+    it('should have expense tracking enabled by default (Pro trial)', () => {
       useUserSettingsStore.setState({ settings: mockSettings });
-      expect(mockSettings.expense_tracking_enabled).toBe(false);
+      expect(mockSettings.expense_tracking_enabled).toBe(true);
     });
 
     it('should have hobby as default user type', () => {
