@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
+import { LoadingScreen } from '@/src/components/ui';
 import { spacing, fontSize } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
 import { fontFamily } from '@/src/constants/fonts';
@@ -164,11 +165,7 @@ export default function SettingsScreen() {
   };
 
   if (isLoading && !settings) {
-    return (
-      <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -407,12 +404,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: spacing.lg,
-  },
-  loadingScreen: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundSecondary,
   },
   title: {
     ...typography.screenTitle,

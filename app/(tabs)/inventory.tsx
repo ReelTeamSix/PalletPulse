@@ -19,6 +19,7 @@ import { Swipeable, GestureHandlerRootView } from 'react-native-gesture-handler'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
+import { LoadingScreen } from '@/src/components/ui';
 import { spacing, fontSize, borderRadius } from '@/src/constants/spacing';
 import { typography } from '@/src/constants/typography';
 import { fontFamily } from '@/src/constants/fonts';
@@ -477,21 +478,13 @@ export default function InventoryScreen() {
 
   // Don't render until segment is loaded from storage
   if (!segmentLoaded) {
-    return (
-      <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   // Show full-screen centered loading for initial data load
   const hasNoData = activeSegment === 'pallets' ? activePallets.length === 0 : items.length === 0;
   if (isLoading && hasNoData) {
-    return (
-      <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -993,12 +986,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xxl,
-  },
-  loadingScreen: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundSecondary,
   },
   // Empty/Error states
   placeholder: {

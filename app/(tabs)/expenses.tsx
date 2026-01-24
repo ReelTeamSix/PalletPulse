@@ -22,7 +22,7 @@ import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
 import { useMileageStore, MileageTripWithPallets } from '@/src/stores/mileage-store';
 import { Card } from '@/src/components/ui/Card';
-import { ConfirmationModal } from '@/src/components/ui';
+import { ConfirmationModal, LoadingScreen } from '@/src/components/ui';
 import {
   SummaryCard,
   SummaryCardRow,
@@ -411,11 +411,7 @@ export default function ExpensesScreen() {
 
   // Show full-screen centered loading for initial data load
   if (isLoadingData && !hasData) {
-    return (
-      <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -601,12 +597,6 @@ const styles = StyleSheet.create({
   title: {
     ...typography.screenTitle,
     color: colors.textPrimary,
-  },
-  loadingScreen: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundSecondary,
   },
   emptyState: {
     alignItems: 'center',
