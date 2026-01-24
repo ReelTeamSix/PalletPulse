@@ -38,9 +38,9 @@ export default function GetStartedScreen() {
           <View style={styles.successIconContainer}>
             <Ionicons name="checkmark" size={48} color={colors.background} />
           </View>
-          <Text style={styles.title}>You're all set!</Text>
+          <Text style={styles.title}>You&apos;re all set!</Text>
           <Text style={styles.subtitle}>
-            Your 7-day Pro trial is active. Let's get started.
+            Your 7-day Pro trial is active. Let&apos;s get started.
           </Text>
         </View>
 

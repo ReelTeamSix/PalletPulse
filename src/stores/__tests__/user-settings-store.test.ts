@@ -592,9 +592,8 @@ describe('UserSettingsStore', () => {
       expect(mockSettings.include_unsellable_in_cost).toBe(false);
     });
   });
-});
 
-describe('profit goals (local-only)', () => {
+  describe('profit goals (local-only)', () => {
     beforeEach(() => {
       useUserSettingsStore.setState({
         settings: mockSettings,

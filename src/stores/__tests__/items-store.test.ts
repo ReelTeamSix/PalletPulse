@@ -25,6 +25,18 @@ jest.mock('../subscription-store', () => ({
     getState: () => ({
       canPerform: () => true, // Allow all operations in tests
       getRequiredTierForAction: () => null,
+      getLimitForAction: () => Infinity, // No limit triggers notifications
+    }),
+  },
+}));
+
+// Also mock with alias path for dynamic require()
+jest.mock('@/src/stores/subscription-store', () => ({
+  useSubscriptionStore: {
+    getState: () => ({
+      canPerform: () => true,
+      getRequiredTierForAction: () => null,
+      getLimitForAction: () => Infinity,
     }),
   },
 }));
@@ -187,6 +199,23 @@ describe('ItemsStore', () => {
             }),
           };
         }
+        if (table === 'notifications') {
+          // Mock for limit warning notification check
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  gte: jest.fn().mockResolvedValue({ data: [], error: null }),
+                }),
+              }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { id: 'notif-1' }, error: null }),
+              }),
+            }),
+          };
+        }
         return {};
       });
 
@@ -206,12 +235,36 @@ describe('ItemsStore', () => {
       });
 
       const itemWithoutPallet = { ...mockItem, pallet_id: null, allocated_cost: null };
-      const mockInsert = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({ data: itemWithoutPallet, error: null }),
-        }),
+
+      // Mock different responses for different tables
+      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+        if (table === 'items') {
+          return {
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: itemWithoutPallet, error: null }),
+              }),
+            }),
+          };
+        }
+        if (table === 'notifications') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  gte: jest.fn().mockResolvedValue({ data: [], error: null }),
+                }),
+              }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { id: 'notif-1' }, error: null }),
+              }),
+            }),
+          };
+        }
+        return {};
       });
-      (supabase.from as jest.Mock).mockReturnValue({ insert: mockInsert });
 
       const result = await useItemsStore.getState().addItem({
         name: 'Test Item',

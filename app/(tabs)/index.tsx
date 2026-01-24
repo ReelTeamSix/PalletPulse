@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState, useEffect, useRef } from 'react';
+import { useMemo, useCallback, useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -54,8 +54,9 @@ export default function DashboardScreen() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showGoalModal, setShowGoalModal] = useState(false);
 
-  // Get profit goals from user settings
-  const { profitGoals, setProfitGoal, profitGoalsEnabled, setProfitGoalsEnabled } = useUserSettingsStore();
+  // Get profit goals and settings from user settings store
+  const { profitGoals, setProfitGoal, profitGoalsEnabled, setProfitGoalsEnabled, settings } = useUserSettingsStore();
+  const staleThresholdDays = settings?.stale_threshold_days ?? 30;
 
   // Get the goal for the current time period (no goal for "all" time)
   const currentGoal = timePeriod === 'all' ? null : profitGoals[timePeriod];
@@ -148,9 +149,7 @@ export default function DashboardScreen() {
     };
   }, [items, expenses, timePeriod, calculatePeriodProfit]);
 
-  // Get stale threshold from user settings (needed for metrics calculation)
-  const { settings } = useUserSettingsStore();
-  const staleThresholdDays = settings?.stale_threshold_days ?? 30;
+  // staleThresholdDays is declared above (extracted from settings store)
 
   // Actionable metrics for metric cards
   const actionableMetrics = useMemo(() => {

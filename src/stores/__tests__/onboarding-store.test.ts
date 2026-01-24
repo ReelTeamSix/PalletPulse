@@ -244,16 +244,16 @@ describe('OnboardingStore', () => {
     });
 
     it('should downgrade to selected tier after trial ends', async () => {
-      const store = useOnboardingStore.getState();
+      const { startTrial, completeOnboarding, endTrial } = useOnboardingStore.getState();
 
-      await store.startTrial('starter');
-      await store.completeOnboarding('pro', 'starter');
+      await startTrial('starter');
+      await completeOnboarding('pro', 'starter');
 
-      // Verify pro during trial
-      expect(store.currentTier).toBe('pro');
+      // Verify pro during trial (get fresh state)
+      expect(useOnboardingStore.getState().currentTier).toBe('pro');
 
       // End trial
-      store.endTrial();
+      endTrial();
 
       const state = useOnboardingStore.getState();
       // After trial, user is on free tier (would need to subscribe for starter)

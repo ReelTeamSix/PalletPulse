@@ -56,7 +56,12 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
       // Update app badge
       await setBadgeCount(unreadCount);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to fetch notifications';
+      // Handle both Error instances and Supabase error objects
+      const message = error instanceof Error
+        ? error.message
+        : (error && typeof error === 'object' && 'message' in error)
+          ? String((error as { message: unknown }).message)
+          : 'Failed to fetch notifications';
       set({ error: message, isLoading: false });
     }
   },

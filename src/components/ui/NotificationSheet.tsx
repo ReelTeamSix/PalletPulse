@@ -198,7 +198,7 @@ export function NotificationSheet({ visible, onClose }: NotificationSheetProps) 
       </View>
       <Text style={styles.emptyTitle}>No Notifications</Text>
       <Text style={styles.emptySubtitle}>
-        You're all caught up!
+        You&apos;re all caught up!
       </Text>
     </View>
   );

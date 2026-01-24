@@ -43,7 +43,7 @@ export default function WelcomeScreen() {
           <Text style={styles.appName}>Pallet Pro</Text>
           <Text style={styles.title}>Track Your Flipping Business</Text>
           <Text style={styles.subtitle}>
-            Know exactly what you're making on every pallet and item you sell
+            Know exactly what you&apos;re making on every pallet and item you sell
           </Text>
         </View>
 

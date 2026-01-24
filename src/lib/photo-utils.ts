@@ -1,5 +1,6 @@
 // Photo Utilities - Picking, compressing, and uploading images
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { Image } from 'react-native';
 import { supabase } from './supabase';
 
@@ -175,6 +176,39 @@ export function calculateResizedDimensions(
 }
 
 /**
+ * Compress and resize an image before upload
+ * This is the key function for reducing storage costs
+ */
+export async function compressImage(uri: string): Promise<string> {
+  try {
+    // Get original dimensions to calculate proper resize
+    const dimensions = await getImageDimensions(uri);
+    const { width: targetWidth, height: targetHeight } = calculateResizedDimensions(
+      dimensions.width,
+      dimensions.height,
+      COMPRESSION_CONFIG.maxWidth,
+      COMPRESSION_CONFIG.maxHeight
+    );
+
+    // Resize and compress
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: targetWidth, height: targetHeight } }],
+      {
+        compress: COMPRESSION_CONFIG.quality,
+        format: ImageManipulator.SaveFormat.JPEG,
+      }
+    );
+
+    return result.uri;
+  } catch (error) {
+    // If compression fails, return original URI
+    console.warn('Image compression failed, using original:', error);
+    return uri;
+  }
+}
+
+/**
  * Convert image URI to ArrayBuffer for upload (React Native/Expo compatible)
  */
 async function uriToArrayBuffer(uri: string): Promise<ArrayBuffer> {
@@ -195,7 +229,8 @@ export function generateStoragePath(userId: string, itemId: string, fileName: st
 
 /**
  * Upload a photo to Supabase Storage with compression
- * The image is already compressed during picking via expo-image-picker quality setting
+ * Images are resized to max 800x800 and compressed to 50% JPEG quality
+ * Typical result: 50-120KB per photo (vs 2-5MB raw from camera)
  */
 export async function uploadItemPhoto(
   photo: PhotoPickResult,
@@ -206,8 +241,11 @@ export async function uploadItemPhoto(
     // Generate storage path
     const storagePath = generateStoragePath(userId, itemId, photo.fileName ?? 'photo.jpg');
 
+    // Compress and resize image before upload
+    const compressedUri = await compressImage(photo.uri);
+
     // Convert to ArrayBuffer (React Native/Expo compatible)
-    const arrayBuffer = await uriToArrayBuffer(photo.uri);
+    const arrayBuffer = await uriToArrayBuffer(compressedUri);
 
     // Upload to Supabase Storage
     const { error } = await supabase.storage

@@ -16,6 +16,18 @@ jest.mock('../subscription-store', () => ({
     getState: () => ({
       canPerform: () => true, // Allow all operations in tests
       getRequiredTierForAction: () => null,
+      getLimitForAction: () => Infinity, // No limit triggers notifications
+    }),
+  },
+}));
+
+// Also mock with alias path for dynamic require()
+jest.mock('@/src/stores/subscription-store', () => ({
+  useSubscriptionStore: {
+    getState: () => ({
+      canPerform: () => true,
+      getRequiredTierForAction: () => null,
+      getLimitForAction: () => Infinity,
     }),
   },
 }));
@@ -94,12 +106,36 @@ describe('PalletsStore', () => {
         data: { user: { id: 'user-123' } },
       });
 
-      const mockInsert = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue({
-          single: jest.fn().mockResolvedValue({ data: mockPallet, error: null }),
-        }),
+      // Mock different responses based on table being accessed
+      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+        if (table === 'pallets') {
+          return {
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: mockPallet, error: null }),
+              }),
+            }),
+          };
+        }
+        if (table === 'notifications') {
+          // Mock for limit warning notification check
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  gte: jest.fn().mockResolvedValue({ data: [], error: null }),
+                }),
+              }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({ data: { id: 'notif-1' }, error: null }),
+              }),
+            }),
+          };
+        }
+        return {};
       });
-      (supabase.from as jest.Mock).mockReturnValue({ insert: mockInsert });
 
       const result = await usePalletsStore.getState().addPallet({
         name: 'Test Pallet',

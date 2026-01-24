@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SubscriptionTier } from '@/src/types/database';
+import { supabase } from '@/src/lib/supabase';
 
 // Trial duration in days (based on RevenueCat research: 7 days optimal)
 const TRIAL_DURATION_DAYS = 7;
@@ -95,6 +96,24 @@ export const useOnboardingStore = create<OnboardingState>()(
           },
           currentTier: 'pro', // Immediate Pro access during trial
         });
+
+        // Sync trial dates to Supabase for server-side notifications
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase
+              .from('user_settings')
+              .update({
+                trial_start_date: now.toISOString(),
+                trial_end_date: endDate.toISOString(),
+                trial_active: true,
+              })
+              .eq('user_id', user.id);
+          }
+        } catch (error) {
+          console.error('Failed to sync trial to Supabase:', error);
+          // Non-critical - local state is source of truth
+        }
       },
 
       endTrial: () => {
@@ -109,6 +128,21 @@ export const useOnboardingStore = create<OnboardingState>()(
           // In production, this would check RevenueCat for actual subscription
           currentTier: 'free',
         });
+
+        // Sync trial end to Supabase
+        (async () => {
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              await supabase
+                .from('user_settings')
+                .update({ trial_active: false })
+                .eq('user_id', user.id);
+            }
+          } catch (error) {
+            console.error('Failed to sync trial end to Supabase:', error);
+          }
+        })();
       },
 
       checkTrialStatus: () => {
