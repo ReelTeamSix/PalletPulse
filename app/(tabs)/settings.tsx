@@ -37,6 +37,8 @@ export default function SettingsScreen() {
     toggleExpenseTracking,
     setStaleThreshold,
     setIncludeUnsellableInCost,
+    profitGoalsEnabled,
+    setProfitGoalsEnabled,
   } = useUserSettingsStore();
   const {
     getEffectiveTier,
@@ -253,6 +255,13 @@ export default function SettingsScreen() {
           label="Stale Inventory Threshold"
           value={`${settings?.stale_threshold_days ?? 30} days`}
           onPress={handleStaleThresholdChange}
+        />
+        <ToggleRow
+          icon="trophy"
+          label="Profit Goals"
+          value={profitGoalsEnabled}
+          onValueChange={setProfitGoalsEnabled}
+          hint="Show profit goal tracker on dashboard"
         />
         <ToggleRow
           icon="calculator"

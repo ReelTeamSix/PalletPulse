@@ -28,6 +28,15 @@ export interface UserSettingsState {
   isLoading: boolean;
   error: string | null;
 
+  // Local-only settings (stored in AsyncStorage, not Supabase)
+  // Profit goals by time period
+  profitGoals: {
+    week: number | null;
+    month: number | null;
+    year: number | null;
+  };
+  profitGoalsEnabled: boolean;
+
   // Actions
   fetchSettings: () => Promise<void>;
   updateSettings: (updates: Partial<UserSettings>) => Promise<{ success: boolean; error?: string }>;
@@ -42,6 +51,11 @@ export interface UserSettingsState {
   setMileageRate: (rate: number) => Promise<{ success: boolean; error?: string }>;
   setSalesTaxRate: (rate: number | null) => Promise<{ success: boolean; error?: string }>;
 
+  // Goals (local-only)
+  setProfitGoal: (period: 'week' | 'month' | 'year', goal: number | null) => void;
+  getProfitGoal: (period: 'week' | 'month' | 'year') => number | null;
+  setProfitGoalsEnabled: (enabled: boolean) => void;
+
   // Helpers
   isExpenseTrackingEnabled: () => boolean;
   getUserType: () => UserType;
@@ -55,6 +69,12 @@ export const useUserSettingsStore = create<UserSettingsState>()(
       settings: null,
       isLoading: false,
       error: null,
+      profitGoals: {
+        week: null,
+        month: null,
+        year: null,
+      },
+      profitGoalsEnabled: true,
 
       fetchSettings: async () => {
         set({ isLoading: true, error: null });
@@ -93,11 +113,17 @@ export const useUserSettingsStore = create<UserSettingsState>()(
       },
 
       updateSettings: async (updates) => {
-        set({ isLoading: true, error: null });
-        try {
-          const currentSettings = get().settings;
-          if (!currentSettings) throw new Error('No settings to update');
+        const currentSettings = get().settings;
+        if (!currentSettings) {
+          set({ error: 'No settings to update', isLoading: false });
+          return { success: false, error: 'No settings to update' };
+        }
 
+        // Optimistic update - apply changes immediately for responsive UI
+        const optimisticSettings = { ...currentSettings, ...updates } as UserSettings;
+        set({ settings: optimisticSettings, isLoading: true, error: null });
+
+        try {
           const { data, error } = await supabase
             .from('user_settings')
             .update(updates)
@@ -113,9 +139,9 @@ export const useUserSettingsStore = create<UserSettingsState>()(
           });
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to update settings';
-          set({ error: message, isLoading: false });
-          return { success: false, error: message };
+          // Revert to previous settings on error
+          set({ settings: currentSettings, error: error instanceof Error ? error.message : 'Failed to update settings', isLoading: false });
+          return { success: false, error: error instanceof Error ? error.message : 'Failed to update settings' };
         }
       },
 
@@ -148,6 +174,24 @@ export const useUserSettingsStore = create<UserSettingsState>()(
         return get().updateSettings({ default_sales_tax_rate: rate });
       },
 
+      // Goals (local-only, stored in AsyncStorage)
+      setProfitGoal: (period, goal) => {
+        set((state) => ({
+          profitGoals: {
+            ...state.profitGoals,
+            [period]: goal,
+          },
+        }));
+      },
+
+      getProfitGoal: (period) => {
+        return get().profitGoals[period];
+      },
+
+      setProfitGoalsEnabled: (enabled) => {
+        set({ profitGoalsEnabled: enabled });
+      },
+
       isExpenseTrackingEnabled: () => {
         return get().settings?.expense_tracking_enabled ?? false;
       },
@@ -163,7 +207,11 @@ export const useUserSettingsStore = create<UserSettingsState>()(
     {
       name: 'user-settings-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ settings: state.settings }),
+      partialize: (state) => ({
+        settings: state.settings,
+        profitGoals: state.profitGoals,
+        profitGoalsEnabled: state.profitGoalsEnabled,
+      }),
     }
   )
 );

@@ -18,9 +18,8 @@ import { checkStaleInventoryNotification, createTrialEndingNotification } from '
 import { useOnboardingStore } from '@/src/stores/onboarding-store';
 import {
   HeroCard,
-  MetricCard,
-  MetricGrid,
-  ActionButtonPair,
+  QuickActions,
+  GoalModal,
   RecentActivityFeed,
   InsightsCard,
   Activity,
@@ -54,6 +53,13 @@ export default function DashboardScreen() {
   // Time period filter for hero card
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showGoalModal, setShowGoalModal] = useState(false);
+
+  // Get profit goals from user settings
+  const { profitGoals, setProfitGoal, profitGoalsEnabled, setProfitGoalsEnabled } = useUserSettingsStore();
+
+  // Get the goal for the current time period (no goal for "all" time)
+  const currentGoal = timePeriod === 'all' ? null : profitGoals[timePeriod];
 
   useFocusEffect(
     useCallback(() => {
@@ -111,6 +117,13 @@ export default function DashboardScreen() {
 
     const periodProfit = calculatePeriodProfit(soldItemsInPeriod, periodExpensesAmount);
 
+    // Calculate ROI for the period
+    const totalCost = soldItemsInPeriod.reduce(
+      (sum, item) => sum + (item.allocated_cost ?? item.purchase_cost ?? 0),
+      0
+    ) + periodExpensesAmount;
+    const roi = totalCost > 0 ? (periodProfit / totalCost) * 100 : 0;
+
     // Calculate previous period profit for comparison
     const { start: prevStart, end: prevEnd } = getPreviousPeriodRange(timePeriod);
     let previousProfit: number | undefined;
@@ -132,6 +145,7 @@ export default function DashboardScreen() {
       soldCount: soldItemsInPeriod.length,
       isProfitable: periodProfit >= 0,
       previousProfit,
+      roi,
     };
   }, [items, expenses, timePeriod, calculatePeriodProfit]);
 
@@ -281,24 +295,21 @@ export default function DashboardScreen() {
         timePeriod={timePeriod}
         onTimePeriodChange={setTimePeriod}
         previousPeriodProfit={periodMetrics.previousProfit}
+        roi={periodMetrics.roi}
+        profitGoal={currentGoal}
+        goalsEnabled={profitGoalsEnabled}
+        pendingToListCount={actionableMetrics.pendingToListCount}
+        staleItemsCount={actionableMetrics.staleItemsCount}
+        onPendingPress={() => router.push({ pathname: '/(tabs)/inventory', params: { filter: 'unlisted', segment: 'items' } })}
+        onStalePress={() => router.push({ pathname: '/(tabs)/inventory', params: { filter: 'stale', segment: 'items' } })}
+        onGoalPress={() => setShowGoalModal(true)}
       />
 
-      <MetricGrid>
-        <MetricCard
-          icon="layers-outline"
-          value={actionableMetrics.pendingToListCount}
-          label="Pending to List"
-          color={actionableMetrics.pendingToListCount > 0 ? colors.primary : colors.neutral}
-          onPress={() => router.push({ pathname: '/(tabs)/inventory', params: { filter: 'unlisted', segment: 'items' } })}
-        />
-        <MetricCard
-          icon="time-outline"
-          value={actionableMetrics.staleItemsCount}
-          label="Stale Items"
-          color={actionableMetrics.staleItemsCount > 0 ? colors.warning : colors.neutral}
-          onPress={() => router.push({ pathname: '/(tabs)/inventory', params: { filter: 'stale', segment: 'items' } })}
-        />
-      </MetricGrid>
+      {/* Strategy Insight Section */}
+      <View style={styles.sectionHeader}>
+        <Ionicons name="sparkles" size={16} color={colors.primary} />
+        <Text style={styles.sectionHeaderText}>STRATEGY INSIGHT</Text>
+      </View>
 
       <InsightsCard
         insights={insights}
@@ -321,13 +332,10 @@ export default function DashboardScreen() {
         }}
       />
 
-      <ActionButtonPair
-        primaryLabel="Add Pallet"
-        primaryIcon="add"
-        primaryOnPress={() => router.push('/pallets/new')}
-        secondaryLabel="Process Items"
-        secondaryIcon="scan-outline"
-        secondaryOnPress={() => router.push('/(tabs)/inventory')}
+      <QuickActions
+        onAddPallet={() => router.push('/pallets/new')}
+        onAddItem={() => router.push('/items/new')}
+        onViewAnalytics={() => router.push('/(tabs)/analytics')}
       />
 
       <RecentActivityFeed
@@ -340,6 +348,18 @@ export default function DashboardScreen() {
           visible={showNotifications}
           onClose={() => setShowNotifications(false)}
         />
+
+        {/* Goal Modal - only show for week/month/year, not "all" */}
+        {timePeriod !== 'all' && (
+          <GoalModal
+            visible={showGoalModal}
+            period={timePeriod}
+            currentGoal={currentGoal}
+            onSave={(goal) => setProfitGoal(timePeriod, goal)}
+            onClose={() => setShowGoalModal(false)}
+            onDisable={() => setProfitGoalsEnabled(false)}
+          />
+        )}
       </ScrollView>
     </View>
   );
@@ -395,5 +415,17 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '700',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  sectionHeaderText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
   },
 });
