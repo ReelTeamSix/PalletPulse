@@ -409,6 +409,24 @@ export default function ExpensesScreen() {
     );
   }
 
+  // Show loading state for initial data load (header visible, loading centered)
+  if (isLoadingData && !hasData) {
+    return (
+      <View style={styles.container}>
+        <View style={[styles.headerFixed, { paddingTop: insets.top + spacing.md }]}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.title}>Expenses</Text>
+            <Text style={styles.subtitle}>Track overheads & mileage</Text>
+          </View>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading expenses...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <>
       <ScrollView
@@ -443,12 +461,7 @@ export default function ExpensesScreen() {
       {/* Date Filter */}
       <DateRangeFilter value={dateRange} onChange={setDateRange} />
 
-      {isLoadingData && !hasData ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading expenses...</Text>
-        </View>
-      ) : error && !hasData ? (
+      {error && !hasData ? (
         renderErrorState()
       ) : !hasData ? (
         renderEmptyState()
@@ -570,6 +583,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: spacing.md,
+  },
+  headerFixed: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
   },
   headerLeft: {
     flex: 1,

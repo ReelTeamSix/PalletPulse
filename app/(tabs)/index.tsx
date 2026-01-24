@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -253,6 +253,27 @@ export default function DashboardScreen() {
     }
   };
 
+  // Show loading state for initial data load
+  if (isLoading && pallets.length === 0 && items.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={{ marginTop: insets.top }}>
+          <TrialBanner />
+        </View>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>Dashboard</Text>
+            <Text style={styles.greeting}>{getGreeting()}</Text>
+          </View>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Loading data...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Trial Banner - shows in last 3 days of trial */}
@@ -423,5 +444,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textSecondary,
     letterSpacing: 0.5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: spacing.xxl,
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
   },
 });
