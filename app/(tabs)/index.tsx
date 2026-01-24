@@ -18,7 +18,6 @@ import { checkStaleInventoryNotification, createTrialEndingNotification } from '
 import { useOnboardingStore } from '@/src/stores/onboarding-store';
 import {
   HeroCard,
-  QuickActions,
   GoalModal,
   RecentActivityFeed,
   InsightsCard,
@@ -330,12 +329,6 @@ export default function DashboardScreen() {
             router.push('/(tabs)/inventory');
           }
         }}
-      />
-
-      <QuickActions
-        onAddPallet={() => router.push('/pallets/new')}
-        onAddItem={() => router.push('/items/new')}
-        onViewAnalytics={() => router.push('/(tabs)/analytics')}
       />
 
       <RecentActivityFeed
