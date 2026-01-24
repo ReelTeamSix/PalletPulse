@@ -3,9 +3,13 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session, User, AuthError } from '@supabase/supabase-js';
+import * as Linking from 'expo-linking';
 import { supabase } from '@/src/lib/supabase';
 import logger from '@/src/lib/logger';
 import { createWelcomeNotification } from '@/src/lib/notification-triggers';
+
+// Create redirect URL for auth callbacks (email confirmation, password reset)
+const redirectUrl = Linking.createURL('auth/callback');
 
 const log = logger.createLogger({ screen: 'AuthStore' });
 
@@ -100,6 +104,7 @@ export const useAuthStore = create<AuthState>()(
             email,
             password,
             options: {
+              emailRedirectTo: redirectUrl,
               data: {
                 affiliate_code: affiliateCode || null,
               },
@@ -203,7 +208,7 @@ export const useAuthStore = create<AuthState>()(
           set({ isLoading: true, error: null });
 
           const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: 'palletpro://reset-password',
+            redirectTo: Linking.createURL('reset-password'),
           });
 
           if (error) {
