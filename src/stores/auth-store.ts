@@ -67,7 +67,16 @@ export const useAuthStore = create<AuthState>()(
 
           if (error) {
             log.error('Error getting session', { action: 'initialize' }, error);
-            set({ isLoading: false, isInitialized: true, error: formatAuthError(error) });
+            // Clear invalid session state on auth errors (e.g., invalid refresh token)
+            set({
+              user: null,
+              session: null,
+              isLoading: false,
+              isInitialized: true,
+              error: null  // Don't show error for stale sessions, just redirect to login
+            });
+            // Sign out to clear any stale tokens
+            await supabase.auth.signOut();
             return;
           }
 
