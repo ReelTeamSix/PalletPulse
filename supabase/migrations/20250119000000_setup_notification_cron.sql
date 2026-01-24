@@ -59,8 +59,8 @@ BEGIN
 END;
 $$;
 
--- Schedule the cron job (runs daily at 9 AM UTC)
--- Adjust the schedule as needed: '0 9 * * *' = 9:00 AM every day
+-- Schedule the cron job (runs daily at 2 PM UTC = 9 AM Eastern / 10 AM EDT)
+-- Adjust the schedule as needed: '0 14 * * *' = 2:00 PM UTC every day
 -- Using SELECT to avoid error if cron extension not enabled
 DO $$
 BEGIN
@@ -72,7 +72,7 @@ BEGIN
     -- Schedule new job
     PERFORM cron.schedule(
       'daily-notifications',
-      '0 9 * * *',  -- 9 AM UTC daily
+      '0 14 * * *',  -- 2 PM UTC = 9 AM Eastern / 10 AM EDT
       'SELECT invoke_daily_notifications()'
     );
 

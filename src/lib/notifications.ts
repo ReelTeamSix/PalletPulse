@@ -1,6 +1,7 @@
 // Push Notification Service - Expo Notifications Integration
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { router } from 'expo-router';
 
@@ -52,7 +53,7 @@ export async function registerForPushNotifications(): Promise<PushToken | null> 
   // Get the Expo push token
   try {
     const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: process.env.EXPO_PUBLIC_PROJECT_ID,
+      projectId: Constants.expoConfig?.extra?.eas?.projectId,
     });
 
     const deviceType = Platform.OS === 'ios' ? 'ios' : 'android';
