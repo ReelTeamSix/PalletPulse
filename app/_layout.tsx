@@ -52,11 +52,19 @@ export default function RootLayout() {
 
   // Configure Android navigation bar to be transparent
   useEffect(() => {
-    if (Platform.OS === 'android') {
-      NavigationBar.setBackgroundColorAsync('transparent');
-      NavigationBar.setPositionAsync('absolute');
-      NavigationBar.setButtonStyleAsync('dark');
+    async function configureNavigationBar() {
+      if (Platform.OS === 'android') {
+        try {
+          await NavigationBar.setBackgroundColorAsync('transparent');
+          await NavigationBar.setPositionAsync('absolute');
+          await NavigationBar.setButtonStyleAsync('dark');
+        } catch (e) {
+          // expo-navigation-bar API may vary between versions
+          console.warn('Failed to configure navigation bar:', e);
+        }
+      }
     }
+    configureNavigationBar();
   }, []);
 
   // Initialize subscription/RevenueCat after auth is ready
