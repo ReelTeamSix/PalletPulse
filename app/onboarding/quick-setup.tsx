@@ -19,6 +19,8 @@ import { useOnboardingStore } from '@/src/stores/onboarding-store';
 interface FlipperProfile {
   id: 'hobby' | 'side_hustle' | 'business';
   icon: keyof typeof Ionicons.glyphMap;
+  iconBgColor: string;
+  iconColor: string;
   title: string;
   subtitle: string;
   description: string;
@@ -29,6 +31,8 @@ const FLIPPER_PROFILES: FlipperProfile[] = [
   {
     id: 'hobby',
     icon: 'happy-outline',
+    iconBgColor: '#FEF3C7', // Warm amber/orange background
+    iconColor: '#F59E0B',   // Amber icon
     title: 'Just for Fun',
     subtitle: 'A few items here and there',
     description: 'Perfect for casual flipping',
@@ -37,6 +41,8 @@ const FLIPPER_PROFILES: FlipperProfile[] = [
   {
     id: 'side_hustle',
     icon: 'wallet-outline',
+    iconBgColor: colors.primaryLight, // Blue background
+    iconColor: colors.primary,        // Blue icon
     title: 'Side Hustle',
     subtitle: 'Making extra income',
     description: 'Track fees and expenses',
@@ -44,9 +50,11 @@ const FLIPPER_PROFILES: FlipperProfile[] = [
   },
   {
     id: 'business',
-    icon: 'business-outline',
+    icon: 'calendar-outline',
+    iconBgColor: '#F3E8FF', // Purple background
+    iconColor: '#9333EA',   // Purple icon
     title: 'Serious Business',
-    subtitle: 'This is my job',
+    subtitle: 'This is my full-time job',
     description: 'Full analytics and reports',
     recommended: false,
   },
@@ -119,12 +127,12 @@ export default function QuickSetupScreen() {
               <View style={styles.profileContent}>
                 <View style={[
                   styles.profileIcon,
-                  selectedProfile === profile.id && styles.profileIconSelected,
+                  { backgroundColor: profile.iconBgColor },
                 ]}>
                   <Ionicons
                     name={profile.icon}
                     size={28}
-                    color={selectedProfile === profile.id ? colors.primary : colors.textSecondary}
+                    color={profile.iconColor}
                   />
                 </View>
 
@@ -249,13 +257,9 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 14,
-    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
-  },
-  profileIconSelected: {
-    backgroundColor: colors.primaryLight,
   },
   profileText: {
     flex: 1,

@@ -6,7 +6,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -14,8 +13,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/constants/colors';
 import { spacing, borderRadius, fontSize, fontWeight } from '@/src/constants/spacing';
 import { shadows } from '@/src/constants/shadows';
-
-const { width } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -33,8 +30,15 @@ export default function WelcomeScreen() {
       <View style={styles.content}>
         {/* Hero Section */}
         <View style={styles.hero}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="cube-outline" size={64} color={colors.primary} />
+          <View style={styles.iconWrapper}>
+            {/* Decorative corner arcs */}
+            <View style={[styles.cornerArc, styles.cornerTopLeft]} />
+            <View style={[styles.cornerArc, styles.cornerTopRight]} />
+            <View style={[styles.cornerArc, styles.cornerBottomLeft]} />
+            <View style={[styles.cornerArc, styles.cornerBottomRight]} />
+            <View style={styles.iconContainer}>
+              <Ionicons name="cube-outline" size={56} color={colors.primary} />
+            </View>
           </View>
           <Text style={styles.appName}>PalletPulse</Text>
           <Text style={styles.title}>Track Your Flipping Business</Text>
@@ -47,15 +51,24 @@ export default function WelcomeScreen() {
         <View style={styles.features}>
           <FeatureRow
             icon="cash-outline"
-            text="See profit instantly when you sell"
+            iconBg={colors.successBackground}
+            iconColor={colors.profit}
+            title="See profit instantly"
+            description="Automated calculations for every sale you record."
           />
           <FeatureRow
             icon="layers-outline"
-            text="Track inventory from pallet to sale"
+            iconBg={colors.primaryLight}
+            iconColor={colors.primary}
+            title="Track inventory life"
+            description="Monitor items from arrival to final sale delivery."
           />
           <FeatureRow
             icon="analytics-outline"
-            text="Find out what's actually working"
+            iconBg={colors.warningBackground}
+            iconColor={colors.warning}
+            title="Performance insights"
+            description="Find out which categories are your top earners."
           />
         </View>
 
@@ -85,16 +98,22 @@ export default function WelcomeScreen() {
 
 interface FeatureRowProps {
   icon: keyof typeof Ionicons.glyphMap;
-  text: string;
+  iconBg: string;
+  iconColor: string;
+  title: string;
+  description: string;
 }
 
-function FeatureRow({ icon, text }: FeatureRowProps) {
+function FeatureRow({ icon, iconBg, iconColor, title, description }: FeatureRowProps) {
   return (
     <View style={styles.featureRow}>
-      <View style={styles.featureIcon}>
-        <Ionicons name={icon} size={20} color={colors.primary} />
+      <View style={[styles.featureIcon, { backgroundColor: iconBg }]}>
+        <Ionicons name={icon} size={22} color={iconColor} />
       </View>
-      <Text style={styles.featureText}>{text}</Text>
+      <View style={styles.featureTextContainer}>
+        <Text style={styles.featureTitle}>{title}</Text>
+        <Text style={styles.featureDescription}>{description}</Text>
+      </View>
     </View>
   );
 }
@@ -113,15 +132,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: spacing.xxl,
   },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 30,
-    backgroundColor: colors.primaryLight,
+  iconWrapper: {
+    width: 140,
+    height: 140,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.lg,
+    position: 'relative',
+  },
+  iconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 25,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
     ...shadows.lg,
+  },
+  cornerArc: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+    borderColor: colors.primary,
+    borderWidth: 3,
+    borderRadius: 8,
+  },
+  cornerTopLeft: {
+    top: 0,
+    left: 0,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+    borderTopLeftRadius: 12,
+  },
+  cornerTopRight: {
+    top: 0,
+    right: 0,
+    borderLeftWidth: 0,
+    borderBottomWidth: 0,
+    borderTopRightRadius: 12,
+  },
+  cornerBottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderRightWidth: 0,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 12,
+  },
+  cornerBottomRight: {
+    bottom: 0,
+    right: 0,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    borderBottomRightRadius: 12,
   },
   appName: {
     fontSize: fontSize.lg,
@@ -138,10 +200,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   subtitle: {
-    fontSize: fontSize.lg,
+    fontSize: fontSize.md,
     color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 22,
     paddingHorizontal: spacing.md,
   },
   features: {
@@ -152,23 +214,31 @@ const styles = StyleSheet.create({
   },
   featureRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
+    alignItems: 'flex-start',
+    paddingVertical: spacing.sm + 2,
   },
   featureIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: colors.primaryLight,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
   },
-  featureText: {
+  featureTextContainer: {
     flex: 1,
+    paddingTop: 2,
+  },
+  featureTitle: {
     fontSize: fontSize.md,
     color: colors.textPrimary,
-    fontWeight: fontWeight.medium as any,
+    fontWeight: fontWeight.semibold as any,
+    marginBottom: 2,
+  },
+  featureDescription: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
   cta: {
     paddingBottom: spacing.lg,

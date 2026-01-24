@@ -35,8 +35,8 @@ export default function GetStartedScreen() {
       <View style={styles.content}>
         {/* Success Header */}
         <View style={styles.header}>
-          <View style={styles.successIcon}>
-            <Ionicons name="checkmark-circle" size={64} color={colors.profit} />
+          <View style={styles.successIconContainer}>
+            <Ionicons name="checkmark" size={48} color={colors.background} />
           </View>
           <Text style={styles.title}>You're all set!</Text>
           <Text style={styles.subtitle}>
@@ -83,19 +83,31 @@ export default function GetStartedScreen() {
 
         {/* Pro Tips */}
         <View style={styles.tips}>
-          <Text style={styles.tipsTitle}>Pro Tips</Text>
+          <View style={styles.tipsHeader}>
+            <Ionicons name="bulb-outline" size={18} color={colors.textSecondary} />
+            <Text style={styles.tipsTitle}>PRO TIPS</Text>
+          </View>
           <View style={styles.tipsList}>
             <TipItem
               icon="camera-outline"
-              text="Take photos of items for easy listing"
+              iconBg="#F3E8FF"
+              iconColor="#9333EA"
+              title="Take photos of items"
+              description="Capture visual proof for easier listings and inventory tracking."
             />
             <TipItem
               icon="pricetag-outline"
-              text="Log your listing price to track stale inventory"
+              iconBg="#FEF3C7"
+              iconColor="#F59E0B"
+              title="Log your listing price"
+              description="Keep track of stale inventory by monitoring price adjustments."
             />
             <TipItem
               icon="receipt-outline"
-              text="Track expenses for accurate profit"
+              iconBg={colors.primaryLight}
+              iconColor={colors.primary}
+              title="Track all expenses"
+              description="Input shipping and fees to see your true accurate net profit."
             />
           </View>
         </View>
@@ -106,14 +118,22 @@ export default function GetStartedScreen() {
 
 interface TipItemProps {
   icon: keyof typeof Ionicons.glyphMap;
-  text: string;
+  iconBg: string;
+  iconColor: string;
+  title: string;
+  description: string;
 }
 
-function TipItem({ icon, text }: TipItemProps) {
+function TipItem({ icon, iconBg, iconColor, title, description }: TipItemProps) {
   return (
     <View style={styles.tipItem}>
-      <Ionicons name={icon} size={18} color={colors.primary} />
-      <Text style={styles.tipText}>{text}</Text>
+      <View style={[styles.tipIconContainer, { backgroundColor: iconBg }]}>
+        <Ionicons name={icon} size={20} color={iconColor} />
+      </View>
+      <View style={styles.tipTextContainer}>
+        <Text style={styles.tipTitle}>{title}</Text>
+        <Text style={styles.tipDescription}>{description}</Text>
+      </View>
     </View>
   );
 }
@@ -132,8 +152,15 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     marginBottom: spacing.xl,
   },
-  successIcon: {
+  successIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.profit,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.lg,
+    ...shadows.md,
   },
   title: {
     fontSize: fontSize.xxl,
@@ -209,23 +236,45 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     ...shadows.sm,
   },
-  tipsTitle: {
-    fontSize: fontSize.md,
-    fontWeight: fontWeight.semibold as any,
-    color: colors.textPrimary,
-    marginBottom: spacing.md,
-  },
-  tipsList: {
-    gap: spacing.md,
-  },
-  tipItem: {
+  tipsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    marginBottom: spacing.lg,
   },
-  tipText: {
+  tipsTitle: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold as any,
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+  },
+  tipsList: {
+    gap: spacing.lg,
+  },
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  tipIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  tipTextContainer: {
+    flex: 1,
+  },
+  tipTitle: {
+    fontSize: fontSize.md,
+    fontWeight: fontWeight.semibold as any,
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  tipDescription: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
-    flex: 1,
+    lineHeight: 18,
   },
 });

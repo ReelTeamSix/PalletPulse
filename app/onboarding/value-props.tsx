@@ -23,32 +23,44 @@ const { width } = Dimensions.get('window');
 interface ValueProp {
   icon: keyof typeof Ionicons.glyphMap;
   iconBgColor: string;
+  iconColor: string;
   title: string;
   description: string;
   highlight: string;
+  highlightBg: string;
+  highlightColor: string;
 }
 
 const VALUE_PROPS: ValueProp[] = [
   {
     icon: 'cash-outline',
     iconBgColor: colors.successBackground,
+    iconColor: colors.profit,
     title: 'Track Every Sale',
-    description: 'Log your sales and see profit instantly. No more guessing if you made money.',
+    description: 'Log your sales and see profit instantly. No more guessing if you made money on your inventory.',
     highlight: 'Know your real profit',
+    highlightBg: colors.successBackground,
+    highlightColor: colors.profit,
   },
   {
     icon: 'layers-outline',
     iconBgColor: colors.primaryLight,
+    iconColor: colors.primary,
     title: 'Manage Inventory',
     description: 'Track items from pallet to sale. See what\'s listed, sold, and sitting too long.',
     highlight: 'Never lose track',
+    highlightBg: colors.successBackground,
+    highlightColor: colors.profit,
   },
   {
-    icon: 'analytics-outline',
+    icon: 'trending-up-outline',
     iconBgColor: colors.warningBackground,
+    iconColor: colors.warning,
     title: 'Make Smarter Decisions',
     description: 'See which sources give you the best ROI. Double down on what works.',
     highlight: 'Data-driven flipping',
+    highlightBg: colors.successBackground,
+    highlightColor: colors.profit,
   },
 ];
 
@@ -102,13 +114,13 @@ export default function ValuePropsScreen() {
           <View key={index} style={styles.slide}>
             <View style={styles.slideContent}>
               <View style={[styles.iconContainer, { backgroundColor: prop.iconBgColor }]}>
-                <Ionicons name={prop.icon} size={48} color={colors.primary} />
+                <Ionicons name={prop.icon} size={52} color={prop.iconColor} />
               </View>
               <Text style={styles.title}>{prop.title}</Text>
               <Text style={styles.description}>{prop.description}</Text>
-              <View style={styles.highlightContainer}>
-                <Ionicons name="checkmark-circle" size={20} color={colors.profit} />
-                <Text style={styles.highlight}>{prop.highlight}</Text>
+              <View style={[styles.highlightContainer, { backgroundColor: prop.highlightBg }]}>
+                <Ionicons name="checkmark-circle" size={20} color={prop.highlightColor} />
+                <Text style={[styles.highlight, { color: prop.highlightColor }]}>{prop.highlight}</Text>
               </View>
             </View>
           </View>
