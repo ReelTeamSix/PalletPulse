@@ -121,14 +121,18 @@ function formatDateRange(range: DateRange): string {
 }
 
 // Dynamic presets - years update automatically
-function getPresets(): { value: DateRangePreset; label: string }[] {
-  const year = new Date().getFullYear();
+// Only show quarters that have started (future quarters are disabled)
+function getPresets(): { value: DateRangePreset; label: string; disabled?: boolean }[] {
+  const now = new Date();
+  const year = now.getFullYear();
+  const currentQuarter = Math.floor(now.getMonth() / 3) + 1; // 1-4
+
   return [
     { value: 'this_month', label: 'Month' },
-    { value: 'q1', label: 'Q1' },
-    { value: 'q2', label: 'Q2' },
-    { value: 'q3', label: 'Q3' },
-    { value: 'q4', label: 'Q4' },
+    { value: 'q1', label: 'Q1', disabled: currentQuarter < 1 }, // Always enabled (Q1 starts Jan)
+    { value: 'q2', label: 'Q2', disabled: currentQuarter < 2 }, // Disabled if before April
+    { value: 'q3', label: 'Q3', disabled: currentQuarter < 3 }, // Disabled if before July
+    { value: 'q4', label: 'Q4', disabled: currentQuarter < 4 }, // Disabled if before October
     { value: 'this_year', label: `${year}` },
     { value: 'last_year', label: `${year - 1}` },
     { value: 'custom', label: 'Custom' },
@@ -232,6 +236,7 @@ export function DateRangeFilter({
       >
         {getPresets().map((preset) => {
           const isActive = value.preset === preset.value;
+          const isDisabled = preset.disabled === true;
 
           return (
             <Pressable
@@ -239,10 +244,16 @@ export function DateRangeFilter({
               style={[
                 styles.presetPill,
                 isActive && styles.presetPillActive,
+                isDisabled && styles.presetPillDisabled,
               ]}
-              onPress={() => handlePresetSelect(preset.value)}
+              onPress={() => !isDisabled && handlePresetSelect(preset.value)}
+              disabled={isDisabled}
             >
-              <Text style={[styles.presetText, isActive && styles.presetTextActive]}>
+              <Text style={[
+                styles.presetText,
+                isActive && styles.presetTextActive,
+                isDisabled && styles.presetTextDisabled,
+              ]}>
                 {preset.label}
               </Text>
             </Pressable>
@@ -417,6 +428,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
+  presetPillDisabled: {
+    opacity: 0.4,
+    backgroundColor: colors.surface,
+  },
   presetText: {
     fontSize: fontSize.sm,
     color: colors.textSecondary,
@@ -425,6 +440,9 @@ const styles = StyleSheet.create({
   },
   presetTextActive: {
     color: colors.background,
+  },
+  presetTextDisabled: {
+    color: colors.textDisabled,
   },
   // Modal styles
   modalOverlay: {
