@@ -90,22 +90,32 @@ export function calculateHeroMetrics(
   expenses: ExpenseWithPallets[],
   dateRange?: DateRange
 ): HeroMetrics {
-  // Filter items by sale date if date range provided
-  const filteredItems = dateRange
-    ? filterByDateRange(items, dateRange, 'sale_date')
+  // Filter sold items by sale date if date range provided
+  // Keep all non-sold items for inventory value calculation
+  const filteredSoldItems = dateRange?.start || dateRange?.end
+    ? filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date')
+    : items.filter(i => i.status === 'sold');
+
+  // Create a combined set: filtered sold items + all non-sold items
+  const filteredItems = dateRange?.start || dateRange?.end
+    ? [
+        ...filteredSoldItems,
+        ...items.filter(i => i.status !== 'sold'),
+      ]
     : items;
 
-  // Get sold items (only those with sale_price)
-  const soldItems = filteredItems.filter(
-    (item) => item.status === 'sold' && item.sale_price !== null
+  // Get sold items (only those with sale_price) from the filtered set
+  const soldItems = filteredSoldItems.filter(
+    (item) => item.sale_price !== null
   );
 
-  // Calculate total profit from all pallets
+  // Calculate total profit from all pallets using filtered items
   let totalProfit = 0;
   let totalCost = 0;
 
   pallets.forEach((pallet) => {
-    const palletItems = items.filter((item) => item.pallet_id === pallet.id);
+    // Use filtered items for pallet profit calculation
+    const palletItems = filteredItems.filter((item) => item.pallet_id === pallet.id);
     const palletExpenses = expenses.filter(
       (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
     );
@@ -121,8 +131,8 @@ export function calculateHeroMetrics(
     totalCost += result.totalCost;
   });
 
-  // Add profit from individual items (no pallet)
-  const individualItems = items.filter((item) => !item.pallet_id);
+  // Add profit from individual items (no pallet) - use filtered items
+  const individualItems = filteredItems.filter((item) => !item.pallet_id);
   individualItems.forEach((item) => {
     if (item.status === 'sold' && item.sale_price !== null) {
       const cost = item.purchase_cost ?? 0;

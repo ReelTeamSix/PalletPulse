@@ -151,7 +151,7 @@ export function GoalModal({
 
           {/* Input */}
           <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>PROFIT TARGET</Text>
+            <Text style={styles.inputLabel}>Profit Target</Text>
             <View style={[
               styles.inputWrapper,
               goalValue.length > 0 && !isValidGoal && styles.inputWrapperError,
@@ -177,7 +177,7 @@ export function GoalModal({
 
           {/* Presets */}
           <View style={styles.presetsSection}>
-            <Text style={styles.presetsLabel}>QUICK SELECT</Text>
+            <Text style={styles.presetsLabel}>Quick Select</Text>
             <View style={styles.presetsRow}>
               {presets.map((amount) => (
                 <TouchableOpacity

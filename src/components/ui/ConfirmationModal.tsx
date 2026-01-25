@@ -121,10 +121,12 @@ export function ConfirmationModal({
       >
         <Pressable style={styles.backdrop} onPress={onClose || handleSecondary} />
         <View style={[styles.modal, shadows.xl]}>
-          {/* Glow effect behind icon */}
-          <View style={[styles.iconGlow, { backgroundColor: config.iconColor + '20' }]} />
-          <View style={[styles.iconContainer, { backgroundColor: config.iconBg }]}>
-            <Ionicons name={config.icon} size={36} color={config.iconColor} />
+          {/* Icon with glow effect - matches GoalModal pattern */}
+          <View style={styles.iconWrapper}>
+            <View style={[styles.iconGlow, { backgroundColor: config.iconColor + '20' }]} />
+            <View style={[styles.iconContainer, { backgroundColor: config.iconBg }]}>
+              <Ionicons name={config.icon} size={36} color={config.iconColor} />
+            </View>
           </View>
 
           <Text style={styles.title}>{title}</Text>
@@ -181,13 +183,16 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     alignItems: 'center',
   },
+  iconWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
   iconGlow: {
     position: 'absolute',
-    top: spacing.xl - 8,
     width: 96,
     height: 96,
     borderRadius: 48,
-    opacity: 0.6,
   },
   iconContainer: {
     width: 72,
@@ -195,7 +200,6 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
     borderWidth: 3,
     borderColor: colors.card,
   },

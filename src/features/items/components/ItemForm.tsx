@@ -258,7 +258,7 @@ export function ItemForm({
           <View style={styles.sectionIconContainer}>
             <Ionicons name="cube-outline" size={18} color={colors.primary} />
           </View>
-          <Text style={styles.sectionLabel}>INVENTORY SOURCE</Text>
+          <Text style={styles.sectionLabel}>Inventory Source</Text>
         </View>
 
         {/* Pallet Link Banner (when pre-selected) */}
@@ -348,7 +348,7 @@ export function ItemForm({
           <View style={styles.sectionIconContainer}>
             <Ionicons name="camera-outline" size={18} color={colors.primary} />
           </View>
-          <Text style={styles.sectionLabel}>PHOTOS</Text>
+          <Text style={styles.sectionLabel}>Photos</Text>
           <View style={styles.photoCountContainer}>
             <Text style={styles.photoCount}>({localPhotos.length}/{maxPhotos})</Text>
             {currentTier !== 'free' && (
@@ -377,7 +377,7 @@ export function ItemForm({
           <View style={styles.sectionIconContainer}>
             <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
           </View>
-          <Text style={styles.sectionLabel}>ITEM DETAILS</Text>
+          <Text style={styles.sectionLabel}>Item Details</Text>
         </View>
 
         {/* Item Name */}
@@ -468,7 +468,7 @@ export function ItemForm({
           <View style={styles.sectionIconContainer}>
             <Ionicons name="pricetag-outline" size={18} color={colors.primary} />
           </View>
-          <Text style={styles.sectionLabel}>PRICING</Text>
+          <Text style={styles.sectionLabel}>Pricing</Text>
         </View>
 
         <View style={styles.row}>
@@ -570,7 +570,7 @@ export function ItemForm({
           <View style={styles.sectionIconContainer}>
             <Ionicons name="folder-outline" size={18} color={colors.primary} />
           </View>
-          <Text style={styles.sectionLabel}>ORGANIZATION</Text>
+          <Text style={styles.sectionLabel}>Organization</Text>
         </View>
 
         {/* Storage Location with autocomplete */}

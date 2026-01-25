@@ -211,6 +211,54 @@ describe('calculateHeroMetrics', () => {
 
     expect(result.totalProfit).toBe(45); // 100 - 40 - 10 - 5
   });
+
+  it('should filter pallet profits by date range correctly', () => {
+    // This test verifies the fix for date range filtering in pallet profit calculation
+    const pallets = [createPallet({ id: 'p1', purchase_cost: 100, sales_tax: 0 })];
+    const items = [
+      // Item sold in January (within date range)
+      createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 80, allocated_cost: 50, sale_date: '2024-01-15' }),
+      // Item sold in March (outside date range)
+      createItem({ id: 'i2', pallet_id: 'p1', status: 'sold', sale_price: 120, allocated_cost: 50, sale_date: '2024-03-15' }),
+      // Unsold item (should be included for inventory value)
+      createItem({ id: 'i3', pallet_id: 'p1', status: 'listed', listing_price: 60, allocated_cost: 25 }),
+    ];
+
+    // Filter to January only
+    const dateRange: DateRange = {
+      start: new Date(2024, 0, 1), // Jan 1
+      end: new Date(2024, 0, 31),  // Jan 31
+      preset: 'custom',
+    };
+
+    const result = calculateHeroMetrics(pallets, items, [], dateRange);
+
+    // Only January sale should be counted
+    expect(result.totalItemsSold).toBe(1);
+    // Active inventory should still include the listed item
+    expect(result.activeInventoryValue).toBe(60);
+  });
+
+  it('should only count sold items within date range for totalItemsSold', () => {
+    const items = [
+      createItem({ id: 'i1', pallet_id: null, status: 'sold', sale_price: 50, purchase_cost: 20, sale_date: '2024-01-15' }),
+      createItem({ id: 'i2', pallet_id: null, status: 'sold', sale_price: 60, purchase_cost: 30, sale_date: '2024-02-15' }),
+      createItem({ id: 'i3', pallet_id: null, status: 'sold', sale_price: 70, purchase_cost: 35, sale_date: '2024-03-15' }),
+    ];
+
+    const dateRange: DateRange = {
+      start: new Date(2024, 0, 1),  // Jan 1
+      end: new Date(2024, 1, 28),   // Feb 28
+      preset: 'custom',
+    };
+
+    const result = calculateHeroMetrics([], items, [], dateRange);
+
+    // Only Jan and Feb sales should be counted
+    expect(result.totalItemsSold).toBe(2);
+    // Profit: (50-20) + (60-30) = 60
+    expect(result.totalProfit).toBe(60);
+  });
 });
 
 // ============================================================================
