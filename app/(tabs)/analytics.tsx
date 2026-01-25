@@ -27,6 +27,7 @@ import { TIER_LIMITS } from '@/src/constants/tier-limits';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useItemsStore } from '@/src/stores/items-store';
 import { useExpensesStore } from '@/src/stores/expenses-store';
+import { useMileageStore } from '@/src/stores/mileage-store';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 
 // Analytics utilities
@@ -61,7 +62,12 @@ import {
   TrendChartTeaser,
   TrendChart,
   ExportDataModal,
+  type ExportFormat,
 } from '@/src/features/analytics/components';
+
+// PDF Export utilities
+import { exportProfitLossPDF } from '@/src/features/analytics/utils/pdf-export';
+import { calculateProfitLoss } from '@/src/features/analytics/utils/profit-loss-calculations';
 
 // Date range filter
 import { DateRangeFilter, DateRange } from '@/src/components/ui/DateRangeFilter';
@@ -91,6 +97,7 @@ export default function AnalyticsScreen() {
   const { pallets, fetchPallets, isLoading: palletsLoading } = usePalletsStore();
   const { items, fetchItems, isLoading: itemsLoading } = useItemsStore();
   const { expenses, fetchExpenses, isLoading: expensesLoading } = useExpensesStore();
+  const { trips: mileageTrips, fetchTrips: fetchMileage } = useMileageStore();
   const { settings } = useUserSettingsStore();
 
   // Date range state - default to this year
@@ -121,13 +128,14 @@ export default function AnalyticsScreen() {
       fetchPallets();
       fetchItems();
       fetchExpenses();
+      fetchMileage();
     }, []) // eslint-disable-line react-hooks/exhaustive-deps -- Store functions are stable references
   );
 
   // Refresh handler
   const handleRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([fetchPallets(), fetchItems(), fetchExpenses()]);
+    await Promise.all([fetchPallets(), fetchItems(), fetchExpenses(), fetchMileage()]);
     setRefreshing(false);
   };
 
@@ -220,30 +228,41 @@ export default function AnalyticsScreen() {
   };
 
   // Export handler (paid tier only)
-  const handleExport = async (exportType: ExportType) => {
+  const handleExport = async (exportType: ExportType, format: ExportFormat) => {
     setIsExporting(true);
 
     try {
       let result;
 
-      switch (exportType) {
-        case 'items':
-          result = await exportItems(items, pallets);
-          break;
-        case 'pallets':
-          result = await exportPallets(pallets);
-          break;
-        case 'expenses':
-          result = await exportExpenses(expenses, pallets);
-          break;
-        case 'pallet_performance':
-          result = await exportPalletPerformance(leaderboard);
-          break;
-        case 'type_comparison':
-          result = await exportTypeComparisonCSV(typeComparison);
-          break;
-        default:
-          throw new Error('Unknown export type');
+      // Handle PDF export - generates P&L report
+      if (format === 'pdf') {
+        // Calculate P&L summary for PDF
+        const plDateRange = dateRange.start && dateRange.end
+          ? { start: dateRange.start.toISOString().split('T')[0], end: dateRange.end.toISOString().split('T')[0] }
+          : undefined;
+        const plSummary = calculateProfitLoss(items, pallets, expenses, mileageTrips, plDateRange);
+        result = await exportProfitLossPDF(plSummary);
+      } else {
+        // Handle CSV export
+        switch (exportType) {
+          case 'items':
+            result = await exportItems(items, pallets);
+            break;
+          case 'pallets':
+            result = await exportPallets(pallets);
+            break;
+          case 'expenses':
+            result = await exportExpenses(expenses, pallets);
+            break;
+          case 'pallet_performance':
+            result = await exportPalletPerformance(leaderboard);
+            break;
+          case 'type_comparison':
+            result = await exportTypeComparisonCSV(typeComparison);
+            break;
+          default:
+            throw new Error('Unknown export type');
+        }
       }
 
       if (result.success) {

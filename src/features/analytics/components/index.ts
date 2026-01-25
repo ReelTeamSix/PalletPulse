@@ -11,3 +11,4 @@ export { TrendChart } from './TrendChart';
 export { SupplierRankingTable } from './SupplierRankingTable';
 export { PalletTypeRankingTable } from './PalletTypeRankingTable';
 export { ExportDataModal } from './ExportDataModal';
+export type { ExportFormat } from './ExportDataModal';

@@ -22,10 +22,12 @@ import type { ExportType } from '../utils/csv-export';
 // Types
 // ============================================================================
 
+export type ExportFormat = 'csv' | 'pdf';
+
 export interface ExportDataModalProps {
   visible: boolean;
   onClose: () => void;
-  onExport: (exportType: ExportType) => Promise<void>;
+  onExport: (exportType: ExportType, format: ExportFormat) => Promise<void>;
   isExporting?: boolean;
   canExportPDF?: boolean;
   onUpgrade?: () => void;
@@ -105,7 +107,7 @@ export function ExportDataModal({
 
   const handleExport = async () => {
     if (!selectedType) return;
-    await onExport(selectedType);
+    await onExport(selectedType, format);
   };
 
   const handleClose = () => {
