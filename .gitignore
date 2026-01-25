@@ -67,3 +67,4 @@ app_screens_current/
 !PROGRESS.md
 !PALLETPULSE_ONESHOT_CONTEXT.md
 supabase/.temp/
+jest-results.json

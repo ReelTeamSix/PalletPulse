@@ -162,19 +162,22 @@ function getBestIndividualItemInsight(soldItems: Item[]): Insight | null {
 
 /**
  * Best pallet by ROI (specific pallet)
+ * Uses COGS model: ROI based on allocated_cost of sold items, not full pallet cost
  */
 function getBestPalletInsight(soldItems: Item[], pallets: Pallet[]): Insight | null {
   if (pallets.length === 0) return null;
 
-  // Group sold items by pallet
-  const palletStats: Record<string, { revenue: number; fees: number; count: number }> = {};
+  // Group sold items by pallet, tracking allocated costs (COGS model)
+  const palletStats: Record<string, { revenue: number; allocatedCost: number; fees: number; count: number }> = {};
 
   soldItems.forEach(item => {
     if (!item.pallet_id) return;
     if (!palletStats[item.pallet_id]) {
-      palletStats[item.pallet_id] = { revenue: 0, fees: 0, count: 0 };
+      palletStats[item.pallet_id] = { revenue: 0, allocatedCost: 0, fees: 0, count: 0 };
     }
     palletStats[item.pallet_id].revenue += item.sale_price ?? 0;
+    // Use allocated_cost (COGS) instead of full pallet cost
+    palletStats[item.pallet_id].allocatedCost += item.allocated_cost ?? item.purchase_cost ?? 0;
     palletStats[item.pallet_id].fees += (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
     palletStats[item.pallet_id].count += 1;
   });
@@ -188,7 +191,8 @@ function getBestPalletInsight(soldItems: Item[], pallets: Pallet[]): Insight | n
     const pallet = pallets.find(p => p.id === palletId);
     if (!pallet) continue;
 
-    const totalCost = pallet.purchase_cost + (pallet.sales_tax ?? 0) + stats.fees;
+    // COGS model: use allocated cost of sold items + fees
+    const totalCost = stats.allocatedCost + stats.fees;
     if (totalCost > 0) {
       const profit = stats.revenue - totalCost;
       const roi = (profit / totalCost) * 100;
@@ -216,6 +220,7 @@ function getBestPalletInsight(soldItems: Item[], pallets: Pallet[]): Insight | n
 
 /**
  * Best supplier by average ROI across all their pallets
+ * Uses COGS model: ROI based on allocated_cost of sold items
  */
 function getBestSupplierInsight(soldItems: Item[], pallets: Pallet[]): Insight | null {
   // Group pallets by supplier
@@ -230,13 +235,13 @@ function getBestSupplierInsight(soldItems: Item[], pallets: Pallet[]): Insight |
 
   if (Object.keys(supplierPallets).length === 0) return null;
 
-  // Calculate ROI per supplier
+  // Calculate ROI per supplier using COGS model
   let bestSupplier = '';
   let bestROI = -Infinity;
 
   Object.entries(supplierPallets).forEach(([supplier, supplierPalletList]) => {
     let totalRevenue = 0;
-    let totalCost = 0;
+    let totalAllocatedCost = 0;
     let totalFees = 0;
     let soldCount = 0;
 
@@ -244,16 +249,16 @@ function getBestSupplierInsight(soldItems: Item[], pallets: Pallet[]): Insight |
       const palletItems = soldItems.filter(item => item.pallet_id === pallet.id);
       palletItems.forEach(item => {
         totalRevenue += item.sale_price ?? 0;
+        // Use allocated_cost (COGS) instead of full pallet cost
+        totalAllocatedCost += item.allocated_cost ?? item.purchase_cost ?? 0;
         totalFees += (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
         soldCount += 1;
       });
-      if (palletItems.length > 0) {
-        totalCost += pallet.purchase_cost + (pallet.sales_tax ?? 0);
-      }
     });
 
+    const totalCost = totalAllocatedCost + totalFees;
     if (soldCount >= 3 && totalCost > 0) {
-      const roi = ((totalRevenue - totalCost - totalFees) / (totalCost + totalFees)) * 100;
+      const roi = ((totalRevenue - totalCost) / totalCost) * 100;
       if (roi > bestROI) {
         bestROI = roi;
         bestSupplier = supplier;
@@ -278,21 +283,22 @@ function getBestSupplierInsight(soldItems: Item[], pallets: Pallet[]): Insight |
 
 /**
  * Best pallet type/source (e.g., "Amazon Medium", "Target") by ROI
+ * Uses COGS model: ROI based on allocated_cost of sold items
  * Shows average retail value per pallet (what the community cares about)
  */
 function getBestSourceTypeInsight(soldItems: Item[], pallets: Pallet[], allItems: Item[]): Insight | null {
   // Group pallets by source_name
-  const sourceTypes: Record<string, { pallets: Pallet[]; revenue: number; cost: number; fees: number; retailValue: number; soldCount: number; totalItems: number }> = {};
+  const sourceTypes: Record<string, { pallets: Pallet[]; revenue: number; allocatedCost: number; fees: number; retailValue: number; soldCount: number; totalItems: number }> = {};
 
   pallets.forEach(pallet => {
     const sourceName = pallet.source_name || pallet.source_type || 'Unknown';
     if (!sourceTypes[sourceName]) {
-      sourceTypes[sourceName] = { pallets: [], revenue: 0, cost: 0, fees: 0, retailValue: 0, soldCount: 0, totalItems: 0 };
+      sourceTypes[sourceName] = { pallets: [], revenue: 0, allocatedCost: 0, fees: 0, retailValue: 0, soldCount: 0, totalItems: 0 };
     }
     sourceTypes[sourceName].pallets.push(pallet);
   });
 
-  // Calculate stats for each source type
+  // Calculate stats for each source type using COGS model
   Object.values(sourceTypes).forEach(source => {
     source.pallets.forEach(pallet => {
       // Get ALL items from this pallet (not just sold) for retail value
@@ -305,14 +311,13 @@ function getBestSourceTypeInsight(soldItems: Item[], pallets: Pallet[], allItems
         source.totalItems += 1;
       });
 
-      if (palletSoldItems.length > 0) {
-        source.cost += pallet.purchase_cost + (pallet.sales_tax ?? 0);
-        palletSoldItems.forEach(item => {
-          source.revenue += item.sale_price ?? 0;
-          source.fees += (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
-          source.soldCount += 1;
-        });
-      }
+      // Use allocated_cost (COGS) for sold items instead of full pallet cost
+      palletSoldItems.forEach(item => {
+        source.revenue += item.sale_price ?? 0;
+        source.allocatedCost += item.allocated_cost ?? item.purchase_cost ?? 0;
+        source.fees += (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
+        source.soldCount += 1;
+      });
     });
   });
 
@@ -321,8 +326,8 @@ function getBestSourceTypeInsight(soldItems: Item[], pallets: Pallet[], allItems
   let avgRetailPerPallet = 0;
 
   Object.entries(sourceTypes).forEach(([sourceName, stats]) => {
-    if (stats.soldCount >= 3 && stats.cost > 0) {
-      const totalCost = stats.cost + stats.fees;
+    const totalCost = stats.allocatedCost + stats.fees;
+    if (stats.soldCount >= 3 && totalCost > 0) {
       const roi = ((stats.revenue - totalCost) / totalCost) * 100;
       if (roi > bestROI) {
         bestROI = roi;

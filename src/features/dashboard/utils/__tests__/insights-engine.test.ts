@@ -201,37 +201,41 @@ describe('insights-engine', () => {
 
   describe('best pallet insight', () => {
     it('should identify best performing pallet by ROI', () => {
-      // Note: getBestPalletInsight uses pallet.purchase_cost, not item.allocated_cost
-      // Great Pallet: purchase_cost=20, revenue=60 (2x30), ROI = (60-20)/20 = 200%
+      // Note: getBestPalletInsight uses item.allocated_cost (COGS model)
+      // Great Pallet: allocated_cost=10 per item (2 items), revenue=60, ROI = (60-20)/20 = 200%
       const pallet1 = createMockPallet({ id: 'p1', name: 'Great Pallet', purchase_cost: 20 });
-      // Okay Pallet: purchase_cost=40, revenue=60 (2x30), ROI = (60-40)/40 = 50%
+      // Okay Pallet: allocated_cost=20 per item (2 items), revenue=60, ROI = (60-40)/40 = 50%
       const pallet2 = createMockPallet({ id: 'p2', name: 'Okay Pallet', purchase_cost: 40 });
 
       const items: Item[] = [
-        // Great Pallet items
+        // Great Pallet items (allocated_cost = 20/2 = 10 each)
         createMockItem({
           status: 'sold',
           pallet_id: 'p1',
           sale_price: 30,
+          allocated_cost: 10,
           sale_date: daysAgo(5),
         }),
         createMockItem({
           status: 'sold',
           pallet_id: 'p1',
           sale_price: 30,
+          allocated_cost: 10,
           sale_date: daysAgo(3),
         }),
-        // Okay Pallet items
+        // Okay Pallet items (allocated_cost = 40/2 = 20 each)
         createMockItem({
           status: 'sold',
           pallet_id: 'p2',
           sale_price: 30,
+          allocated_cost: 20,
           sale_date: daysAgo(4),
         }),
         createMockItem({
           status: 'sold',
           pallet_id: 'p2',
           sale_price: 30,
+          allocated_cost: 20,
           sale_date: daysAgo(2),
         }),
       ];
