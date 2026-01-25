@@ -533,12 +533,12 @@ export function generateProfitLossHTML(summary: ProfitLossSummary): string {
               <span><strong>(${formatCurrency(cogs.totalCOGS)})</strong></span>
             </div>
             <div class="summary-row">
-              <span style="padding-left: 12px;">Pallet Purchases (${cogs.palletCount} pallets)</span>
+              <span style="padding-left: 12px;">Pallet Items (${cogs.palletCount} sold)</span>
               <span>${formatCurrency(cogs.palletPurchases)}</span>
             </div>
             ${cogs.individualItemPurchases > 0 ? `
             <div class="summary-row">
-              <span style="padding-left: 12px;">Individual Items (${cogs.individualItemCount})</span>
+              <span style="padding-left: 12px;">Individual Items (${cogs.individualItemCount} sold)</span>
               <span>${formatCurrency(cogs.individualItemPurchases)}</span>
             </div>
             ` : ''}
@@ -680,25 +680,29 @@ export function generateProfitLossHTML(summary: ProfitLossSummary): string {
             </div>
 
             <div class="section">
-              <div class="section-title">Cost Breakdown</div>
+              <div class="section-title">Cost of Goods Sold Breakdown</div>
               <table>
                 <tr>
-                  <td>Pallet Purchases</td>
+                  <td>Pallet Items Cost</td>
                   <td class="text-right">${formatCurrency(cogs.palletPurchases)}</td>
                 </tr>
                 <tr>
-                  <td>Number of Pallets</td>
+                  <td>Pallet Items Sold</td>
                   <td class="text-right">${cogs.palletCount}</td>
                 </tr>
                 ${cogs.individualItemPurchases > 0 ? `
                 <tr>
-                  <td>Individual Item Purchases</td>
+                  <td>Individual Items Cost</td>
                   <td class="text-right">${formatCurrency(cogs.individualItemPurchases)}</td>
+                </tr>
+                <tr>
+                  <td>Individual Items Sold</td>
+                  <td class="text-right">${cogs.individualItemCount}</td>
                 </tr>
                 ` : ''}
                 ${cogs.salesTax > 0 ? `
                 <tr>
-                  <td>Sales Tax Paid</td>
+                  <td>Sales Tax (Prorated)</td>
                   <td class="text-right">${formatCurrency(cogs.salesTax)}</td>
                 </tr>
                 ` : ''}

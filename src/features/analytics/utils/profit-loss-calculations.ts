@@ -133,16 +133,39 @@ export function calculateProfitLoss(
   const grossSales = soldItems.reduce((sum, item) => sum + (item.sale_price || 0), 0);
   const avgSalePrice = soldItems.length > 0 ? grossSales / soldItems.length : 0;
 
-  // Calculate COGS
-  // Pallet purchases
-  const palletPurchases = filteredPallets.reduce((sum, p) => sum + p.purchase_cost, 0);
-  const salesTax = filteredPallets.reduce((sum, p) => sum + (p.sales_tax || 0), 0);
+  // Calculate COGS using accrual basis (cost of items SOLD, not purchased)
+  // This matches the COGS model in analytics-calculations.ts
 
-  // Individual item purchases (items without a pallet_id)
-  const individualItems = filteredItems.filter(item => !item.pallet_id && item.purchase_cost !== null);
-  const individualItemPurchases = individualItems.reduce((sum, item) => sum + (item.purchase_cost || 0), 0);
+  // Pallet items sold: use allocated_cost
+  const soldPalletItems = soldItems.filter(item => item.pallet_id !== null);
+  const palletItemsCOGS = soldPalletItems.reduce(
+    (sum, item) => sum + (item.allocated_cost ?? item.purchase_cost ?? 0),
+    0
+  );
 
-  const totalCOGS = palletPurchases + salesTax + individualItemPurchases;
+  // Get unique pallets that contributed to sales (for counting and sales tax)
+  const palletIdsWithSales = new Set(soldPalletItems.map(item => item.pallet_id));
+  const palletsWithSales = pallets.filter(p => palletIdsWithSales.has(p.id));
+
+  // Prorate sales tax based on portion of pallet items sold
+  let proratedSalesTax = 0;
+  palletsWithSales.forEach(pallet => {
+    if (!pallet.sales_tax) return;
+    const totalItemsInPallet = items.filter(i => i.pallet_id === pallet.id).length;
+    const soldItemsFromPallet = soldPalletItems.filter(i => i.pallet_id === pallet.id).length;
+    if (totalItemsInPallet > 0) {
+      proratedSalesTax += (soldItemsFromPallet / totalItemsInPallet) * pallet.sales_tax;
+    }
+  });
+
+  // Individual items sold (no pallet_id): use purchase_cost
+  const soldIndividualItems = soldItems.filter(item => !item.pallet_id && item.purchase_cost !== null);
+  const individualItemsCOGS = soldIndividualItems.reduce(
+    (sum, item) => sum + (item.purchase_cost || 0),
+    0
+  );
+
+  const totalCOGS = palletItemsCOGS + proratedSalesTax + individualItemsCOGS;
 
   // Gross Profit
   const grossProfit = grossSales - totalCOGS;
@@ -219,11 +242,11 @@ export function calculateProfitLoss(
       avgSalePrice,
     },
     cogs: {
-      palletPurchases,
-      palletCount: filteredPallets.length,
-      individualItemPurchases,
-      individualItemCount: individualItems.length,
-      salesTax,
+      palletPurchases: palletItemsCOGS,
+      palletCount: soldPalletItems.length, // Count of pallet items sold
+      individualItemPurchases: individualItemsCOGS,
+      individualItemCount: soldIndividualItems.length, // Count of individual items sold
+      salesTax: proratedSalesTax,
       totalCOGS,
     },
     grossProfit,
