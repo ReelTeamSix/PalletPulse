@@ -13,7 +13,7 @@ import { getSourceTypeLabel } from './analytics-calculations';
 // Types
 // ============================================================================
 
-export type ExportType = 'pallets' | 'items' | 'expenses' | 'pallet_performance' | 'type_comparison' | 'mileage' | 'profit_loss';
+export type ExportType = 'pallets' | 'items' | 'expenses' | 'pallet_performance' | 'type_comparison' | 'mileage' | 'profit_loss' | 'analytics_summary';
 
 export interface ExportResult {
   success: boolean;

@@ -40,6 +40,7 @@ interface ExportOptionConfig {
   description: string;
   iconColor: string;
   iconBgColor: string;
+  pdfOnly?: boolean; // True if this export is PDF-only (requires Pro)
 }
 
 // ============================================================================
@@ -48,36 +49,53 @@ interface ExportOptionConfig {
 
 const EXPORT_OPTIONS: ExportOptionConfig[] = [
   {
+    type: 'profit_loss',
+    icon: 'document-text',
+    label: 'Profit & Loss',
+    description: 'Full financial statement for taxes',
+    iconColor: '#22C55E', // Green
+    iconBgColor: '#DCFCE7',
+  },
+  {
+    type: 'analytics_summary',
+    icon: 'analytics',
+    label: 'Analytics Summary',
+    description: 'Performance overview & rankings',
+    iconColor: colors.primary,
+    iconBgColor: colors.primaryLight,
+    pdfOnly: true, // Requires Pro tier
+  },
+  {
     type: 'pallets',
     icon: 'cube',
     label: 'Pallets',
     description: 'All pallet data & inventory',
-    iconColor: colors.primary,
-    iconBgColor: colors.primaryLight,
+    iconColor: '#8B5CF6', // Purple
+    iconBgColor: '#EDE9FE',
   },
   {
     type: 'items',
     icon: 'pricetag',
     label: 'Items',
     description: 'All items with profit data',
-    iconColor: '#8B5CF6', // Purple
-    iconBgColor: '#EDE9FE',
+    iconColor: '#F97316', // Orange
+    iconBgColor: '#FFEDD5',
   },
   {
     type: 'pallet_performance',
     icon: 'trophy',
     label: 'Pallet Performance',
     description: 'Analytics broken down by pallet',
-    iconColor: '#F97316', // Orange
-    iconBgColor: '#FFEDD5',
+    iconColor: '#14B8A6', // Teal
+    iconBgColor: '#CCFBF1',
   },
   {
     type: 'type_comparison',
     icon: 'grid',
     label: 'Type Comparison',
     description: 'Analytics by source type',
-    iconColor: '#14B8A6', // Teal
-    iconBgColor: '#CCFBF1',
+    iconColor: '#EC4899', // Pink
+    iconBgColor: '#FCE7F3',
   },
 ];
 
@@ -148,14 +166,28 @@ export function ExportDataModal({
             contentContainerStyle={styles.optionsContainer}
             showsVerticalScrollIndicator={false}
           >
-            {EXPORT_OPTIONS.map((option) => (
-              <ExportOptionCard
-                key={option.type}
-                option={option}
-                selected={selectedType === option.type}
-                onPress={() => setSelectedType(option.type)}
-              />
-            ))}
+            {EXPORT_OPTIONS.map((option) => {
+              const isLocked = option.pdfOnly && !canExportPDF;
+              return (
+                <ExportOptionCard
+                  key={option.type}
+                  option={option}
+                  selected={selectedType === option.type}
+                  locked={isLocked}
+                  onPress={() => {
+                    if (isLocked && onUpgrade) {
+                      onUpgrade();
+                    } else {
+                      setSelectedType(option.type);
+                      // Auto-select PDF format for PDF-only exports
+                      if (option.pdfOnly && canExportPDF) {
+                        setFormat('pdf');
+                      }
+                    }
+                  }}
+                />
+              );
+            })}
           </ScrollView>
 
           {/* Format Selector */}
@@ -233,26 +265,47 @@ export function ExportDataModal({
 function ExportOptionCard({
   option,
   selected,
+  locked,
   onPress,
 }: {
   option: ExportOptionConfig;
   selected: boolean;
+  locked?: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
-      style={[styles.optionCard, selected && styles.optionCardSelected]}
+      style={[
+        styles.optionCard,
+        selected && styles.optionCardSelected,
+        locked && styles.optionCardLocked,
+      ]}
       onPress={onPress}
     >
-      <View style={[styles.optionIcon, { backgroundColor: option.iconBgColor }]}>
-        <Ionicons name={option.icon} size={24} color={option.iconColor} />
+      <View style={[styles.optionIcon, { backgroundColor: locked ? colors.surface : option.iconBgColor }]}>
+        <Ionicons name={option.icon} size={24} color={locked ? colors.textDisabled : option.iconColor} />
       </View>
       <View style={styles.optionContent}>
-        <Text style={styles.optionLabel}>{option.label}</Text>
-        <Text style={styles.optionDescription}>{option.description}</Text>
+        <View style={styles.optionLabelRow}>
+          <Text style={[styles.optionLabel, locked && styles.optionLabelLocked]}>{option.label}</Text>
+          {locked && (
+            <View style={styles.proBadge}>
+              <Ionicons name="lock-closed" size={10} color="#8B5CF6" />
+              <Text style={styles.proBadgeText}>PRO</Text>
+            </View>
+          )}
+          {option.pdfOnly && !locked && (
+            <View style={styles.pdfBadge}>
+              <Text style={styles.pdfBadgeText}>PDF</Text>
+            </View>
+          )}
+        </View>
+        <Text style={[styles.optionDescription, locked && styles.optionDescriptionLocked]}>
+          {option.description}
+        </Text>
       </View>
       <Ionicons
-        name="chevron-forward"
+        name={locked ? 'lock-closed' : 'chevron-forward'}
         size={20}
         color={selected ? colors.primary : colors.textDisabled}
       />
@@ -328,6 +381,10 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     backgroundColor: colors.primaryLight,
   },
+  optionCardLocked: {
+    opacity: 0.7,
+    backgroundColor: colors.surface,
+  },
   optionIcon: {
     width: 48,
     height: 48,
@@ -338,17 +395,57 @@ const styles = StyleSheet.create({
   optionContent: {
     flex: 1,
   },
+  optionLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: 2,
+  },
   optionLabel: {
     fontSize: fontSize.md,
     fontWeight: '600',
     fontFamily: fontFamily.semibold,
     color: colors.textPrimary,
-    marginBottom: 2,
+  },
+  optionLabelLocked: {
+    color: colors.textDisabled,
   },
   optionDescription: {
     fontSize: fontSize.sm,
     fontFamily: fontFamily.regular,
     color: colors.textSecondary,
+  },
+  optionDescriptionLocked: {
+    color: colors.textDisabled,
+  },
+  proBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: '#EDE9FE',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  proBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    fontFamily: fontFamily.bold,
+    color: '#8B5CF6',
+    letterSpacing: 0.5,
+  },
+  pdfBadge: {
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+  },
+  pdfBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    fontFamily: fontFamily.bold,
+    color: colors.primary,
+    letterSpacing: 0.5,
   },
   formatSection: {
     marginTop: spacing.md,

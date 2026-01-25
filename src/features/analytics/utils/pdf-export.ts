@@ -5,6 +5,13 @@ import { shareAsync } from 'expo-sharing';
 import type { ProfitLossSummary } from './profit-loss-calculations';
 import type { ExpenseWithPallets } from '@/src/stores/expenses-store';
 import type { MileageTripWithPallets } from '@/src/stores/mileage-store';
+import type {
+  HeroMetrics,
+  PalletAnalytics,
+  SupplierComparison,
+  PalletTypeComparison,
+  TypeComparison,
+} from '../types/analytics';
 
 // ============================================================================
 // Types
@@ -14,6 +21,17 @@ export interface PDFExportResult {
   success: boolean;
   error?: string;
   filename?: string;
+}
+
+// Analytics summary data for PDF export
+export interface AnalyticsSummaryData {
+  heroMetrics: HeroMetrics;
+  supplierRankings: SupplierComparison[];
+  palletTypeRankings: PalletTypeComparison[];
+  palletLeaderboard: PalletAnalytics[];
+  typeComparison: TypeComparison[];
+  periodStart: string;
+  periodEnd: string;
 }
 
 // ============================================================================
@@ -1096,6 +1114,204 @@ export function generateMileageHTML(
 }
 
 // ============================================================================
+// Analytics Summary PDF
+// ============================================================================
+
+export function generateAnalyticsSummaryHTML(data: AnalyticsSummaryData): string {
+  const { heroMetrics, supplierRankings, palletTypeRankings, palletLeaderboard, typeComparison } = data;
+  const isProfit = heroMetrics.totalProfit >= 0;
+
+  // Get source type label
+  const getSourceTypeLabel = (sourceType: string): string => {
+    const labels: Record<string, string> = {
+      pallet: 'Pallet',
+      thrift: 'Thrift Store',
+      garage_sale: 'Garage Sale',
+      estate_sale: 'Estate Sale',
+      auction: 'Auction',
+      retail_arbitrage: 'Retail Arbitrage',
+      wholesale: 'Wholesale',
+      online_arbitrage: 'Online Arbitrage',
+      other: 'Other',
+    };
+    return labels[sourceType] || sourceType;
+  };
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      ${PDF_STYLES}
+    </head>
+    <body>
+      <!-- Page 1: Summary & Rankings -->
+      <div class="page">
+        ${generatePageHeader('Analytics Summary', data.periodStart, data.periodEnd)}
+
+        <!-- Hero Metrics -->
+        <div class="hero-grid">
+          <div class="hero-card highlight">
+            <div class="hero-top">
+              <div class="hero-icon white">${isProfit ? '↑' : '↓'}</div>
+              <div class="hero-label">Total ${isProfit ? 'Profit' : 'Loss'}</div>
+            </div>
+            <div class="hero-value">${formatCurrency(Math.abs(heroMetrics.totalProfit))}</div>
+          </div>
+          <div class="hero-card">
+            <div class="hero-top">
+              <div class="hero-icon neutral">#</div>
+              <div class="hero-label">Items Sold</div>
+            </div>
+            <div class="hero-value">${heroMetrics.totalItemsSold}</div>
+          </div>
+          <div class="hero-card">
+            <div class="hero-top">
+              <div class="hero-icon ${heroMetrics.avgROI >= 0 ? 'profit' : 'loss'}">%</div>
+              <div class="hero-label">Avg ROI</div>
+            </div>
+            <div class="hero-value ${heroMetrics.avgROI >= 0 ? 'positive' : 'negative'}">${formatPercent(heroMetrics.avgROI)}</div>
+          </div>
+          <div class="hero-card">
+            <div class="hero-top">
+              <div class="hero-icon neutral">$</div>
+              <div class="hero-label">Inventory Value</div>
+            </div>
+            <div class="hero-value">${formatCurrency(heroMetrics.activeInventoryValue)}</div>
+          </div>
+        </div>
+
+        ${supplierRankings.length > 0 ? `
+        <!-- Top Suppliers -->
+        <div class="section">
+          <div class="section-title">Top Suppliers</div>
+          <table>
+            <tr>
+              <th>#</th>
+              <th>Supplier</th>
+              <th class="text-right">Profit</th>
+              <th class="text-right">ROI</th>
+              <th class="text-right">Pallets</th>
+            </tr>
+            ${supplierRankings.slice(0, 10).map((s, i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${s.supplier}</td>
+              <td class="text-right" style="color: ${s.totalProfit >= 0 ? '#22C55E' : '#EF4444'}">${formatCurrency(s.totalProfit)}</td>
+              <td class="text-right" style="color: ${s.avgROI >= 0 ? '#22C55E' : '#EF4444'}">${formatPercent(s.avgROI)}</td>
+              <td class="text-right">${s.palletCount}</td>
+            </tr>
+            `).join('')}
+          </table>
+        </div>
+        ` : ''}
+
+        ${palletTypeRankings.length > 0 ? `
+        <!-- Top Pallet Types -->
+        <div class="section">
+          <div class="section-title">Top Pallet Types</div>
+          <table>
+            <tr>
+              <th>#</th>
+              <th>Type</th>
+              <th class="text-right">Profit</th>
+              <th class="text-right">ROI</th>
+              <th class="text-right">Pallets</th>
+            </tr>
+            ${palletTypeRankings.slice(0, 10).map((p, i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${p.palletType}${p.isMysteryBox ? ' 🎁' : ''}</td>
+              <td class="text-right" style="color: ${p.totalProfit >= 0 ? '#22C55E' : '#EF4444'}">${formatCurrency(p.totalProfit)}</td>
+              <td class="text-right" style="color: ${p.avgROI >= 0 ? '#22C55E' : '#EF4444'}">${formatPercent(p.avgROI)}</td>
+              <td class="text-right">${p.palletCount}</td>
+            </tr>
+            `).join('')}
+          </table>
+        </div>
+        ` : ''}
+
+        ${generatePageFooter(1, 2)}
+      </div>
+
+      <!-- Page 2: Leaderboard & Source Comparison -->
+      <div class="page">
+        ${generatePageHeader('Analytics Summary', data.periodStart, data.periodEnd)}
+
+        ${palletLeaderboard.length > 0 ? `
+        <!-- Pallet Leaderboard -->
+        <div class="section">
+          <div class="section-title">Pallet Leaderboard</div>
+          <table>
+            <tr>
+              <th>#</th>
+              <th>Pallet</th>
+              <th>Source</th>
+              <th class="text-right">Revenue</th>
+              <th class="text-right">Profit</th>
+              <th class="text-right">ROI</th>
+              <th class="text-right">Sell-Thru</th>
+            </tr>
+            ${palletLeaderboard.slice(0, 15).map((p, i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${p.name}</td>
+              <td>${p.sourceName || '-'}</td>
+              <td class="text-right">${formatCurrency(p.totalRevenue)}</td>
+              <td class="text-right" style="color: ${p.profit >= 0 ? '#22C55E' : '#EF4444'}">${formatCurrency(p.profit)}</td>
+              <td class="text-right" style="color: ${p.roi >= 0 ? '#22C55E' : '#EF4444'}">${formatPercent(p.roi)}</td>
+              <td class="text-right">${formatPercent(p.sellThroughRate)}</td>
+            </tr>
+            `).join('')}
+          </table>
+        </div>
+        ` : ''}
+
+        ${typeComparison.length > 0 ? `
+        <!-- Source Type Comparison -->
+        <div class="section">
+          <div class="section-title">Sourcing Method Comparison</div>
+          <table>
+            <tr>
+              <th>Source Type</th>
+              <th class="text-right">Pallets</th>
+              <th class="text-right">Total Profit</th>
+              <th class="text-right">Avg ROI</th>
+              <th class="text-right">Avg Profit/Pallet</th>
+              <th class="text-right">Sell-Thru</th>
+            </tr>
+            ${typeComparison.map(t => `
+            <tr>
+              <td>${getSourceTypeLabel(t.sourceType)}</td>
+              <td class="text-right">${t.palletCount}</td>
+              <td class="text-right" style="color: ${t.totalProfit >= 0 ? '#22C55E' : '#EF4444'}">${formatCurrency(t.totalProfit)}</td>
+              <td class="text-right" style="color: ${t.avgROI >= 0 ? '#22C55E' : '#EF4444'}">${formatPercent(t.avgROI)}</td>
+              <td class="text-right">${formatCurrency(t.avgProfitPerPallet)}</td>
+              <td class="text-right">${formatPercent(t.sellThroughRate)}</td>
+            </tr>
+            `).join('')}
+          </table>
+        </div>
+        ` : ''}
+
+        <!-- Key Takeaways Note -->
+        <div style="margin-top: 24px; padding: 16px; background: #EEF2FF; border-radius: 8px; border-left: 4px solid #2563EB;">
+          <div style="font-weight: 600; color: #3730A3; margin-bottom: 4px;">Performance Insights</div>
+          <div style="font-size: 11px; color: #4338CA; line-height: 1.5;">
+            This analytics summary shows your sourcing performance. Focus on suppliers and pallet types
+            with the highest ROI and sell-through rates. For detailed financial reporting including
+            expenses and tax deductions, export the Profit & Loss statement.
+          </div>
+        </div>
+
+        ${generatePageFooter(2, 2)}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// ============================================================================
 // PDF Generation & Sharing
 // ============================================================================
 
@@ -1162,4 +1378,10 @@ export async function exportMileagePDF(
   const html = generateMileageHTML(trips, palletMap, dateRange);
   const timestamp = new Date().toISOString().slice(0, 10);
   return generateAndSharePDF(html, `mileage-${timestamp}.pdf`);
+}
+
+export async function exportAnalyticsSummaryPDF(data: AnalyticsSummaryData): Promise<PDFExportResult> {
+  const html = generateAnalyticsSummaryHTML(data);
+  const timestamp = new Date().toISOString().slice(0, 10);
+  return generateAndSharePDF(html, `analytics-summary-${timestamp}.pdf`);
 }

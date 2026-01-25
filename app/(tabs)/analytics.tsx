@@ -66,8 +66,9 @@ import {
 } from '@/src/features/analytics/components';
 
 // PDF Export utilities
-import { exportProfitLossPDF } from '@/src/features/analytics/utils/pdf-export';
+import { exportProfitLossPDF, exportAnalyticsSummaryPDF, type AnalyticsSummaryData } from '@/src/features/analytics/utils/pdf-export';
 import { calculateProfitLoss } from '@/src/features/analytics/utils/profit-loss-calculations';
+import { exportProfitLoss as exportProfitLossCSV } from '@/src/features/analytics/utils/csv-export';
 
 // Date range filter
 import { DateRangeFilter, DateRange } from '@/src/components/ui/DateRangeFilter';
@@ -234,35 +235,59 @@ export default function AnalyticsScreen() {
     try {
       let result;
 
-      // Handle PDF export - generates P&L report
-      if (format === 'pdf') {
-        // Calculate P&L summary for PDF
-        const plDateRange = dateRange.start && dateRange.end
-          ? { start: dateRange.start.toISOString().split('T')[0], end: dateRange.end.toISOString().split('T')[0] }
-          : undefined;
-        const plSummary = calculateProfitLoss(items, pallets, expenses, mileageTrips, plDateRange);
-        result = await exportProfitLossPDF(plSummary);
-      } else {
-        // Handle CSV export
-        switch (exportType) {
-          case 'items':
-            result = await exportItems(items, pallets);
-            break;
-          case 'pallets':
-            result = await exportPallets(pallets);
-            break;
-          case 'expenses':
-            result = await exportExpenses(expenses, pallets);
-            break;
-          case 'pallet_performance':
-            result = await exportPalletPerformance(leaderboard);
-            break;
-          case 'type_comparison':
-            result = await exportTypeComparisonCSV(typeComparison);
-            break;
-          default:
-            throw new Error('Unknown export type');
-        }
+      // Get date range for reports
+      const exportDateRange = dateRange.start && dateRange.end
+        ? { start: dateRange.start.toISOString().split('T')[0], end: dateRange.end.toISOString().split('T')[0] }
+        : undefined;
+
+      // Handle specific export types
+      switch (exportType) {
+        case 'profit_loss':
+          // P&L has both CSV and PDF versions
+          const plSummary = calculateProfitLoss(items, pallets, expenses, mileageTrips, exportDateRange);
+          if (format === 'pdf') {
+            result = await exportProfitLossPDF(plSummary);
+          } else {
+            result = await exportProfitLossCSV(plSummary);
+          }
+          break;
+
+        case 'analytics_summary':
+          // Analytics Summary is PDF-only
+          const analyticsSummaryData: AnalyticsSummaryData = {
+            heroMetrics,
+            supplierRankings: supplierComparison,
+            palletTypeRankings: palletTypeComparison,
+            palletLeaderboard: leaderboard,
+            typeComparison,
+            periodStart: exportDateRange?.start || new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
+            periodEnd: exportDateRange?.end || new Date().toISOString().split('T')[0],
+          };
+          result = await exportAnalyticsSummaryPDF(analyticsSummaryData);
+          break;
+
+        case 'items':
+          result = await exportItems(items, pallets);
+          break;
+
+        case 'pallets':
+          result = await exportPallets(pallets);
+          break;
+
+        case 'expenses':
+          result = await exportExpenses(expenses, pallets);
+          break;
+
+        case 'pallet_performance':
+          result = await exportPalletPerformance(leaderboard);
+          break;
+
+        case 'type_comparison':
+          result = await exportTypeComparisonCSV(typeComparison);
+          break;
+
+        default:
+          throw new Error('Unknown export type');
       }
 
       if (result.success) {
