@@ -84,7 +84,7 @@ describe('useAuthStore', () => {
       expect(result.current.user).toBeNull();
     });
 
-    it('should handle initialization error', async () => {
+    it('should handle initialization error gracefully', async () => {
       (mockSupabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
         data: { session: null },
         error: { message: 'Network error' },
@@ -96,8 +96,11 @@ describe('useAuthStore', () => {
         await result.current.initialize();
       });
 
+      // Auth errors during init are handled gracefully (user redirected to login)
+      // without showing an error message - just clears session state
       expect(result.current.isInitialized).toBe(true);
-      expect(result.current.error).toBeTruthy();
+      expect(result.current.user).toBeNull();
+      expect(result.current.session).toBeNull();
     });
   });
 
@@ -214,6 +217,7 @@ describe('useAuthStore', () => {
         email: 'test@example.com',
         password: 'password123',
         options: {
+          emailRedirectTo: 'palletpro://auth/callback',
           data: {
             affiliate_code: 'GRPL2024',
           },

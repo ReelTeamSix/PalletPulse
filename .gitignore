@@ -63,4 +63,7 @@ app_screens_current/
 # Project documentation (internal tracking)
 *.md
 !README.md
+!CLAUDE.md
+!PROGRESS.md
+!PALLETPULSE_ONESHOT_CONTEXT.md
 supabase/.temp/

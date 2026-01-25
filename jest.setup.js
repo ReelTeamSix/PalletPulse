@@ -22,6 +22,16 @@ jest.mock('expo-haptics', () => ({
   },
 }));
 
+// Mock expo-linking
+jest.mock('expo-linking', () => ({
+  createURL: jest.fn((path) => `palletpro://${path}`),
+  parse: jest.fn((url) => ({ path: url, queryParams: {} })),
+  addEventListener: jest.fn(() => ({ remove: jest.fn() })),
+  getInitialURL: jest.fn().mockResolvedValue(null),
+  openURL: jest.fn().mockResolvedValue(undefined),
+  canOpenURL: jest.fn().mockResolvedValue(true),
+}));
+
 // Mock Sentry
 jest.mock('@sentry/react-native', () => ({
   init: jest.fn(),

@@ -508,7 +508,9 @@ describe('UserSettingsStore', () => {
       });
 
       it('should return false when disabled', () => {
-        useUserSettingsStore.setState({ settings: mockSettings });
+        useUserSettingsStore.setState({
+          settings: { ...mockSettings, expense_tracking_enabled: false },
+        });
 
         expect(useUserSettingsStore.getState().isExpenseTrackingEnabled()).toBe(false);
       });
