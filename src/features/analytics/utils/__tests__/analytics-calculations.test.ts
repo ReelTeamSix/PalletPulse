@@ -1,6 +1,7 @@
 // Analytics Calculations Tests - Phase 9
 import {
   filterByDateRange,
+  calculateCOGS,
   calculateHeroMetrics,
   calculatePalletLeaderboard,
   calculateTypeComparison,
@@ -139,6 +140,316 @@ describe('filterByDateRange', () => {
 });
 
 // ============================================================================
+// calculateCOGS Tests (Cost of Goods Sold Model)
+// ============================================================================
+
+describe('calculateCOGS', () => {
+  it('should return zeros for empty array', () => {
+    const result = calculateCOGS([]);
+    expect(result).toEqual({
+      totalRevenue: 0,
+      totalCOGS: 0,
+      totalFees: 0,
+      netProfit: 0,
+    });
+  });
+
+  it('should calculate revenue from sale prices', () => {
+    const items = [
+      createItem({ id: 'i1', status: 'sold', sale_price: 100 }),
+      createItem({ id: 'i2', status: 'sold', sale_price: 150 }),
+    ];
+
+    const result = calculateCOGS(items);
+
+    expect(result.totalRevenue).toBe(250);
+  });
+
+  it('should use allocated_cost when available', () => {
+    const items = [
+      createItem({ id: 'i1', status: 'sold', sale_price: 100, allocated_cost: 30, purchase_cost: 50 }),
+      createItem({ id: 'i2', status: 'sold', sale_price: 150, allocated_cost: 45, purchase_cost: 60 }),
+    ];
+
+    const result = calculateCOGS(items);
+
+    // Should use allocated_cost (30 + 45 = 75), not purchase_cost (50 + 60 = 110)
+    expect(result.totalCOGS).toBe(75);
+  });
+
+  it('should fallback to purchase_cost when allocated_cost is null', () => {
+    const items = [
+      createItem({ id: 'i1', status: 'sold', sale_price: 100, allocated_cost: null, purchase_cost: 40 }),
+      createItem({ id: 'i2', status: 'sold', sale_price: 150, allocated_cost: 25, purchase_cost: 50 }),
+    ];
+
+    const result = calculateCOGS(items);
+
+    // i1: uses purchase_cost (40), i2: uses allocated_cost (25)
+    expect(result.totalCOGS).toBe(65);
+  });
+
+  it('should include platform fees and shipping costs', () => {
+    const items = [
+      createItem({ id: 'i1', status: 'sold', sale_price: 100, allocated_cost: 30, platform_fee: 10, shipping_cost: 5 }),
+      createItem({ id: 'i2', status: 'sold', sale_price: 150, allocated_cost: 45, platform_fee: 15, shipping_cost: 8 }),
+    ];
+
+    const result = calculateCOGS(items);
+
+    expect(result.totalFees).toBe(38); // (10+5) + (15+8)
+  });
+
+  it('should calculate net profit correctly', () => {
+    const items = [
+      createItem({ id: 'i1', status: 'sold', sale_price: 100, allocated_cost: 30, platform_fee: 10, shipping_cost: 5 }),
+    ];
+
+    const result = calculateCOGS(items);
+
+    // Revenue (100) - COGS (30) - Fees (15) = 55
+    expect(result.netProfit).toBe(55);
+  });
+
+  it('should handle items with null sale_price by skipping them', () => {
+    const items = [
+      createItem({ id: 'i1', status: 'sold', sale_price: 100, allocated_cost: 30 }),
+      createItem({ id: 'i2', status: 'listed', sale_price: null, allocated_cost: 40 }), // Not sold
+    ];
+
+    const result = calculateCOGS(items);
+
+    // Only the sold item with sale_price should be counted
+    expect(result.totalRevenue).toBe(100);
+    expect(result.totalCOGS).toBe(30);
+  });
+
+  it('should handle missing costs gracefully (default to 0)', () => {
+    const items = [
+      createItem({ id: 'i1', status: 'sold', sale_price: 100, allocated_cost: null, purchase_cost: null }),
+    ];
+
+    const result = calculateCOGS(items);
+
+    expect(result.totalCOGS).toBe(0);
+    expect(result.netProfit).toBe(100);
+  });
+});
+
+// ============================================================================
+// COGS Model Integration Tests
+// ============================================================================
+
+describe('COGS Model Integration', () => {
+  // These tests verify the Matching Principle:
+  // When a date range is provided, only the costs of items sold within that period
+  // should be counted, not the full pallet cost.
+
+  describe('calculateHeroMetrics with date range (COGS model)', () => {
+    it('should use item-level costs when date range is provided', () => {
+      const pallets = [createPallet({ id: 'p1', purchase_cost: 200, sales_tax: 0 })];
+      const items = [
+        // Sold in January - should be included
+        createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 100, allocated_cost: 50, sale_date: '2024-01-15' }),
+        // Sold in March - should be excluded
+        createItem({ id: 'i2', pallet_id: 'p1', status: 'sold', sale_price: 150, allocated_cost: 50, sale_date: '2024-03-15' }),
+        // Not sold - should not affect profit
+        createItem({ id: 'i3', pallet_id: 'p1', status: 'listed', listing_price: 60, allocated_cost: 50 }),
+      ];
+
+      const dateRange: DateRange = {
+        start: new Date(2024, 0, 1), // Jan 1
+        end: new Date(2024, 0, 31),  // Jan 31
+        preset: 'custom',
+      };
+
+      const result = calculateHeroMetrics(pallets, items, [], dateRange);
+
+      // COGS model: Only January sale counted
+      // Revenue: 100, COGS: 50, Profit: 50
+      // NOT full pallet cost of 200
+      expect(result.totalProfit).toBe(50);
+      expect(result.totalItemsSold).toBe(1);
+    });
+
+    it('should use traditional pallet cost when no date range provided', () => {
+      const pallets = [createPallet({ id: 'p1', purchase_cost: 200, sales_tax: 0 })];
+      const items = [
+        createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 100, allocated_cost: 50, sale_date: '2024-01-15' }),
+        createItem({ id: 'i2', pallet_id: 'p1', status: 'sold', sale_price: 150, allocated_cost: 50, sale_date: '2024-03-15' }),
+      ];
+
+      const result = calculateHeroMetrics(pallets, items, []);
+
+      // Traditional model: Full pallet cost
+      // Revenue: 250, Pallet Cost: 200, Profit: 50
+      expect(result.totalProfit).toBe(50);
+      expect(result.totalItemsSold).toBe(2);
+    });
+
+    it('should prevent false negative ROI for future quarters', () => {
+      // This test verifies the fix for the -100% ROI bug
+      // When filtering to a period with no sales, we should get 0 profit, not negative
+      const pallets = [createPallet({ id: 'p1', purchase_cost: 200, sales_tax: 0 })];
+      const items = [
+        createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 100, allocated_cost: 50, sale_date: '2024-01-15' }),
+        createItem({ id: 'i2', pallet_id: 'p1', status: 'listed', allocated_cost: 75 }),
+        createItem({ id: 'i3', pallet_id: 'p1', status: 'listed', allocated_cost: 75 }),
+      ];
+
+      // Filter to Q2 (no sales)
+      const dateRange: DateRange = {
+        start: new Date(2024, 3, 1), // Apr 1
+        end: new Date(2024, 5, 30),  // Jun 30
+        preset: 'q2',
+      };
+
+      const result = calculateHeroMetrics(pallets, items, [], dateRange);
+
+      // No sales in Q2 = no revenue, no COGS, zero profit (NOT -200)
+      expect(result.totalProfit).toBe(0);
+      expect(result.avgROI).toBe(0);
+      expect(result.totalItemsSold).toBe(0);
+    });
+  });
+
+  describe('calculatePalletLeaderboard with date range (COGS model)', () => {
+    it('should use COGS for pallet profit when date range is provided', () => {
+      const pallets = [createPallet({ id: 'p1', name: 'Test Pallet', purchase_cost: 200, sales_tax: 0 })];
+      const items = [
+        createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 100, allocated_cost: 50, sale_date: '2024-01-15' }),
+        createItem({ id: 'i2', pallet_id: 'p1', status: 'sold', sale_price: 150, allocated_cost: 50, sale_date: '2024-03-15' }),
+      ];
+
+      const dateRange: DateRange = {
+        start: new Date(2024, 0, 1),
+        end: new Date(2024, 0, 31),
+        preset: 'custom',
+      };
+
+      const result = calculatePalletLeaderboard(pallets, items, [], dateRange);
+
+      // COGS model for January
+      expect(result[0].profit).toBe(50); // 100 - 50
+      expect(result[0].soldCount).toBe(1);
+      expect(result[0].itemCount).toBe(2); // Total items in pallet
+    });
+
+    it('should calculate ROI correctly with COGS model', () => {
+      const pallets = [createPallet({ id: 'p1', name: 'Test Pallet', purchase_cost: 200, sales_tax: 0 })];
+      const items = [
+        createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 100, allocated_cost: 40, sale_date: '2024-01-15' }),
+      ];
+
+      const dateRange: DateRange = {
+        start: new Date(2024, 0, 1),
+        end: new Date(2024, 0, 31),
+        preset: 'custom',
+      };
+
+      const result = calculatePalletLeaderboard(pallets, items, [], dateRange);
+
+      // Profit: 100 - 40 = 60, Cost: 40, ROI: 150%
+      expect(result[0].profit).toBe(60);
+      expect(result[0].roi).toBe(150);
+    });
+  });
+
+  describe('calculateSupplierComparison with date range (COGS model)', () => {
+    it('should use COGS for supplier metrics when date range is provided', () => {
+      const pallets = [
+        createPallet({ id: 'p1', supplier: 'Bulq', purchase_cost: 200, sales_tax: 0 }),
+        createPallet({ id: 'p2', supplier: 'Bulq', purchase_cost: 150, sales_tax: 0 }),
+      ];
+      const items = [
+        createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 120, allocated_cost: 60, sale_date: '2024-01-15' }),
+        createItem({ id: 'i2', pallet_id: 'p2', status: 'sold', sale_price: 100, allocated_cost: 50, sale_date: '2024-03-15' }),
+      ];
+
+      const dateRange: DateRange = {
+        start: new Date(2024, 0, 1),
+        end: new Date(2024, 0, 31),
+        preset: 'custom',
+      };
+
+      const result = calculateSupplierComparison(pallets, items, [], dateRange);
+
+      const bulq = result.find(s => s.supplier === 'Bulq');
+      // Only January sale: Revenue 120, COGS 60, Profit 60
+      expect(bulq!.totalProfit).toBe(60);
+      expect(bulq!.totalItemsSold).toBe(1);
+    });
+  });
+
+  describe('calculateTypeComparison with date range (COGS model)', () => {
+    it('should use COGS for type metrics when date range is provided', () => {
+      const pallets = [
+        createPallet({ id: 'p1', source_type: 'pallet', purchase_cost: 200, sales_tax: 0 }),
+      ];
+      const items = [
+        createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 100, allocated_cost: 40, sale_date: '2024-01-15' }),
+        createItem({ id: 'i2', pallet_id: 'p1', status: 'sold', sale_price: 150, allocated_cost: 60, sale_date: '2024-03-15' }),
+      ];
+
+      const dateRange: DateRange = {
+        start: new Date(2024, 0, 1),
+        end: new Date(2024, 0, 31),
+        preset: 'custom',
+      };
+
+      const result = calculateTypeComparison(pallets, items, [], dateRange);
+
+      const palletType = result.find(t => t.sourceType === 'pallet');
+      // Only January sale: Revenue 100, COGS 40, Profit 60
+      expect(palletType!.totalProfit).toBe(60);
+    });
+  });
+
+  describe('calculatePalletTypeComparison with date range (COGS model)', () => {
+    it('should use COGS for pallet type metrics when date range is provided', () => {
+      const pallets = [
+        createPallet({ id: 'p1', source_name: 'Amazon Monster', purchase_cost: 300, sales_tax: 0 }),
+      ];
+      const items = [
+        createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 80, allocated_cost: 30, sale_date: '2024-01-15' }),
+        createItem({ id: 'i2', pallet_id: 'p1', status: 'sold', sale_price: 120, allocated_cost: 50, sale_date: '2024-02-15' }),
+        createItem({ id: 'i3', pallet_id: 'p1', status: 'listed', allocated_cost: 70 }),
+      ];
+
+      const dateRange: DateRange = {
+        start: new Date(2024, 0, 1),
+        end: new Date(2024, 0, 31),
+        preset: 'custom',
+      };
+
+      const result = calculatePalletTypeComparison(pallets, items, [], dateRange);
+
+      const amazonMonster = result.find(t => t.palletType === 'Amazon Monster');
+      // Only January sale: Revenue 80, COGS 30, Profit 50
+      expect(amazonMonster!.totalProfit).toBe(50);
+      expect(amazonMonster!.totalItemsSold).toBe(1);
+    });
+
+    it('should use traditional model when no date range', () => {
+      const pallets = [
+        createPallet({ id: 'p1', source_name: 'Amazon Monster', purchase_cost: 100, sales_tax: 0 }),
+      ];
+      const items = [
+        createItem({ id: 'i1', pallet_id: 'p1', status: 'sold', sale_price: 80, allocated_cost: 30, sale_date: '2024-01-15' }),
+        createItem({ id: 'i2', pallet_id: 'p1', status: 'sold', sale_price: 120, allocated_cost: 50, sale_date: '2024-02-15' }),
+      ];
+
+      const result = calculatePalletTypeComparison(pallets, items, []);
+
+      const amazonMonster = result.find(t => t.palletType === 'Amazon Monster');
+      // Traditional: Revenue 200, Pallet Cost 100, Profit 100
+      expect(amazonMonster!.totalProfit).toBe(100);
+      expect(amazonMonster!.totalItemsSold).toBe(2);
+    });
+  });
+});
+
+// ============================================================================
 // calculateHeroMetrics Tests
 // ============================================================================
 
@@ -240,10 +551,11 @@ describe('calculateHeroMetrics', () => {
   });
 
   it('should only count sold items within date range for totalItemsSold', () => {
+    // Note: allocated_cost: null forces fallback to purchase_cost for COGS model
     const items = [
-      createItem({ id: 'i1', pallet_id: null, status: 'sold', sale_price: 50, purchase_cost: 20, sale_date: '2024-01-15' }),
-      createItem({ id: 'i2', pallet_id: null, status: 'sold', sale_price: 60, purchase_cost: 30, sale_date: '2024-02-15' }),
-      createItem({ id: 'i3', pallet_id: null, status: 'sold', sale_price: 70, purchase_cost: 35, sale_date: '2024-03-15' }),
+      createItem({ id: 'i1', pallet_id: null, status: 'sold', sale_price: 50, purchase_cost: 20, allocated_cost: null, sale_date: '2024-01-15' }),
+      createItem({ id: 'i2', pallet_id: null, status: 'sold', sale_price: 60, purchase_cost: 30, allocated_cost: null, sale_date: '2024-02-15' }),
+      createItem({ id: 'i3', pallet_id: null, status: 'sold', sale_price: 70, purchase_cost: 35, allocated_cost: null, sale_date: '2024-03-15' }),
     ];
 
     const dateRange: DateRange = {
@@ -256,7 +568,7 @@ describe('calculateHeroMetrics', () => {
 
     // Only Jan and Feb sales should be counted
     expect(result.totalItemsSold).toBe(2);
-    // Profit: (50-20) + (60-30) = 60
+    // Profit (COGS model): (50-20) + (60-30) = 60
     expect(result.totalProfit).toBe(60);
   });
 });

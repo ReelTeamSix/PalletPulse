@@ -1,6 +1,13 @@
 // Analytics Calculations - Phase 9
 // Pure functions for calculating analytics metrics
 // Leverages existing profit-utils.ts for base calculations
+//
+// COGS (Cost of Goods Sold) Model:
+// When a date range is selected, we use the COGS model for accurate period-based analytics.
+// - Revenue: Sum of sale_price for items sold within the period
+// - COGS: Sum of allocated_cost (or purchase_cost) for those same sold items
+// - Profit: Revenue - COGS - Fees
+// This ensures costs and revenues are matched to the same period (Matching Principle).
 
 import type { Item, Pallet, Expense, SourceType } from '@/src/types/database';
 import type { ExpenseWithPallets } from '@/src/stores/expenses-store';
@@ -73,11 +80,61 @@ export function filterByDateRange<T>(
 }
 
 // ============================================================================
+// COGS (Cost of Goods Sold) Calculation
+// ============================================================================
+
+/**
+ * Calculate COGS-based metrics for sold items.
+ * Uses item-level costs (allocated_cost or purchase_cost) instead of full pallet costs.
+ * This provides accurate period-based profitability when filtering by date range.
+ *
+ * @param soldItems - Array of sold items to calculate COGS for
+ * @returns Object with totalRevenue, totalCOGS, totalFees, and netProfit
+ */
+export function calculateCOGS(soldItems: Item[]): {
+  totalRevenue: number;
+  totalCOGS: number;
+  totalFees: number;
+  netProfit: number;
+} {
+  let totalRevenue = 0;
+  let totalCOGS = 0;
+  let totalFees = 0;
+
+  soldItems.forEach((item) => {
+    if (item.sale_price !== null) {
+      totalRevenue += item.sale_price;
+      // Use allocated_cost if available, otherwise use purchase_cost
+      totalCOGS += item.allocated_cost ?? item.purchase_cost ?? 0;
+      totalFees += (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
+    }
+  });
+
+  const netProfit = totalRevenue - totalCOGS - totalFees;
+
+  return {
+    totalRevenue,
+    totalCOGS,
+    totalFees,
+    netProfit,
+  };
+}
+
+// ============================================================================
 // Hero Metrics
 // ============================================================================
 
 /**
  * Calculate hero metrics for the analytics dashboard.
+ *
+ * When a date range is provided, uses the COGS (Cost of Goods Sold) model:
+ * - Only counts revenue and costs for items sold within the date range
+ * - Uses item-level allocated_cost/purchase_cost instead of full pallet costs
+ * - This ensures costs and revenues are matched to the same period
+ *
+ * When no date range is provided (all-time view), uses the traditional model:
+ * - Counts full pallet costs and all revenue
+ *
  * @param pallets - All pallets
  * @param items - All items
  * @param expenses - All expenses (with pallet_ids)
@@ -91,61 +148,63 @@ export function calculateHeroMetrics(
   dateRange?: DateRange
 ): HeroMetrics {
   // Filter sold items by sale date if date range provided
-  // Keep all non-sold items for inventory value calculation
-  const filteredSoldItems = dateRange?.start || dateRange?.end
+  const hasDateRange = dateRange?.start || dateRange?.end;
+  const filteredSoldItems = hasDateRange
     ? filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date')
     : items.filter(i => i.status === 'sold');
-
-  // Create a combined set: filtered sold items + all non-sold items
-  const filteredItems = dateRange?.start || dateRange?.end
-    ? [
-        ...filteredSoldItems,
-        ...items.filter(i => i.status !== 'sold'),
-      ]
-    : items;
 
   // Get sold items (only those with sale_price) from the filtered set
   const soldItems = filteredSoldItems.filter(
     (item) => item.sale_price !== null
   );
 
-  // Calculate total profit from all pallets using filtered items
   let totalProfit = 0;
   let totalCost = 0;
 
-  pallets.forEach((pallet) => {
-    // Use filtered items for pallet profit calculation
-    const palletItems = filteredItems.filter((item) => item.pallet_id === pallet.id);
-    const palletExpenses = expenses.filter(
-      (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
-    );
+  // When a date range is provided, use COGS model for accurate period profitability
+  if (hasDateRange) {
+    // COGS model: Use item-level costs for items sold within the period
+    const cogsResult = calculateCOGS(soldItems);
+    totalProfit = cogsResult.netProfit;
+    totalCost = cogsResult.totalCOGS + cogsResult.totalFees;
+  } else {
+    // All-time view: Use traditional pallet-based calculation
+    // Create a combined set: all sold items + all non-sold items
+    const allItems = items;
 
-    // Calculate split amounts for multi-pallet expenses
-    const splitExpenses: Expense[] = palletExpenses.map((exp) => ({
-      ...exp,
-      amount: exp.amount / (exp.pallet_ids?.length || 1),
-    }));
+    pallets.forEach((pallet) => {
+      const palletItems = allItems.filter((item) => item.pallet_id === pallet.id);
+      const palletExpenses = expenses.filter(
+        (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
+      );
 
-    const result = calculatePalletProfit(pallet, palletItems, splitExpenses);
-    totalProfit += result.netProfit;
-    totalCost += result.totalCost;
-  });
+      // Calculate split amounts for multi-pallet expenses
+      const splitExpenses: Expense[] = palletExpenses.map((exp) => ({
+        ...exp,
+        amount: exp.amount / (exp.pallet_ids?.length || 1),
+      }));
 
-  // Add profit from individual items (no pallet) - use filtered items
-  const individualItems = filteredItems.filter((item) => !item.pallet_id);
-  individualItems.forEach((item) => {
-    if (item.status === 'sold' && item.sale_price !== null) {
-      const cost = item.purchase_cost ?? 0;
-      const fees = (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
-      totalProfit += item.sale_price - cost - fees;
-      totalCost += cost + fees;
-    }
-  });
+      const result = calculatePalletProfit(pallet, palletItems, splitExpenses);
+      totalProfit += result.netProfit;
+      totalCost += result.totalCost;
+    });
+
+    // Add profit from individual items (no pallet)
+    const individualItems = allItems.filter((item) => !item.pallet_id);
+    individualItems.forEach((item) => {
+      if (item.status === 'sold' && item.sale_price !== null) {
+        const cost = item.purchase_cost ?? 0;
+        const fees = (item.platform_fee ?? 0) + (item.shipping_cost ?? 0);
+        totalProfit += item.sale_price - cost - fees;
+        totalCost += cost + fees;
+      }
+    });
+  }
 
   // Calculate average ROI
   const avgROI = totalCost > 0 ? (totalProfit / totalCost) * 100 : 0;
 
-  // Calculate active inventory value (unsold items)
+  // Calculate active inventory value (unsold items - always use all items)
   const unsoldItems = items.filter((item) => item.status !== 'sold');
   const activeInventoryValue = unsoldItems.reduce((sum, item) => {
     return sum + (item.listing_price ?? item.retail_price ?? item.purchase_cost ?? 0);
@@ -217,6 +276,11 @@ export function calculateRetailMetrics(
 
 /**
  * Calculate pallet analytics for leaderboard.
+ *
+ * When a date range is provided, uses the COGS model:
+ * - Only counts revenue and costs for items sold within the date range
+ * - Uses item-level allocated_cost instead of full pallet costs
+ *
  * @param pallets - All pallets
  * @param items - All items
  * @param expenses - All expenses (with pallet_ids)
@@ -229,55 +293,83 @@ export function calculatePalletLeaderboard(
   expenses: ExpenseWithPallets[],
   dateRange?: DateRange
 ): PalletAnalytics[] {
+  const hasDateRange = dateRange?.start || dateRange?.end;
+
   // Filter sold items by sale date if dateRange provided
-  const filteredItems = dateRange?.start || dateRange?.end
-    ? [
-        ...filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date'),
-        ...items.filter(i => i.status !== 'sold'), // Include non-sold items for counts
-      ]
-    : items;
+  const filteredSoldItems = hasDateRange
+    ? filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date')
+    : items.filter(i => i.status === 'sold');
+
+  // Get all items for counting purposes
+  const allItems = items;
 
   const analytics: PalletAnalytics[] = pallets.map((pallet) => {
-    const palletItems = filteredItems.filter((item) => item.pallet_id === pallet.id);
-    const palletExpenses = expenses.filter(
-      (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
+    // Get all pallet items for counts
+    const allPalletItems = allItems.filter((item) => item.pallet_id === pallet.id);
+    // Get filtered sold items for this pallet
+    const palletSoldItems = filteredSoldItems.filter((item) => item.pallet_id === pallet.id);
+
+    let profit: number;
+    let roi: number;
+    let totalCost: number;
+    let totalRevenue: number;
+    let soldCount: number;
+
+    if (hasDateRange) {
+      // COGS model: Use item-level costs for period profitability
+      const cogsResult = calculateCOGS(palletSoldItems);
+      totalRevenue = cogsResult.totalRevenue;
+      totalCost = cogsResult.totalCOGS + cogsResult.totalFees;
+      profit = cogsResult.netProfit;
+      roi = totalCost > 0 ? (profit / totalCost) * 100 : (profit > 0 ? 100 : 0);
+      soldCount = palletSoldItems.length;
+    } else {
+      // All-time view: Use traditional pallet-based calculation
+      const palletExpenses = expenses.filter(
+        (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
+      );
+
+      // Calculate split amounts for multi-pallet expenses
+      const splitExpenses: Expense[] = palletExpenses.map((exp) => ({
+        ...exp,
+        amount: exp.amount / (exp.pallet_ids?.length || 1),
+      }));
+
+      const result = calculatePalletProfit(pallet, allPalletItems, splitExpenses);
+      profit = result.netProfit;
+      roi = result.roi;
+      totalCost = result.totalCost;
+      totalRevenue = result.totalRevenue;
+      soldCount = result.soldItemsCount;
+    }
+
+    // Calculate average days to sell for sold items (use filtered sold items)
+    const soldItemsWithDates = palletSoldItems.filter(
+      (item) => item.listing_date && item.sale_date
     );
-
-    // Calculate split amounts for multi-pallet expenses
-    const splitExpenses: Expense[] = palletExpenses.map((exp) => ({
-      ...exp,
-      amount: exp.amount / (exp.pallet_ids?.length || 1),
-    }));
-
-    const result = calculatePalletProfit(pallet, palletItems, splitExpenses);
-
-    // Calculate average days to sell for sold items
-    const soldItems = palletItems.filter(
-      (item) => item.status === 'sold' && item.listing_date && item.sale_date
-    );
-    const avgDaysToSell = soldItems.length > 0
-      ? soldItems.reduce((sum, item) => sum + (getDaysToSell(item) ?? 0), 0) / soldItems.length
+    const avgDaysToSell = soldItemsWithDates.length > 0
+      ? soldItemsWithDates.reduce((sum, item) => sum + (getDaysToSell(item) ?? 0), 0) / soldItemsWithDates.length
       : null;
 
-    // Calculate sell-through rate
-    const sellThroughRate = palletItems.length > 0
-      ? (result.soldItemsCount / palletItems.length) * 100
+    // Calculate sell-through rate based on all pallet items
+    const sellThroughRate = allPalletItems.length > 0
+      ? (soldCount / allPalletItems.length) * 100
       : 0;
 
-    // Calculate retail metrics
-    const retailMetrics = calculateRetailMetrics(palletItems, result.totalCost);
+    // Calculate retail metrics using all pallet items
+    const retailMetrics = calculateRetailMetrics(allPalletItems, totalCost);
 
     return {
       id: pallet.id,
       name: pallet.name,
       sourceType: pallet.source_type,
       sourceName: pallet.source_name,
-      profit: result.netProfit,
-      roi: result.roi,
-      totalCost: result.totalCost,
-      totalRevenue: result.totalRevenue,
-      itemCount: palletItems.length,
-      soldCount: result.soldItemsCount,
+      profit,
+      roi,
+      totalCost,
+      totalRevenue,
+      itemCount: allPalletItems.length,
+      soldCount,
       avgDaysToSell,
       sellThroughRate,
       retailMetrics,
@@ -294,6 +386,10 @@ export function calculatePalletLeaderboard(
 
 /**
  * Calculate aggregated metrics by pallet source type.
+ *
+ * When a date range is provided, uses the COGS model:
+ * - Only counts revenue and costs for items sold within the date range
+ *
  * @param pallets - All pallets
  * @param items - All items
  * @param expenses - All expenses (with pallet_ids)
@@ -306,13 +402,12 @@ export function calculateTypeComparison(
   expenses: ExpenseWithPallets[],
   dateRange?: DateRange
 ): TypeComparison[] {
+  const hasDateRange = dateRange?.start || dateRange?.end;
+
   // Filter sold items by sale date if dateRange provided
-  const filteredItems = dateRange?.start || dateRange?.end
-    ? [
-        ...filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date'),
-        ...items.filter(i => i.status !== 'sold'),
-      ]
-    : items;
+  const filteredSoldItems = hasDateRange
+    ? filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date')
+    : items.filter(i => i.status === 'sold');
 
   // Get unique source types from pallets
   const sourceTypes = [...new Set(pallets.map((p) => p.source_type))];
@@ -328,28 +423,42 @@ export function calculateTypeComparison(
     let soldItemsWithDays = 0;
 
     typePallets.forEach((pallet) => {
-      const palletItems = filteredItems.filter((item) => item.pallet_id === pallet.id);
-      const palletExpenses = expenses.filter(
-        (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
-      );
+      // Get all pallet items for counting
+      const allPalletItems = items.filter((item) => item.pallet_id === pallet.id);
+      // Get filtered sold items for this pallet
+      const palletSoldItems = filteredSoldItems.filter((item) => item.pallet_id === pallet.id);
 
-      // Calculate split amounts for multi-pallet expenses
-      const splitExpenses: Expense[] = palletExpenses.map((exp) => ({
-        ...exp,
-        amount: exp.amount / (exp.pallet_ids?.length || 1),
-      }));
+      totalItems += allPalletItems.length;
 
-      const result = calculatePalletProfit(pallet, palletItems, splitExpenses);
-      totalProfit += result.netProfit;
-      totalCost += result.totalCost;
-      totalItems += palletItems.length;
-      totalSoldItems += result.soldItemsCount;
+      if (hasDateRange) {
+        // COGS model: Use item-level costs
+        const cogsResult = calculateCOGS(palletSoldItems);
+        totalProfit += cogsResult.netProfit;
+        totalCost += cogsResult.totalCOGS + cogsResult.totalFees;
+        totalSoldItems += palletSoldItems.length;
+      } else {
+        // All-time view: Use traditional pallet-based calculation
+        const palletExpenses = expenses.filter(
+          (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
+        );
+
+        // Calculate split amounts for multi-pallet expenses
+        const splitExpenses: Expense[] = palletExpenses.map((exp) => ({
+          ...exp,
+          amount: exp.amount / (exp.pallet_ids?.length || 1),
+        }));
+
+        const result = calculatePalletProfit(pallet, allPalletItems, splitExpenses);
+        totalProfit += result.netProfit;
+        totalCost += result.totalCost;
+        totalSoldItems += result.soldItemsCount;
+      }
 
       // Sum days to sell for averaging
-      const soldItems = palletItems.filter(
-        (item) => item.status === 'sold' && item.listing_date && item.sale_date
+      const soldItemsForDays = palletSoldItems.filter(
+        (item) => item.listing_date && item.sale_date
       );
-      soldItems.forEach((item) => {
+      soldItemsForDays.forEach((item) => {
         const days = getDaysToSell(item);
         if (days !== null) {
           totalDaysToSell += days;
@@ -388,6 +497,10 @@ export function calculateTypeComparison(
 
 /**
  * Calculate aggregated metrics by supplier (vendor).
+ *
+ * When a date range is provided, uses the COGS model:
+ * - Only counts revenue and costs for items sold within the date range
+ *
  * @param pallets - All pallets
  * @param items - All items
  * @param expenses - All expenses (with pallet_ids)
@@ -400,13 +513,12 @@ export function calculateSupplierComparison(
   expenses: ExpenseWithPallets[],
   dateRange?: DateRange
 ): SupplierComparison[] {
+  const hasDateRange = dateRange?.start || dateRange?.end;
+
   // Filter sold items by sale date if dateRange provided
-  const filteredItems = dateRange?.start || dateRange?.end
-    ? [
-        ...filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date'),
-        ...items.filter(i => i.status !== 'sold'),
-      ]
-    : items;
+  const filteredSoldItems = hasDateRange
+    ? filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date')
+    : items.filter(i => i.status === 'sold');
 
   // Get unique suppliers from pallets (normalize null/empty to "Unknown")
   const normalizeSupplier = (supplier: string | null): string => {
@@ -428,28 +540,42 @@ export function calculateSupplierComparison(
     let soldItemsWithDays = 0;
 
     supplierPallets.forEach((pallet) => {
-      const palletItems = filteredItems.filter((item) => item.pallet_id === pallet.id);
-      const palletExpenses = expenses.filter(
-        (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
-      );
+      // Get all pallet items for counting
+      const allPalletItems = items.filter((item) => item.pallet_id === pallet.id);
+      // Get filtered sold items for this pallet
+      const palletSoldItems = filteredSoldItems.filter((item) => item.pallet_id === pallet.id);
 
-      // Calculate split amounts for multi-pallet expenses
-      const splitExpenses: Expense[] = palletExpenses.map((exp) => ({
-        ...exp,
-        amount: exp.amount / (exp.pallet_ids?.length || 1),
-      }));
+      totalItems += allPalletItems.length;
 
-      const result = calculatePalletProfit(pallet, palletItems, splitExpenses);
-      totalProfit += result.netProfit;
-      totalCost += result.totalCost;
-      totalItems += palletItems.length;
-      totalSoldItems += result.soldItemsCount;
+      if (hasDateRange) {
+        // COGS model: Use item-level costs
+        const cogsResult = calculateCOGS(palletSoldItems);
+        totalProfit += cogsResult.netProfit;
+        totalCost += cogsResult.totalCOGS + cogsResult.totalFees;
+        totalSoldItems += palletSoldItems.length;
+      } else {
+        // All-time view: Use traditional pallet-based calculation
+        const palletExpenses = expenses.filter(
+          (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
+        );
+
+        // Calculate split amounts for multi-pallet expenses
+        const splitExpenses: Expense[] = palletExpenses.map((exp) => ({
+          ...exp,
+          amount: exp.amount / (exp.pallet_ids?.length || 1),
+        }));
+
+        const result = calculatePalletProfit(pallet, allPalletItems, splitExpenses);
+        totalProfit += result.netProfit;
+        totalCost += result.totalCost;
+        totalSoldItems += result.soldItemsCount;
+      }
 
       // Sum days to sell for averaging
-      const soldItems = palletItems.filter(
-        (item) => item.status === 'sold' && item.listing_date && item.sale_date
+      const soldItemsForDays = palletSoldItems.filter(
+        (item) => item.listing_date && item.sale_date
       );
-      soldItems.forEach((item) => {
+      soldItemsForDays.forEach((item) => {
         const days = getDaysToSell(item);
         if (days !== null) {
           totalDaysToSell += days;
@@ -484,6 +610,10 @@ export function calculateSupplierComparison(
 /**
  * Calculate aggregated metrics by pallet type (source_name).
  * Groups pallets by source_name and includes mystery box indicator.
+ *
+ * When a date range is provided, uses the COGS model:
+ * - Only counts revenue and costs for items sold within the date range
+ *
  * @param pallets - All pallets
  * @param items - All items
  * @param expenses - All expenses (with pallet_ids)
@@ -496,13 +626,12 @@ export function calculatePalletTypeComparison(
   expenses: ExpenseWithPallets[],
   dateRange?: DateRange
 ): PalletTypeComparison[] {
+  const hasDateRange = dateRange?.start || dateRange?.end;
+
   // Filter sold items by sale date if dateRange provided
-  const filteredItems = dateRange?.start || dateRange?.end
-    ? [
-        ...filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date'),
-        ...items.filter(i => i.status !== 'sold'),
-      ]
-    : items;
+  const filteredSoldItems = hasDateRange
+    ? filterByDateRange(items.filter(i => i.status === 'sold'), dateRange, 'sale_date')
+    : items.filter(i => i.status === 'sold');
 
   // Get unique pallet types from pallets (normalize null/empty to "Unspecified")
   const normalizePalletType = (sourceName: string | null): string => {
@@ -527,28 +656,42 @@ export function calculatePalletTypeComparison(
     let soldItemsWithDays = 0;
 
     typePallets.forEach((pallet) => {
-      const palletItems = filteredItems.filter((item) => item.pallet_id === pallet.id);
-      const palletExpenses = expenses.filter(
-        (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
-      );
+      // Get all pallet items for counting
+      const allPalletItems = items.filter((item) => item.pallet_id === pallet.id);
+      // Get filtered sold items for this pallet
+      const palletSoldItems = filteredSoldItems.filter((item) => item.pallet_id === pallet.id);
 
-      // Calculate split amounts for multi-pallet expenses
-      const splitExpenses: Expense[] = palletExpenses.map((exp) => ({
-        ...exp,
-        amount: exp.amount / (exp.pallet_ids?.length || 1),
-      }));
+      totalItems += allPalletItems.length;
 
-      const result = calculatePalletProfit(pallet, palletItems, splitExpenses);
-      totalProfit += result.netProfit;
-      totalCost += result.totalCost;
-      totalItems += palletItems.length;
-      totalSoldItems += result.soldItemsCount;
+      if (hasDateRange) {
+        // COGS model: Use item-level costs
+        const cogsResult = calculateCOGS(palletSoldItems);
+        totalProfit += cogsResult.netProfit;
+        totalCost += cogsResult.totalCOGS + cogsResult.totalFees;
+        totalSoldItems += palletSoldItems.length;
+      } else {
+        // All-time view: Use traditional pallet-based calculation
+        const palletExpenses = expenses.filter(
+          (exp) => exp.pallet_ids?.includes(pallet.id) || exp.pallet_id === pallet.id
+        );
+
+        // Calculate split amounts for multi-pallet expenses
+        const splitExpenses: Expense[] = palletExpenses.map((exp) => ({
+          ...exp,
+          amount: exp.amount / (exp.pallet_ids?.length || 1),
+        }));
+
+        const result = calculatePalletProfit(pallet, allPalletItems, splitExpenses);
+        totalProfit += result.netProfit;
+        totalCost += result.totalCost;
+        totalSoldItems += result.soldItemsCount;
+      }
 
       // Sum days to sell for averaging
-      const soldItems = palletItems.filter(
-        (item) => item.status === 'sold' && item.listing_date && item.sale_date
+      const soldItemsForDays = palletSoldItems.filter(
+        (item) => item.listing_date && item.sale_date
       );
-      soldItems.forEach((item) => {
+      soldItemsForDays.forEach((item) => {
         const days = getDaysToSell(item);
         if (days !== null) {
           totalDaysToSell += days;
