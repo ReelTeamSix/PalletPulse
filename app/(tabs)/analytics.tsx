@@ -92,7 +92,7 @@ export default function AnalyticsScreen() {
   const tier = trialActive ? 'pro' : getEffectiveTier();
   const isPaidTier = tier !== 'free';
   const canExportCSV = trialActive || canPerform('csvExport', 0);
-  // Note: canExportPDF will be used when PDF export is implemented
+  const canExportPDF = trialActive || canPerform('pdfExport', 0);
 
   // Stores
   const { pallets, fetchPallets, isLoading: palletsLoading } = usePalletsStore();
@@ -452,7 +452,7 @@ export default function AnalyticsScreen() {
         onClose={() => setShowExportModal(false)}
         onExport={handleExport}
         isExporting={isExporting}
-        canExportPDF={canPerform('pdfExport', 0)}
+        canExportPDF={canExportPDF}
         onUpgrade={handleUpgrade}
       />
 
