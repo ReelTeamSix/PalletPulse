@@ -11,6 +11,8 @@ export interface UserProfileCardProps {
   email: string | null;
   displayName?: string | null;
   tier?: 'free' | 'starter' | 'pro';
+  isTrialActive?: boolean;
+  trialDaysRemaining?: number;
   onPress?: () => void;
   onSubscriptionPress?: () => void;
 }
@@ -42,12 +44,20 @@ export function UserProfileCard({
   email,
   displayName,
   tier = 'free',
+  isTrialActive = false,
+  trialDaysRemaining = 0,
   onPress,
   onSubscriptionPress,
 }: UserProfileCardProps) {
   const tierDisplay = TIER_DISPLAY[tier as SubscriptionTier];
   const initials = getInitials(email, displayName);
   const name = getDisplayName(email, displayName);
+
+  // Determine badge display - show trial badge if on trial
+  const showTrialBadge = isTrialActive && tier === 'pro';
+  const trialBadgeText = trialDaysRemaining === 1
+    ? 'PRO TRIAL (1 day)'
+    : `PRO TRIAL (${trialDaysRemaining} days)`;
 
   return (
     <Card shadow="sm" padding="md" style={styles.card}>
@@ -68,11 +78,18 @@ export function UserProfileCard({
             <Text style={styles.profileName} numberOfLines={1}>
               {name}
             </Text>
-            {/* Tier badge */}
-            <View style={[styles.tierBadge, { backgroundColor: tierDisplay.color }]}>
-              <Ionicons name={tierDisplay.icon as keyof typeof Ionicons.glyphMap} size={10} color={colors.background} />
-              <Text style={styles.tierText}>{tierDisplay.shortLabel}</Text>
-            </View>
+            {/* Tier badge - show trial badge if on trial */}
+            {showTrialBadge ? (
+              <View style={[styles.tierBadge, styles.trialBadge]}>
+                <Ionicons name="gift" size={10} color={colors.background} />
+                <Text style={styles.tierText}>{trialBadgeText}</Text>
+              </View>
+            ) : (
+              <View style={[styles.tierBadge, { backgroundColor: tierDisplay.color }]}>
+                <Ionicons name={tierDisplay.icon as keyof typeof Ionicons.glyphMap} size={10} color={colors.background} />
+                <Text style={styles.tierText}>{tierDisplay.shortLabel}</Text>
+              </View>
+            )}
           </View>
           {email && (
             <Text style={styles.profileEmail} numberOfLines={1}>
@@ -157,6 +174,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: borderRadius.full,
+  },
+  trialBadge: {
+    backgroundColor: colors.profit,
   },
   tierText: {
     fontSize: fontSize.xs,

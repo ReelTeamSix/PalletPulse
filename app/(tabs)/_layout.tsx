@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/src/constants/colors';
 import { useUserSettingsStore } from '@/src/stores/user-settings-store';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
+import { useOnboardingStore } from '@/src/stores/onboarding-store';
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof Ionicons>['name'];
@@ -18,10 +19,15 @@ function TabBarIcon(props: {
 
 export default function TabLayout() {
   const { isExpenseTrackingEnabled } = useUserSettingsStore();
-  const { canPerform } = useSubscriptionStore();
+  const { getEffectiveTier } = useSubscriptionStore();
+  const { isTrialActive } = useOnboardingStore();
+
+  // Check trial status - trial users get Pro access
+  const trialActive = isTrialActive();
+  const currentTier = trialActive ? 'pro' : getEffectiveTier();
 
   // User must have tier access AND have it enabled in settings
-  const canAccessExpenses = canPerform('expenseTracking', 0);
+  const canAccessExpenses = currentTier !== 'free';
   const expensesEnabled = canAccessExpenses && isExpenseTrackingEnabled();
 
   const insets = useSafeAreaInsets();

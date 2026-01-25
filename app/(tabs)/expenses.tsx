@@ -40,7 +40,9 @@ import {
   isWithinDateRange,
 } from '@/src/components/ui/DateRangeFilter';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
-import { UpgradePrompt } from '@/src/components/subscription';
+import { useOnboardingStore } from '@/src/stores/onboarding-store';
+import { UpgradePrompt, PaywallModal } from '@/src/components/subscription';
+import { TrialBanner } from '@/src/components/onboarding';
 import { exportExpenses, exportMileageTrips, exportProfitLoss } from '@/src/features/analytics/utils/csv-export';
 import { exportExpensesPDF, exportMileagePDF, exportProfitLossPDF } from '@/src/features/analytics/utils/pdf-export';
 import { calculateProfitLoss } from '@/src/features/analytics/utils/profit-loss-calculations';
@@ -55,10 +57,18 @@ export default function ExpensesScreen() {
   const insets = useSafeAreaInsets();
 
   // Check subscription tier for expense tracking access
-  const { canPerform } = useSubscriptionStore();
-  const canAccessExpenses = canPerform('expenseTracking', 0);
-  const canExportCSV = canPerform('csvExport', 0);
-  const canExportPDF = canPerform('pdfExport', 0);
+  const { canPerform, getEffectiveTier } = useSubscriptionStore();
+  const { isTrialActive, getTrialDaysRemaining } = useOnboardingStore();
+
+  // Check trial status - trial users get Pro access
+  const trialActive = isTrialActive();
+  const trialDaysRemaining = getTrialDaysRemaining();
+  const currentTier = trialActive ? 'pro' : getEffectiveTier();
+
+  // Expense access based on effective tier (free tier can't access)
+  const canAccessExpenses = currentTier !== 'free';
+  const canExportCSV = currentTier !== 'free'; // Starter+ can export CSV
+  const canExportPDF = currentTier === 'pro' || currentTier === 'enterprise'; // Pro+ can export PDF
 
   const { expenses, isLoading, error, fetchExpenses } = useExpensesStore();
   const { pallets, getPalletById, fetchPallets } = usePalletsStore();
@@ -83,6 +93,7 @@ export default function ExpensesScreen() {
     title: '',
     message: '',
   });
+  const [showPaywall, setShowPaywall] = useState(false);
 
   // Fetch data on focus
   useFocusEffect(
@@ -448,6 +459,25 @@ export default function ExpensesScreen() {
         )}
       </View>
 
+        {/* Trial Banner - shows throughout trial to indicate this is a paid feature */}
+        {trialActive && (
+          <View style={styles.trialBanner}>
+            <Ionicons name="gift" size={20} color={colors.primary} style={styles.trialBannerIcon} />
+            <View style={styles.trialBannerContent}>
+              <Text style={styles.trialBannerTitle}>Paid Feature</Text>
+              <Text style={styles.trialBannerSubtitle}>
+                {trialDaysRemaining} {trialDaysRemaining === 1 ? 'day' : 'days'} left in trial
+              </Text>
+            </View>
+            <Pressable
+              style={styles.trialBannerButton}
+              onPress={() => setShowPaywall(true)}
+            >
+              <Text style={styles.trialBannerButtonText}>Upgrade</Text>
+            </Pressable>
+          </View>
+        )}
+
       {/* Date Filter */}
       <DateRangeFilter value={dateRange} onChange={setDateRange} />
 
@@ -555,6 +585,13 @@ export default function ExpensesScreen() {
         onPrimary={() => setErrorModal({ ...errorModal, visible: false })}
         onClose={() => setErrorModal({ ...errorModal, visible: false })}
       />
+
+      {/* Paywall Modal - for trial banner upgrade */}
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        requiredTier="starter"
+      />
     </>
   );
 }
@@ -591,6 +628,47 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: fontFamily.semibold,
     color: colors.primary,
+  },
+  trialBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primaryLight,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.primary + '20',
+  },
+  trialBannerIcon: {
+    marginRight: spacing.sm,
+  },
+  trialBannerContent: {
+    flex: 1,
+  },
+  trialBannerTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    fontFamily: fontFamily.semibold,
+    color: colors.primary,
+  },
+  trialBannerSubtitle: {
+    fontSize: fontSize.xs,
+    fontFamily: fontFamily.regular,
+    color: colors.primary,
+    opacity: 0.8,
+  },
+  trialBannerButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+  },
+  trialBannerButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    fontFamily: fontFamily.semibold,
+    color: colors.background,
   },
   subtitle: {
     fontSize: fontSize.md,

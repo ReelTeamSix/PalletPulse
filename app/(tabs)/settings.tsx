@@ -58,10 +58,15 @@ export default function SettingsScreen() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [hapticsEnabled, setHapticsEnabledState] = useState(isHapticsEnabled());
-  const { resetOnboarding } = useOnboardingStore();
+  const { resetOnboarding, trial, isTrialActive, getTrialDaysRemaining, startTrial, currentTier: onboardingTier } = useOnboardingStore();
 
-  const currentTier = getEffectiveTier();
-  const canAccessExpenseTracking = canPerform('expenseTracking', 0);
+  // Call these during render to get current values - subscribe to trial state
+  const trialActive = isTrialActive();
+  const trialDaysRemaining = getTrialDaysRemaining();
+  // Use subscription tier which considers trial status
+  const currentTier = trialActive ? 'pro' : getEffectiveTier();
+  // Check expense access based on effective tier (free tier can't access)
+  const canAccessExpenseTracking = currentTier !== 'free';
 
   // Fetch settings and refresh subscription on mount and focus
   useFocusEffect(
@@ -159,6 +164,22 @@ export default function SettingsScreen() {
     });
   };
 
+  // Debug helpers for trial
+  const getTrialStatusText = () => {
+    if (trialActive) {
+      return `Active (${trialDaysRemaining} days left)`;
+    }
+    if (trial.endDate) {
+      return `Expired ${new Date(trial.endDate).toLocaleDateString()}`;
+    }
+    return 'Never started';
+  };
+
+  const handleRestartTrial = async () => {
+    await startTrial('starter');
+    Alert.alert('Trial Restarted', 'You now have 7 days of Pro access. The page will update automatically.');
+  };
+
   const handleHapticsToggle = async (enabled: boolean) => {
     setHapticsEnabledState(enabled);
     await setHapticsEnabled(enabled);
@@ -181,10 +202,40 @@ export default function SettingsScreen() {
       <UserProfileCard
         email={user?.email ?? null}
         tier={currentTier === 'enterprise' ? 'pro' : currentTier}
+        isTrialActive={trialActive}
+        trialDaysRemaining={trialDaysRemaining}
       />
 
-      {/* Subscription Section */}
-      {currentTier !== 'free' && (
+      {/* Trial Section - shows when on trial */}
+      {trialActive && (
+        <>
+          <SectionHeader title="Your Trial" />
+          <Card shadow="sm" padding="md" style={styles.trialCard}>
+            <View style={styles.trialCardContent}>
+              <View style={styles.trialCardIcon}>
+                <Ionicons name="gift" size={24} color={colors.primary} />
+              </View>
+              <View style={styles.trialCardText}>
+                <Text style={styles.trialCardTitle}>Pro Trial Active</Text>
+                <Text style={styles.trialCardSubtitle}>
+                  {trialDaysRemaining} {trialDaysRemaining === 1 ? 'day' : 'days'} remaining
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.trialCardDescription}>
+              You have full access to Pro features. Subscribe before your trial ends to keep access.
+            </Text>
+            <Button
+              title="Subscribe Now"
+              onPress={handleSubscriptionPress}
+              style={styles.trialCardButton}
+            />
+          </Card>
+        </>
+      )}
+
+      {/* Subscription Section - shows for actual paid subscribers (not trial) */}
+      {currentTier !== 'free' && !trialActive && (
         <>
           <SectionHeader title="Subscription" />
           <Card shadow="sm" padding={0} style={styles.sectionCard}>
@@ -331,6 +382,16 @@ export default function SettingsScreen() {
           <SectionHeader title="Developer" />
           <Card shadow="sm" padding={0} style={styles.sectionCard}>
             <SettingRow
+              icon="flask"
+              label="Trial Status"
+              value={getTrialStatusText()}
+            />
+            <SettingRow
+              icon="play"
+              label="Restart Trial (7 days)"
+              onPress={handleRestartTrial}
+            />
+            <SettingRow
               icon="refresh"
               label="Reset Onboarding"
               onPress={() => {
@@ -475,6 +536,49 @@ const styles = StyleSheet.create({
   },
   upgradeButton: {
     marginBottom: spacing.sm,
+  },
+  // Trial card styles
+  trialCard: {
+    marginBottom: spacing.md,
+  },
+  trialCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  trialCardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  trialCardText: {
+    flex: 1,
+  },
+  trialCardTitle: {
+    fontSize: fontSize.md,
+    fontWeight: '600',
+    fontFamily: fontFamily.semibold,
+    color: colors.textPrimary,
+  },
+  trialCardSubtitle: {
+    fontSize: fontSize.sm,
+    color: colors.primary,
+    fontFamily: fontFamily.medium,
+    marginTop: 2,
+  },
+  trialCardDescription: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    fontFamily: fontFamily.regular,
+    marginBottom: spacing.md,
+    lineHeight: 20,
+  },
+  trialCardButton: {
+    marginTop: spacing.xs,
   },
   restoreLink: {
     alignItems: 'center',

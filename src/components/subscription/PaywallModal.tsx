@@ -34,17 +34,17 @@ interface PaywallModalProps {
   currentCount?: number;
 }
 
-// Tier feature descriptions
+// Tier feature descriptions - must match TIER_LIMITS in tier-limits.ts
 const TIER_FEATURES: Record<SubscriptionTier, string[]> = {
   free: [
-    '1 pallet',
-    '20 items',
+    '2 active pallets',
+    '100 active items',
     '1 photo per item',
-    '30-day analytics',
+    '30-day analytics history',
   ],
   starter: [
-    '25 pallets',
-    '500 items',
+    '5 active pallets',
+    '500 active items',
     '3 photos per item',
     'Unlimited analytics history',
     'Expense & mileage tracking',
@@ -52,13 +52,13 @@ const TIER_FEATURES: Record<SubscriptionTier, string[]> = {
     '50 AI descriptions/month',
   ],
   pro: [
-    'Unlimited pallets',
-    'Unlimited items',
+    'Unlimited pallets & items',
     '10 photos per item',
     'Everything in Starter',
     'PDF export',
     'Saved mileage routes',
     '200 AI descriptions/month',
+    'Bulk import/export',
     'Priority support',
   ],
   enterprise: [
@@ -230,6 +230,52 @@ export function PaywallModal({
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
+            {/* Free Tier (Current Plan for free users) */}
+            {currentTier === 'free' && (
+              <View style={[styles.tierCard, styles.tierCardFree]}>
+                <View style={styles.tierHeader}>
+                  <View style={styles.tierTitleRow}>
+                    <Ionicons name="person-outline" size={24} color={colors.textSecondary} />
+                    <Text style={styles.tierTitle}>Free</Text>
+                    <View style={styles.currentBadge}>
+                      <Text style={styles.currentBadgeText}>CURRENT</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.tierSubtitle}>Basic inventory tracking</Text>
+                </View>
+
+                <View style={styles.priceRow}>
+                  <Text style={styles.price}>$0</Text>
+                  <Text style={styles.priceUnit}>/month</Text>
+                </View>
+
+                <View style={styles.featuresList}>
+                  {TIER_FEATURES.free.map((feature, index) => (
+                    <View key={index} style={styles.featureRow}>
+                      <Ionicons name="checkmark" size={16} color={colors.textSecondary} />
+                      <Text style={[styles.featureText, styles.featureTextMuted]}>{feature}</Text>
+                    </View>
+                  ))}
+                  <View style={styles.featureRow}>
+                    <Ionicons name="close" size={16} color={colors.loss} />
+                    <Text style={[styles.featureText, styles.featureTextDisabled]}>No expense tracking</Text>
+                  </View>
+                  <View style={styles.featureRow}>
+                    <Ionicons name="close" size={16} color={colors.loss} />
+                    <Text style={[styles.featureText, styles.featureTextDisabled]}>No mileage tracking</Text>
+                  </View>
+                  <View style={styles.featureRow}>
+                    <Ionicons name="close" size={16} color={colors.loss} />
+                    <Text style={[styles.featureText, styles.featureTextDisabled]}>No AI descriptions</Text>
+                  </View>
+                  <View style={styles.featureRow}>
+                    <Ionicons name="close" size={16} color={colors.loss} />
+                    <Text style={[styles.featureText, styles.featureTextDisabled]}>No CSV/PDF export</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
             {/* Starter Tier */}
             <View
               style={[
@@ -386,8 +432,14 @@ export function PaywallModal({
 
         {/* Footer - Continue Free */}
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.md) }]}>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.continueFreetText}>Continue with Free</Text>
+          <TouchableOpacity
+            style={styles.continueFreeButton}
+            onPress={onClose}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.continueFreeText}>
+              {currentTier === 'free' ? 'Stay on Free Plan' : 'Close'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -507,6 +559,23 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.warning,
   },
+  tierCardFree: {
+    backgroundColor: colors.surface,
+    opacity: 0.9,
+  },
+  currentBadge: {
+    backgroundColor: colors.textSecondary + '20',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+    marginLeft: 'auto',
+  },
+  currentBadgeText: {
+    fontSize: 10,
+    fontWeight: fontWeight.bold,
+    fontFamily: fontFamily.bold,
+    color: colors.textSecondary,
+  },
   popularBadge: {
     position: 'absolute',
     top: -12,
@@ -595,6 +664,12 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.regular,
     color: colors.textPrimary,
   },
+  featureTextMuted: {
+    color: colors.textSecondary,
+  },
+  featureTextDisabled: {
+    color: colors.textDisabled,
+  },
   subscribeButton: {
     marginTop: spacing.sm,
   },
@@ -660,10 +735,15 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     alignItems: 'center',
   },
-  continueFreetText: {
-    fontSize: fontSize.sm,
+  continueFreeButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  continueFreeText: {
+    fontSize: fontSize.md,
     color: colors.textSecondary,
     fontWeight: fontWeight.medium,
     fontFamily: fontFamily.medium,
+    textDecorationLine: 'underline',
   },
 });
