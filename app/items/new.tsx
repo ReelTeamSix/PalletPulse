@@ -6,11 +6,12 @@ import { fontFamily } from '@/src/constants/fonts';
 import { useItemsStore, ITEM_ERROR_CODES } from '@/src/stores/items-store';
 import { usePalletsStore } from '@/src/stores/pallets-store';
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
+import { useOnboardingStore } from '@/src/stores/onboarding-store';
 import { ItemForm, ItemFormData } from '@/src/features/items';
 import { PhotoItem } from '@/src/components/ui/PhotoPicker';
 import { ConfirmationModal } from '@/src/components/ui';
 import { PaywallModal } from '@/src/components/subscription';
-import { SubscriptionTier, isUnlimited } from '@/src/constants/tier-limits';
+import { SubscriptionTier, isUnlimited, TIER_LIMITS } from '@/src/constants/tier-limits';
 import { useToast } from '@/src/lib/toast';
 
 export default function NewItemScreen() {
@@ -20,6 +21,7 @@ export default function NewItemScreen() {
   const { items, addItem, uploadItemPhotos, isLoading } = useItemsStore();
   const { getPalletById } = usePalletsStore();
   const { getLimitForAction, getEffectiveTier } = useSubscriptionStore();
+  const { isTrialActive } = useOnboardingStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [errorModal, setErrorModal] = useState<{ visible: boolean; title: string; message: string }>({
@@ -35,10 +37,15 @@ export default function NewItemScreen() {
   // Get pallet name for display
   const pallet = palletId ? getPalletById(palletId) : null;
 
-  // Get photo limit based on subscription tier
-  const photoLimit = getLimitForAction('photosPerItem') as number;
+  // Check trial status - trial users get Pro access
+  const trialActive = isTrialActive();
+  const effectiveTier = trialActive ? 'pro' : getEffectiveTier();
+
+  // Get photo limit based on subscription tier (trial gets Pro limits)
+  const photoLimit = trialActive
+    ? TIER_LIMITS.pro.photosPerItem
+    : getLimitForAction('photosPerItem') as number;
   const maxPhotos = isUnlimited(photoLimit) ? 50 : photoLimit; // Cap at 50 for unlimited
-  const effectiveTier = getEffectiveTier();
 
   const handleCancel = () => {
     router.dismiss();

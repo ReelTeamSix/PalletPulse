@@ -69,6 +69,7 @@ import { ConfirmationModal } from '@/src/components/ui';
 
 // Subscription store and paywall
 import { useSubscriptionStore } from '@/src/stores/subscription-store';
+import { useOnboardingStore } from '@/src/stores/onboarding-store';
 import { PaywallModal } from '@/src/components/subscription';
 
 export default function AnalyticsScreen() {
@@ -77,9 +78,13 @@ export default function AnalyticsScreen() {
 
   // Get user's subscription tier from subscription store
   const { getEffectiveTier, canPerform } = useSubscriptionStore();
-  const tier = getEffectiveTier();
+  const { isTrialActive } = useOnboardingStore();
+
+  // Check trial status - trial users get Pro access
+  const trialActive = isTrialActive();
+  const tier = trialActive ? 'pro' : getEffectiveTier();
   const isPaidTier = tier !== 'free';
-  const canExportCSV = canPerform('csvExport', 0);
+  const canExportCSV = trialActive || canPerform('csvExport', 0);
   // Note: canExportPDF will be used when PDF export is implemented
 
   // Stores
